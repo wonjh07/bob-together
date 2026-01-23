@@ -1,0 +1,62 @@
+/* 1) box-sizing 통일 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 2) 기본 margin 제거 */
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* 3) 높이 기준 통일 (레이아웃 계산 편해짐) */
+html,
+body {
+  height: 100%;
+}
+
+/* 4) 폰트 렌더링 개선 */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 5) 미디어 기본 동작 안정화 */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* 6) 폼 요소 기본 스타일 통일 */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* 7) 버튼 기본 커서 */
+button {
+  cursor: pointer;
+}
+
+/* 8) 기본 링크 스타일 유지/선택 (원하면 바꿔도 됨) */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 9) 리스트 기본 스타일 제거 (필요시만) */
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
