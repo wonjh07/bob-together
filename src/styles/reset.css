@@ -60,3 +60,10 @@ ol {
   padding: 0;
   list-style: none;
 }
+
+/* 10) 터치 및 오버스크롤 동작 통일 */
+/* html,
+body {
+  touch-action: pan-x pan-y;
+  overscroll-behavior-y: none;
+} */
