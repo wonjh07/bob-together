@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/libs/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { createSupabaseServerClient } from '@/libs/supabase/server';
 
 export async function POST(req: NextRequest) {
   const supabase = createSupabaseServerClient();

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { createSupabaseServerClient } from '@/libs/supabase/server';
 
 export async function GET() {
@@ -20,7 +21,7 @@ export async function GET() {
       user: {
         id: data.user.id,
         email: data.user.email,
-        metadata: data.user.user_metadata, 
+        metadata: data.user.user_metadata,
         // signUp에서 넣은 name/nickname 등
       },
     },

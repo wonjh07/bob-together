@@ -1,8 +1,8 @@
 // src/styles/layout.css.ts
 import { style } from '@vanilla-extract/css';
 
-import { mq } from './responsive.css';
-import { vars } from './theme.css';
+import { mq } from '../styles/responsive.css';
+import { vars } from '../styles/theme.css';
 
 export const appShell = style({
   // vh는 모바일에서 주소창 등에 의해 뷰포트 높이가 변할 수 있어 dvh 사용
@@ -15,9 +15,8 @@ export const appShell = style({
 });
 
 export const appFrame = style({
-  background: vars.color.mainSoft,
   width: '100%',
-  maxWidth: '1024px',
+  maxWidth: '768px',
   minHeight: '100dvh',
   display: 'flex',
   justifyContent: 'center',
@@ -29,10 +28,4 @@ export const appFrame = style({
     [mq.lgUp]: {},
     [mq.xlUp]: {},
   },
-});
-
-export const flexCenter = style({
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
 });

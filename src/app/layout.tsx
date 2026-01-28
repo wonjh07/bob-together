@@ -5,7 +5,7 @@ import localFont from 'next/font/local';
 
 import type { Metadata } from 'next';
 
-import { appFrame, appShell } from '@/styles/layout.css';
+import { appFrame, appShell } from '@/app/layout.css';
 import { themeClass } from '@/styles/theme.css';
 
 const pretendard = localFont({

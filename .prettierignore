@@ -12,5 +12,6 @@ pnpm-lock.yaml
 *.ico
 .vscode
 .idea
+reset.css
 README.md
 AGENTS.md
