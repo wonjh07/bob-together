@@ -36,52 +36,6 @@ export const navRight = style({
   gap: '16px',
 });
 
-export const groupButton = style({
-  background: 'none',
-  border: 'none',
-  fontSize: '14px',
-  color: vars.color.text,
-  cursor: 'pointer',
-  padding: '8px',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '4px',
-  transition: 'color 0.2s ease',
-
-  ':hover': {
-    color: vars.color.main,
-  },
-});
-
-export const dropdownMenu = style({
-  position: 'absolute',
-  top: '100%',
-  right: 0,
-  border: `1px solid ${vars.color.stroke}`,
-  borderRadius: '8px',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-  minWidth: '120px',
-  zIndex: 1000,
-  backgroundColor: vars.color.background,
-});
-
-export const dropdownItem = style({
-  display: 'block',
-  padding: '12px 16px',
-  color: vars.color.text,
-  textDecoration: 'none',
-  fontSize: '14px',
-  transition: 'background-color 0.2s ease',
-
-  ':hover': {
-    color: vars.color.main,
-  },
-});
-
-export const groupDropdown = style({
-  position: 'relative',
-});
-
 export const userIcon = style({
   position: 'relative',
   display: 'flex',
@@ -95,6 +49,7 @@ export const userIcon = style({
   borderRadius: '50%',
   transition: 'outline 0.2s ease',
   cursor: 'pointer',
+  border: 'none',
 
   ':hover': {
     outline: `2px solid ${vars.color.main}`,

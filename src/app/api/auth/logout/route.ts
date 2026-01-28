@@ -1,10 +1,10 @@
-import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { createSupabaseServerClient } from '@/libs/supabase/server';
 
 export async function POST(req: NextRequest) {
   const supabase = createSupabaseServerClient();
+  console.log(` HOST: ${req.headers.get('host')}`);
 
   const {
     data: { user },
@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
     await supabase.auth.signOut();
   }
 
-  revalidatePath('/', 'layout');
-  return NextResponse.redirect(new URL('/login', req.url), {
-    status: 302,
-  });
+  return NextResponse.json(
+    { ok: true, message: 'logged out' },
+    { status: 200 },
+  );
 }

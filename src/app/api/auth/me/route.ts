@@ -18,12 +18,8 @@ export async function GET() {
   return NextResponse.json(
     {
       ok: true,
-      user: {
-        id: data.user.id,
-        email: data.user.email,
-        metadata: data.user.user_metadata,
-        // signUp에서 넣은 name/nickname 등
-      },
+      user: data.user.user_metadata,
+      // signUp에서 넣은 name/nickname 등
     },
     { status: 200 },
   );

@@ -49,3 +49,19 @@ export const buttonContainer = style({
   gap: '16px',
   width: '100%',
 });
+
+export const submitButton = style({
+  padding: '12px',
+  fontSize: '16px',
+  fontWeight: 'bold',
+  border: 'none',
+  borderRadius: '8px',
+  background: vars.color.main,
+  color: vars.color.mainSoft,
+  cursor: 'pointer',
+  transition: 'opacity 0.2s',
+  ':disabled': {
+    cursor: 'not-allowed',
+    opacity: 0.6,
+  },
+});

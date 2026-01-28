@@ -3,19 +3,13 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
-import {
-  topNav,
-  logoSection,
-  navRight,
-  groupDropdown,
-  groupButton,
-  dropdownMenu,
-  dropdownItem,
-  userIcon,
-} from './topNav.css';
+import { topNav, logoSection, navRight, userIcon } from './topNav.css';
+import { GroupDropdown } from './ui/groupDropdown';
+import { ProfileDropdown } from './ui/profileDropdown';
 
 export function TopNav() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
   return (
     <header className={topNav}>
@@ -31,28 +25,21 @@ export function TopNav() {
       </div>
 
       <div className={navRight}>
-        <div className={groupDropdown}>
-          <button
-            className={groupButton}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-            그룹1 <span>▼</span>
-          </button>
-          {isDropdownOpen && (
-            <div className={dropdownMenu}>
-              <a className={dropdownItem} href="#group1">
-                그룹1
-              </a>
-              <a className={dropdownItem} href="#group2">
-                그룹2
-              </a>
-              <a className={dropdownItem} href="#group3">
-                그룹3
-              </a>
-            </div>
-          )}
-        </div>
+        <GroupDropdown
+          isOpen={isDropdownOpen}
+          onOpenChange={(open) => {
+            setIsProfileDropdownOpen(false);
+            setIsDropdownOpen(open);
+          }}
+          currentGroup="그룹1"
+        />
 
-        <button className={userIcon}>
+        <button
+          className={userIcon}
+          onClick={() => {
+            setIsDropdownOpen(false);
+            setIsProfileDropdownOpen(!isProfileDropdownOpen);
+          }}>
           <Image
             src="/profileImage.png"
             alt="사용자"
@@ -62,6 +49,11 @@ export function TopNav() {
           />
         </button>
       </div>
+
+      <ProfileDropdown
+        isOpen={isProfileDropdownOpen}
+        onOpenChange={setIsProfileDropdownOpen}
+      />
     </header>
   );
 }

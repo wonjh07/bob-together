@@ -1,14 +1,19 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { LoginButton } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+import { signupAction } from './actions';
 import { signupPage, signupForm, title, buttonContainer } from './page.css';
 import { useOnboardingLayout } from '../layout';
-
-import Link from 'next/link';
+import {
+  validateEmail,
+  validateNickname,
+  validatePassword,
+  validatePasswordMatch,
+} from './utils/validation';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -22,46 +27,14 @@ export default function SignupPage() {
     password: '',
     confirmPassword: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
   const { setShowMoveback } = useOnboardingLayout();
 
   useEffect(() => {
     setShowMoveback(true);
-    return () => setShowMoveback(true);
+    return () => setShowMoveback(false);
   }, [setShowMoveback]);
-
-  // 이메일 유효성 검사
-  const validateEmail = (value: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!value) return '';
-    if (!emailRegex.test(value)) {
-      return '올바른 이메일 형식이 아닙니다.';
-    }
-    return '';
-  };
-
-  // 닉네임 유효성 검사
-  const validateNickname = (value: string) => {
-    if (!value) return '';
-    if (value.length < 2) {
-      return '닉네임은 최소 2자 이상이어야 합니다.';
-    }
-    if (value.length > 20) {
-      return '닉네임은 최대 20자까지 입력 가능합니다.';
-    }
-    return '';
-  };
-
-  // 비밀번호 유효성 검사
-  const validatePassword = (value: string) => {
-    if (!value) return '';
-    if (value.length < 8) {
-      return '비밀번호는 최소 8자 이상이어야 합니다.';
-    }
-    if (!/[a-z]/.test(value) || !/[0-9]/.test(value)) {
-      return '비밀번호는 영문자와 숫자를 포함해야 합니다.';
-    }
-    return '';
-  };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -95,20 +68,13 @@ export default function SignupPage() {
   ) => {
     const value = e.target.value;
     setConfirmPassword(value);
-    if (value && value !== password) {
-      setErrors((prev) => ({
-        ...prev,
-        confirmPassword: '비밀번호가 일치하지 않습니다.',
-      }));
-    } else {
-      setErrors((prev) => ({
-        ...prev,
-        confirmPassword: '',
-      }));
-    }
+    setErrors((prev) => ({
+      ...prev,
+      confirmPassword: validatePasswordMatch(password, value),
+    }));
   };
 
-  const handleSignup = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (
       errors.email ||
@@ -119,8 +85,27 @@ export default function SignupPage() {
       alert('입력 항목을 확인해주세요.');
       return;
     }
-    // 회원가입 로직 구현
-    console.log('Signup:', { email, name, nickname, password });
+
+    setIsLoading(true);
+    setServerError('');
+
+    try {
+      const result = await signupAction({
+        email,
+        password,
+        name,
+        nickname,
+      });
+
+      if (result && !result.ok) {
+        setServerError(result.error || '회원가입에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      setServerError('회원가입 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -166,7 +151,23 @@ export default function SignupPage() {
           caption={errors.confirmPassword}
           required
         />
-        <LoginButton href="/dashboard">회원가입</LoginButton>
+        {serverError && <div style={{ color: '#FF0000' }}>{serverError}</div>}
+        <button
+          type="submit"
+          disabled={isLoading}
+          style={{
+            padding: '12px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            border: 'none',
+            borderRadius: '8px',
+            background: '#4A90E2',
+            color: 'white',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            opacity: isLoading ? 0.6 : 1,
+          }}>
+          {isLoading ? '가입 중...' : '제출'}
+        </button>
       </form>
       <div className={buttonContainer}>
         <p>이미 계정이 있으신가요?</p>

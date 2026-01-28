@@ -2,6 +2,7 @@ import '@/styles/reset.css';
 import '@/styles/globals.css';
 
 import localFont from 'next/font/local';
+import { Toaster } from 'react-hot-toast';
 
 import type { Metadata } from 'next';
 
@@ -35,6 +36,16 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${pretendard.className} ${themeClass}`}>
       <body>
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+          }}
+        />
         <div className={appShell}>
           <div className={appFrame}>{children}</div>
         </div>

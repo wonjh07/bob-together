@@ -18,11 +18,11 @@ export function useOnboardingLayout() {
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [showMoveback, setShowMoveback] = useState(true);
+  const [showMoveback, setShowMoveback] = useState(false);
 
   const contextValue = useMemo(
     () => ({ showMoveback, setShowMoveback }),
-    [showMoveback]
+    [showMoveback],
   );
 
   return (

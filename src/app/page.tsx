@@ -1,6 +1,14 @@
 import { redirect } from 'next/navigation';
 
-export default function RootPage() {
-  const isLoggedIn = false;
+import { createSupabaseServerClient } from '@/libs/supabase/server';
+
+export default async function RootPage() {
+  const supabase = createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isLoggedIn = !!user;
   redirect(isLoggedIn ? '/dashboard' : '/login');
 }
