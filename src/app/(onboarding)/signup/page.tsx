@@ -51,7 +51,7 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupInput) => {
     const result = await signupAction(data);
 
-    if (!result.ok) {
+    if (result.ok === false) {
       setError('root', { message: result.message });
     }
   };

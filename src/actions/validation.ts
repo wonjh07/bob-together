@@ -39,10 +39,10 @@ export async function checkEmailExists(
     // Use Admin client (bypass RLS)
     const supabase = createSupabaseAdminClient();
 
-    // Check if email exists in profiles table
+    // Check if email exists in users table
     const { data, error } = await supabase
-      .from('profiles')
-      .select('id')
+      .from('users')
+      .select('user_id')
       .eq('email', normalizedEmail)
       .maybeSingle();
 

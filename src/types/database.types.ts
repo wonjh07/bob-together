@@ -14,30 +14,485 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
+      appointment_comments: {
+        Row: {
+          appointment_id: string
+          comment_id: string
+          content: string
+          created_at: string
+          deleted_at: string | null
+          edited_at: string
+          is_deleted: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_id: string
+          comment_id?: string
+          content: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string
+          is_deleted?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string
+          comment_id?: string
+          content?: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string
+          is_deleted?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_comments_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["appointment_id"]
+          },
+          {
+            foreignKeyName: "appointment_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      appointment_members: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          joined_at: string
+          role: Database["public"]["Enums"]["appointment_member_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["appointment_member_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["appointment_member_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_members_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["appointment_id"]
+          },
+          {
+            foreignKeyName: "appointment_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      appointments: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          creator_id: string
+          ends_at: string
+          group_id: string
+          is_ended: boolean
+          place_id: string
+          start_at: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string
+          created_at?: string
+          creator_id: string
+          ends_at: string
+          group_id: string
+          is_ended?: boolean
+          place_id: string
+          start_at: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          creator_id?: string
+          ends_at?: string
+          group_id?: string
+          is_ended?: boolean
+          place_id?: string
+          start_at?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "appointments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "appointments_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["place_id"]
+          },
+        ]
+      }
+      group_members: {
         Row: {
           created_at: string
-          email: string
-          id: string
+          group_id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["group_member_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["group_member_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["group_member_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "group_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          created_at: string
+          group_id: string
           name: string
-          nickname: string
+          owner_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          email: string
-          id: string
+          group_id?: string
           name: string
-          nickname: string
+          owner_id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
-          email?: string
-          id?: string
+          group_id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      invitations: {
+        Row: {
+          appointment_id: string | null
+          created_time: string
+          group_id: string
+          invitation_id: string
+          invitee_id: string
+          inviter_id: string
+          responded_time: string | null
+          status: Database["public"]["Enums"]["invitation_status"]
+          type: Database["public"]["Enums"]["invitation_type"]
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_time?: string
+          group_id: string
+          invitation_id?: string
+          invitee_id: string
+          inviter_id: string
+          responded_time?: string | null
+          status?: Database["public"]["Enums"]["invitation_status"]
+          type: Database["public"]["Enums"]["invitation_type"]
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          created_time?: string
+          group_id?: string
+          invitation_id?: string
+          invitee_id?: string
+          inviter_id?: string
+          responded_time?: string | null
+          status?: Database["public"]["Enums"]["invitation_status"]
+          type?: Database["public"]["Enums"]["invitation_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["appointment_id"]
+          },
+          {
+            foreignKeyName: "invitations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "invitations_invitee_id_fkey"
+            columns: ["invitee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "invitations_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_time: string
+          link_url: string | null
+          message: string
+          notification_id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["notification_target_type"]
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Insert: {
+          created_time?: string
+          link_url?: string | null
+          message: string
+          notification_id?: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["notification_target_type"]
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Update: {
+          created_time?: string
+          link_url?: string | null
+          message?: string
+          notification_id?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["notification_target_type"]
+          type?: Database["public"]["Enums"]["notification_type"]
+        }
+        Relationships: []
+      }
+      places: {
+        Row: {
+          address: string
+          category: string
+          created_at: string
+          kakao_id: string
+          latitude: number
+          longitude: number
+          name: string
+          place_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string
+          category?: string
+          created_at?: string
+          kakao_id: string
+          latitude: number
+          longitude: number
+          name: string
+          place_id?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          category?: string
+          created_at?: string
+          kakao_id?: string
+          latitude?: number
+          longitude?: number
+          name?: string
+          place_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_notifications: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          is_deleted: boolean
+          is_read: boolean
+          notification_id: string
+          read_at: string | null
+          user_id: string
+          user_notification_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          is_deleted?: boolean
+          is_read?: boolean
+          notification_id: string
+          read_at?: string | null
+          user_id: string
+          user_notification_id?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          is_deleted?: boolean
+          is_read?: boolean
+          notification_id?: string
+          read_at?: string | null
+          user_id?: string
+          user_notification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["notification_id"]
+          },
+          {
+            foreignKeyName: "user_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_places: {
+        Row: {
+          created_at: string
+          edited_at: string | null
+          place_id: string
+          review: string | null
+          score: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          edited_at?: string | null
+          place_id: string
+          review?: string | null
+          score?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          edited_at?: string | null
+          place_id?: string
+          review?: string | null
+          score?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_places_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["place_id"]
+          },
+          {
+            foreignKeyName: "user_places_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          name: string
+          nickname: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
           name?: string
           nickname?: string
           updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          nickname?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -49,7 +504,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      appointment_member_role: "owner" | "member"
+      appointment_status: "pending" | "canceled" | "confirmed"
+      group_member_role: "owner" | "member"
+      invitation_status: "pending" | "accepted" | "rejected" | "canceled"
+      invitation_type: "group" | "appointment"
+      notification_target_type: "group" | "appointment"
+      notification_type: "invite" | "review" | "confirmed" | "comment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -176,6 +637,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      appointment_member_role: ["owner", "member"],
+      appointment_status: ["pending", "canceled", "confirmed"],
+      group_member_role: ["owner", "member"],
+      invitation_status: ["pending", "accepted", "rejected", "canceled"],
+      invitation_type: ["group", "appointment"],
+      notification_target_type: ["group", "appointment"],
+      notification_type: ["invite", "review", "confirmed", "comment"],
+    },
   },
 } as const
