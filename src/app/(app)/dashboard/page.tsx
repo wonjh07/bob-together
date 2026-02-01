@@ -1,6 +1,7 @@
 'use server';
 
 import { getUserData } from '@/actions/user';
+
 import { dashboardContainer, userInfo, loadingContainer } from './page.css';
 
 export default async function DashboardPage() {

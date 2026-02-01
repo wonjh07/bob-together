@@ -1,8 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { act } from 'react';
 
-import { useEmailValidation } from './useEmailValidation';
 import { checkEmailExists } from '@/actions/validation';
+
+import { useEmailValidation } from './useEmailValidation';
 
 import type { SignupInput } from '@/schemas/auth';
 import type {

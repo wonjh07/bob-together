@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 
-import { dropdownContent, logoutButton } from './profileDropdown.css';
 import { logoutAction } from '@/actions/auth';
+
+import { dropdownContent, logoutButton } from './profileDropdown.css';
 
 interface ProfileDropdownProps {
   isOpen: boolean;

@@ -2,8 +2,8 @@
 
 import { redirect } from 'next/navigation';
 
-import { loginSchema, signupSchema } from '@/schemas/auth';
 import { createSupabaseServerClient } from '@/libs/supabase/server';
+import { loginSchema, signupSchema } from '@/schemas/auth';
 
 import type { ActionResult, AuthErrorCode } from '@/types/result';
 

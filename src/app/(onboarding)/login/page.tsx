@@ -7,10 +7,11 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
+import { loginAction } from '@/actions/auth';
 import { LoginButton } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { loginSchema } from '@/schemas/auth';
 
-import { loginAction } from '@/actions/auth';
 import {
   loginPage,
   loginForm,
@@ -20,7 +21,6 @@ import {
   linkContainer,
   submitButton,
 } from './page.css';
-import { loginSchema } from '../utils/schemas';
 
 import type { z } from 'zod';
 

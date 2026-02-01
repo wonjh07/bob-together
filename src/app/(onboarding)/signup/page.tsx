@@ -5,14 +5,14 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { signupAction } from '@/actions/auth';
 import { SubmitButton } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-import { signupAction } from '@/actions/auth';
-import { signupPage, signupForm, title, buttonContainer } from './page.css';
 import { useEmailValidation } from '@/hooks/useEmailValidation';
+import { signupSchema } from '@/schemas/auth';
+
+import { signupPage, signupForm, title, buttonContainer } from './page.css';
 import { useOnboardingLayout } from '../provider/onboarding-provider';
-import { signupSchema } from '../utils/schemas';
 
 import type { z } from 'zod';
 
