@@ -4,7 +4,7 @@
     "eslint:recommended",
     "next/core-web-vitals",
     "next/typescript",
-    "plugin:import/recommended", 
+    "plugin:import/recommended",
     "plugin:import/typescript",
     "prettier"
   ],
@@ -12,7 +12,13 @@
   "plugins": ["import", "@typescript-eslint"],
 
   "rules": {
-    "@typescript-eslint/no-explicit-any": "warn",
+    "import/no-unresolved": [
+      "error",
+      {
+        "ignore": ["\\.css$"]
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/no-unused-vars": [
       "warn",
       { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
