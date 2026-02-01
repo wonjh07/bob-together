@@ -34,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${pretendard.className} ${themeClass}`}>
+    <html lang="en" className={`${pretendard.variable} ${themeClass}`}>
       <body>
         <Toaster
           position="top-center"

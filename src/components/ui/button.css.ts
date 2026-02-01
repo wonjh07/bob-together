@@ -15,3 +15,25 @@ export const button = style({
   color: vars.color.mainSoft,
   cursor: 'pointer',
 });
+
+export const submitButton = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '100%',
+  padding: '12px',
+  borderRadius: '8px',
+  border: 'none',
+  fontSize: '16px',
+  fontWeight: vars.fontWeight.bold,
+  color: 'white',
+  background: vars.color.main,
+  cursor: 'pointer',
+  transition: 'opacity 0.2s',
+  selectors: {
+    '&:disabled': {
+      opacity: 0.6,
+      cursor: 'not-allowed',
+    },
+  },
+});

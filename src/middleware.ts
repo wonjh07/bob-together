@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
+
 import { updateSession } from '@/libs/supabase/proxy';
 
 // 경로 보호 설정
-// Next.js 16 부터는 middlware.ts 이름이 proxy.ts 로 변경되었습니다.
 const PUBLIC_ROUTES = ['/', '/login', '/signup'];
 const AUTH_ROUTES = ['/login', '/signup'];
 
@@ -23,14 +23,22 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(url);
+    const redirect = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((cookie) => {
+      redirect.cookies.set(cookie);
+    });
+    return redirect;
   }
 
   // 4. 로그인된 사용자가 인증 페이지 접근 시 대시보드로 리다이렉트
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+    const redirect = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((cookie) => {
+      redirect.cookies.set(cookie);
+    });
+    return redirect;
   }
 
   return response;
@@ -45,6 +53,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

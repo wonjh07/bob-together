@@ -1,41 +1,37 @@
-import { inputWrapper, inputField, caption } from './input.css';
+import { forwardRef } from 'react';
 
-interface InputProps {
-  name?: string;
-  type?: string;
-  placeholder?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  required?: boolean;
-  caption?: string;
-  disabled?: boolean;
+import {
+  inputWrapper,
+  inputField,
+  inputFieldError,
+  caption,
+  successCaption,
+} from './input.css';
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  error?: string;
+  successMessage?: string;
 }
 
-export const Input = ({
-  name,
-  type = 'text',
-  placeholder = '',
-  value,
-  onChange,
-  required = false,
-  caption: captionText,
-  disabled = false,
-}: InputProps) => {
-  return (
-    <div className={inputWrapper}>
-      <input
-        className={inputField}
-        name={name}
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        required={required}
-        disabled={disabled}
-      />
-      <div className={caption}>{captionText || ''}</div>
-    </div>
-  );
-};
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ error, successMessage, ...props }, ref) => {
+    return (
+      <div className={inputWrapper}>
+        <input
+          className={error ? inputFieldError : inputField}
+          ref={ref}
+          {...props}
+        />
+        {error && <div className={caption}>{error}</div>}
+        {!error && successMessage && (
+          <div className={successCaption}>{successMessage}</div>
+        )}
+        {!error && !successMessage && <div style={{ minHeight: '20px' }} />}
+      </div>
+    );
+  },
+);
+
+Input.displayName = 'Input';
 
 export default Input;

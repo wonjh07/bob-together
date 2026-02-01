@@ -1,14 +1,16 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
 import { LoginButton } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-import { loginAction } from './actions';
+import { loginAction } from '@/actions/auth';
 import {
   loginPage,
   loginForm,
@@ -18,65 +20,41 @@ import {
   linkContainer,
   submitButton,
 } from './page.css';
+import { loginSchema } from '../utils/schemas';
+
+import type { z } from 'zod';
 
 import { vars } from '@/styles/theme.css';
 
+type LoginInput = z.infer<typeof loginSchema>;
+
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onChange',
+  });
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (isLoading) return;
-
-    if (!email.trim() || !password.trim()) {
-      toast.error('이메일과 비밀번호를 입력해주세요.');
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast.error('올바른 이메일 형식이 아닙니다.');
-      return;
-    }
-
-    setIsLoading(true);
-
+  const onSubmit = async (data: LoginInput) => {
     try {
-      const result = await loginAction(email, password);
+      const result = await loginAction(data.email, data.password);
 
-      if (result && !result.ok) {
-        // 타입 안정성을 위한 Record 타입 사용
-        const errorMessages: Record<string, string> = {
-          'forbidden-origin': '요청이 차단됐습니다. 다시 시도해주세요.',
-          'invalid-credentials': '이메일 또는 비밀번호가 올바르지 않습니다.',
-          'login-failed': '로그인에 실패했습니다. 잠시 후 다시 시도해주세요.',
-          'invalid-email': '이메일 형식이 올바르지 않습니다.',
-          'missing-fields': '이메일/비밀번호를 입력해주세요.',
-        };
-
-        const message = errorMessages[result.error] || '로그인에 실패했습니다.';
-        toast.error(message);
+      if (!result.ok) {
+        toast.error(result.message || '로그인에 실패했습니다.');
+        return;
       }
+
+      toast.success('로그인 성공!');
+      router.push('/dashboard');
     } catch (err) {
       toast.error('로그인 중 오류가 발생했습니다.');
       console.error('Login error:', err);
-    } finally {
-      setIsLoading(false);
     }
   };
-
-  /*
-  // 기존 fetch 기반 로그인 핸들러 (서버 액션으로 대체됨)
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
-  */
 
   return (
     <div className={loginPage}>
@@ -90,25 +68,25 @@ export default function LoginPage() {
       />
       <div className={serviceTitle}>밥투게더</div>
       <div className={title}>쉽고 편리한 밥약속 서비스</div>
-      <form className={loginForm} onSubmit={handleLogin}>
+      <form className={loginForm} onSubmit={handleSubmit(onSubmit)}>
         <Input
+          {...register('email')}
           type="email"
           placeholder="이메일"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={isLoading}
-          required
+          disabled={isSubmitting}
+          error={errors.email?.message}
         />
+
         <Input
+          {...register('password')}
           type="password"
           placeholder="비밀번호"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={isLoading}
-          required
+          disabled={isSubmitting}
+          error={errors.password?.message}
         />
-        <button type="submit" disabled={isLoading} className={submitButton}>
-          {isLoading ? '로그인 중...' : '로그인'}
+
+        <button type="submit" disabled={isSubmitting} className={submitButton}>
+          {isSubmitting ? '로그인 중...' : '로그인'}
         </button>
         <div className={linkContainer}>
           <Link href="/email-find">이메일 찾기</Link>

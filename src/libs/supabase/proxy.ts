@@ -11,8 +11,7 @@ export async function updateSession(request: NextRequest) {
   // 요청마다 새로 생성해야 합니다.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    // process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, // 개발단계 사용
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
         getAll() {

@@ -1,9 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 import { dropdownContent, logoutButton } from './profileDropdown.css';
+import { logoutAction } from '@/actions/auth';
 
 interface ProfileDropdownProps {
   isOpen: boolean;
@@ -16,7 +16,6 @@ export function ProfileDropdown({
 }: ProfileDropdownProps) {
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -37,17 +36,15 @@ export function ProfileDropdown({
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        router.push('/login');
-      }
+      await logoutAction();
+      // redirect가 성공하면 여기까지 오지 않음
     } catch (error) {
+      // redirect는 NEXT_REDIRECT 에러를 던지므로 무시
+      if (error && typeof error === 'object' && 'digest' in error) {
+        throw error; // Next.js redirect 에러는 다시 던짐
+      }
       console.error('Logout error:', error);
       alert('로그아웃 중 오류가 발생했습니다.');
-    } finally {
       setIsLoading(false);
     }
   };

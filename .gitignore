@@ -34,3 +34,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# swc
+.swc/
+
+# vs-code
+.vscode
+
+# AI generated documents
+.ai_docs

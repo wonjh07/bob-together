@@ -1,14 +1,23 @@
 'use server';
 
-import { getUserData } from './actions';
+import { getUserData } from '@/actions/user';
 import { dashboardContainer, userInfo, loadingContainer } from './page.css';
 
 export default async function DashboardPage() {
-  const { user, error } = await getUserData();
+  const result = await getUserData();
 
-  if (error || !user) {
-    return <div className={loadingContainer}>오류: {error}</div>;
+  if (!result.ok || !result.data) {
+    return (
+      <div className={loadingContainer}>
+        오류:{' '}
+        {!result.ok
+          ? result.message || '알 수 없는 오류'
+          : '사용자 정보를 가져올 수 없습니다'}
+      </div>
+    );
   }
+
+  const user = result.data;
 
   return (
     <div className={dashboardContainer}>

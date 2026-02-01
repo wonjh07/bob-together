@@ -11,7 +11,7 @@ export function BottomNav() {
   const navItems = [
     { href: '/dashboard', label: '홈', icon: '🏠' },
     { href: '/dashboard/appointments', label: '약속', icon: '📅' },
-    { href: '/dashboard/new-appointment', label: '새 약속', icon: '➕' },
+    { href: '/dashboard/appointments/create', label: '새 약속', icon: '➕' },
     { href: '/dashboard/search', label: '검색', icon: '🔍' },
     { href: '/dashboard/profile', label: '내 정보', icon: '👤' },
   ];
