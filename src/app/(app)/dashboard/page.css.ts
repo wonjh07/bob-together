@@ -4,12 +4,12 @@ import { vars } from '@/styles/theme.css';
 
 export const dashboardContainer = style({
   width: '100%',
-  height: '100dvh',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  backgroundColor: vars.color.background,
+  backgroundColor: vars.color.main,
   padding: '20px',
+  boxSizing: 'border-box',
 });
 
 export const userInfo = style({

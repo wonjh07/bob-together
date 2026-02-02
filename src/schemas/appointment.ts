@@ -1,0 +1,36 @@
+import { z } from 'zod';
+
+export const appointmentTitleSchema = z
+  .string()
+  .trim()
+  .min(1, '약속 제목을 입력해주세요.')
+  .max(50, '약속 제목은 50자 이내로 입력해주세요.');
+
+export const appointmentDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, '약속 날짜를 선택해주세요.');
+
+export const appointmentTimeSchema = z
+  .string()
+  .regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, '시간을 선택해주세요.');
+
+export const appointmentPlaceSchema = z.object({
+  kakaoId: z.string().min(1),
+  name: z.string().min(1),
+  address: z.string().min(1),
+  roadAddress: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
+  latitude: z.number(),
+  longitude: z.number(),
+});
+
+export const appointmentCreateSchema = z.object({
+  title: appointmentTitleSchema,
+  date: appointmentDateSchema,
+  startTime: appointmentTimeSchema,
+  endTime: appointmentTimeSchema,
+  place: appointmentPlaceSchema,
+  groupId: z.string().optional(),
+});
+
+export type AppointmentCreateInput = z.infer<typeof appointmentCreateSchema>;

@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from 'react';
 
-import Moveback from '@/app/(onboarding)/components/moveback';
+import Moveback from '@/components/ui/moveback';
+import LayoutContext from '@/provider/moveback-provider';
 
 import { loginLayoutContainer } from './layout.css';
-import LayoutContext from './provider/onboarding-provider';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [showMoveback, setShowMoveback] = useState(false);

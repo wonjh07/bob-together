@@ -48,6 +48,8 @@ npm run dev
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+NEXT_PUBLIC_KAKAO_MAP_APP_KEY=your_kakao_js_app_key
+KAKAO_REST_API_KEY=your_kakao_rest_api_key
 ```
 
 ## 📁 프로젝트 구조

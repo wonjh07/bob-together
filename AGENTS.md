@@ -14,6 +14,11 @@
 - Parse versions from `package.json`
 - Prefer framework-native features
 - Justify any custom implementation
+- Read `ai_docs/INDEX.md` first and follow linked context docs before making changes
+- Update `ai_docs/CHANGELOG_AI.md` when making material changes
+- If new AI docs are added, register them in `ai_docs/INDEX.md`
+- Keep `ai_docs` concise, factual, and free of secrets/keys
+- Use short sections with clear headings and bullet points
 
 ### Component Development
 - Reuse `lib/supabase` utilities

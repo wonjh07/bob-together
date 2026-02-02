@@ -57,7 +57,6 @@ export const buttonStack = style({
 });
 
 export const buttonBase = style({
-  width: '100%',
   padding: '12px 16px',
   borderRadius: vars.radius.md,
   border: 'none',
@@ -66,6 +65,8 @@ export const buttonBase = style({
   cursor: 'pointer',
   transition: 'opacity 0.2s ease',
   textAlign: 'center',
+  // 줄 바꿈 방지
+  whiteSpace: 'nowrap',
   selectors: {
     '&:disabled': {
       opacity: 0.6,

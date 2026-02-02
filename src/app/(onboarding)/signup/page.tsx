@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -11,10 +11,10 @@ import { signupAction } from '@/actions/auth';
 import { SubmitButton } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEmailValidation } from '@/hooks/useEmailValidation';
+import { useOnboardingLayout } from '@/provider/moveback-provider';
 import { signupSchema } from '@/schemas/auth';
 
 import { signupPage, signupForm, title, buttonContainer } from './page.css';
-import { useOnboardingLayout } from '../provider/onboarding-provider';
 
 import type { z } from 'zod';
 
@@ -38,7 +38,6 @@ export default function SignupPage() {
   const { setShowMoveback } = useOnboardingLayout();
   const email = watch('email');
   const router = useRouter();
-
   const { emailCheckSuccess } = useEmailValidation({
     email,
     errors,

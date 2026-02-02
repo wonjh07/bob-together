@@ -55,3 +55,18 @@ export type GroupErrorCode =
   | 'group-name-duplicated'
   | 'already-member'
   | 'invite-already-sent';
+
+// 장소 관련 에러
+export type PlaceErrorCode =
+  | CommonErrorCode
+  | 'missing-config'
+  | 'provider-error';
+
+// 약속 관련 에러
+export type AppointmentErrorCode =
+  | CommonErrorCode
+  | 'invalid-time'
+  | 'missing-place'
+  | 'missing-group'
+  | 'already-member'
+  | 'invite-already-sent';

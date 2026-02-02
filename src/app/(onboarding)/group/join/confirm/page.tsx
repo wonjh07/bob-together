@@ -7,7 +7,7 @@ import { getGroupByIdAction, joinGroupAction } from '@/actions/group';
 import GroupIcon from '@/components/icons/GroupIcon';
 
 import { groupName, message } from './page.css';
-import { useOnboardingLayout } from '../../../provider/onboarding-provider';
+import { useOnboardingLayout } from '../../../provider/moveback-provider';
 import {
   page,
   panel,

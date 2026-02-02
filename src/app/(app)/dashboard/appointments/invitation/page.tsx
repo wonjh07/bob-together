@@ -6,9 +6,9 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { searchUsersAction, sendGroupInvitationAction } from '@/actions/group';
+import { sendAppointmentInvitationAction } from '@/actions/appointment';
+import { searchUsersAction } from '@/actions/group';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useOnboardingLayout } from '@/provider/moveback-provider';
 import { groupSearchFormSchema } from '@/schemas/group';
 
 import {
@@ -32,16 +32,15 @@ import {
   invitedButton,
   helperText,
 } from './page.css';
-import { buttonBase, primaryButton } from '../shared.css';
 
 import type { UserSummary } from '@/actions/group';
 import type { GroupSearchFormInput } from '@/schemas/group';
 
-export default function GroupInvitationPage() {
+import { buttonBase, primaryButton } from '@/app/(onboarding)/group/shared.css';
+export default function AppointmentInvitationPage() {
   const searchParams = useSearchParams();
-  const groupId = searchParams.get('groupId') || '';
-  const groupName = searchParams.get('groupName') || '';
-  const { setShowMoveback } = useOnboardingLayout();
+  const appointmentId = searchParams.get('appointmentId') || '';
+  const appointmentTitle = searchParams.get('title') || '';
 
   const [resultUsers, setResultUsers] = useState<UserSummary[]>([]);
   const [invitedIds, setInvitedIds] = useState<string[]>([]);
@@ -63,21 +62,16 @@ export default function GroupInvitationPage() {
   const debouncedQuery = useDebouncedValue(queryValue, 500);
 
   const completeHref = useMemo(() => {
-    if (!groupId) return '/group/invitation/complete';
-    return `/group/invitation/complete?groupId=${groupId}&groupName=${encodeURIComponent(
-      groupName,
+    if (!appointmentId) return '/dashboard/appointments/invitation/complete';
+    return `/dashboard/appointments/invitation/complete?appointmentId=${appointmentId}&title=${encodeURIComponent(
+      appointmentTitle,
     )}`;
-  }, [groupId, groupName]);
-
-  useEffect(() => {
-    setShowMoveback(true);
-    return () => setShowMoveback(false);
-  }, [setShowMoveback]);
+  }, [appointmentId, appointmentTitle]);
 
   const performSearch = useCallback(
     async (query: string) => {
-      if (!groupId) {
-        setErrorMessage('그룹 정보가 필요합니다.');
+      if (!appointmentId) {
+        setErrorMessage('약속 정보가 필요합니다.');
         return;
       }
 
@@ -104,7 +98,7 @@ export default function GroupInvitationPage() {
 
       setResultUsers(result.data.users);
     },
-    [groupId],
+    [appointmentId],
   );
 
   useEffect(() => {
@@ -121,15 +115,15 @@ export default function GroupInvitationPage() {
   };
 
   const handleInvite = async (userId: string) => {
-    if (!groupId) {
-      setErrorMessage('그룹 정보가 필요합니다.');
+    if (!appointmentId) {
+      setErrorMessage('약속 정보가 필요합니다.');
       return;
     }
 
     setIsInviting((prev) => ({ ...prev, [userId]: true }));
     setErrorMessage('');
 
-    const result = await sendGroupInvitationAction(groupId, userId);
+    const result = await sendAppointmentInvitationAction(appointmentId, userId);
 
     setIsInviting((prev) => ({ ...prev, [userId]: false }));
 
@@ -144,10 +138,12 @@ export default function GroupInvitationPage() {
   return (
     <div className={invitationPage}>
       <div className={invitationPanel}>
+        {appointmentTitle && (
+          <div className={headerMeta}>{appointmentTitle}</div>
+        )}
         <div className={headerRow}>
           <div>
-            <div className={headerTitle}>새 멤버를 초대해주세요</div>
-            {groupName && <div className={headerMeta}>{groupName}</div>}
+            <div className={headerTitle}>그룹원을 검색하고 초대해주세요</div>
           </div>
           <Link href={completeHref} className={actionLink}>
             완료
@@ -156,7 +152,7 @@ export default function GroupInvitationPage() {
 
         <form className={searchBlock} onSubmit={handleSubmit(onSubmit)}>
           <label className={searchLabel} htmlFor="query">
-            새멤버 검색
+            닉네임 검색
           </label>
           <div className={searchRow}>
             <input
@@ -195,7 +191,9 @@ export default function GroupInvitationPage() {
                 </div>
                 <button
                   type="button"
-                  className={`${inviteButton} ${isInvited ? invitedButton : ''}`}
+                  className={`${inviteButton} ${
+                    isInvited ? invitedButton : ''
+                  }`}
                   onClick={() => handleInvite(user.userId)}
                   disabled={isInvited || isLoading}>
                   {isInvited ? '초대됨' : isLoading ? '전송 중' : '초대하기'}

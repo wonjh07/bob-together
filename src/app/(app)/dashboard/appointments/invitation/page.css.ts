@@ -5,16 +5,11 @@ import { vars } from '@/styles/theme.css';
 export const invitationPage = style({
   minHeight: '100%',
   width: '100%',
-  background: vars.color.mainSoft,
   display: 'flex',
-  justifyContent: 'flex-start',
-  alignItems: 'center',
-  padding: '24px 20px 32px',
 });
 
 export const invitationPanel = style({
   width: '100%',
-  maxWidth: '480px',
   display: 'flex',
   flexDirection: 'column',
   gap: '20px',
@@ -22,18 +17,20 @@ export const invitationPanel = style({
 
 export const headerRow = style({
   display: 'flex',
+  width: '100%',
   justifyContent: 'space-between',
   alignItems: 'center',
 });
 
 export const headerTitle = style({
+  width: '100%',
   fontSize: vars.fontSize.title,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.text,
 });
 
 export const headerMeta = style({
-  fontSize: vars.fontSize.caption,
+  fontSize: vars.fontSize.text,
   color: vars.color.subText,
 });
 
@@ -63,7 +60,7 @@ export const searchRow = style({
 });
 
 export const searchInput = style({
-  flex: 1,
+  width: '100%',
   border: 'none',
   borderBottom: `1px solid ${vars.color.stroke}`,
   padding: '8px 4px',
