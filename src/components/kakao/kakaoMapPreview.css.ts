@@ -4,7 +4,7 @@ import { vars } from '@/styles/theme.css';
 
 export const mapFrame = style({
   width: '100%',
-  height: '360px',
+  height: '280px',
   borderRadius: vars.radius.md,
   border: `1px solid ${vars.color.stroke}`,
   background: 'white',

@@ -43,3 +43,6 @@ next-env.d.ts
 
 # AI generated documents
 .ai_docs
+
+.claude
+.omc

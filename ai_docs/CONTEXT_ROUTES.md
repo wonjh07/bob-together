@@ -15,10 +15,24 @@
 - `/group/invitation` -> `src/app/(onboarding)/group/invitation/page.tsx`
 - `/group/invitation/complete` -> `src/app/(onboarding)/group/invitation/complete/page.tsx`
 
-## App Shell
+## App Shell (with TopNav)
 - `/dashboard` -> `src/app/(app)/dashboard/page.tsx`
+- `/dashboard/profile` -> `src/app/(app)/dashboard/profile/`
+- `/dashboard/search` -> `src/app/(app)/dashboard/search/`
+- App layout -> `src/app/(app)/layout.tsx`
 
-## Appointments
-- `/dashboard/appointments/create` -> `src/app/(app)/dashboard/appointments/create/page.tsx`
-- `/dashboard/appointments/invitation` -> `src/app/(app)/dashboard/appointments/invitation/page.tsx`
-- `/dashboard/appointments/invitation/complete` -> `src/app/(app)/dashboard/appointments/invitation/complete/page.tsx`
+## App Plain (step-based flows, no TopNav)
+- Plain layout -> `src/app/(app-plain)/dashboard/layout.tsx`
+
+### Appointments
+- `/dashboard/appointments/create` -> `src/app/(app-plain)/dashboard/appointments/create/page.tsx`
+- `/dashboard/appointments/create` layout -> `src/app/(app-plain)/dashboard/appointments/create/layout.tsx`
+- `/dashboard/appointments/invitation` -> `src/app/(app-plain)/dashboard/appointments/invitation/page.tsx`
+- `/dashboard/appointments/invitation/complete` -> `src/app/(app-plain)/dashboard/appointments/invitation/complete/page.tsx`
+
+### Appointment Create Steps
+- TitleStep -> `src/app/(app-plain)/dashboard/appointments/create/steps/TitleStep.tsx`
+- DateTimeStep -> `src/app/(app-plain)/dashboard/appointments/create/steps/DateTimeStep.tsx`
+- PlaceStep -> `src/app/(app-plain)/dashboard/appointments/create/steps/PlaceStep.tsx`
+- ConfirmStep -> `src/app/(app-plain)/dashboard/appointments/create/steps/ConfirmStep.tsx`
+- CompleteStep -> `src/app/(app-plain)/dashboard/appointments/create/steps/CompleteStep.tsx`

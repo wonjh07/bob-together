@@ -16,16 +16,20 @@
 ## Appointments
 - Routes: `/dashboard/appointments/create`, `/dashboard/appointments/invitation`, `/dashboard/appointments/invitation/complete`.
 - Title duplicates allowed; date/time split; place search via Kakao REST API.
+- Place search supports optional current-location sorting (radius 5km).
 - Selected place shows map preview with marker + info window.
+- Create route uses a route layout + context provider for initial group data.
+- Step UI is split into per-step components with per-step css files.
 
 ## Navigation
-- TopNav group dropdown shows member groups via `getMyGroupsAction`.
+- TopNav group dropdown uses group data fetched in app layout (no client fetch).
 - Middleware redirects `/dashboard` to `/group` if no group membership.
 
 ## Kakao Integration
 - JS SDK loader + hook + preview component in place.
 - REST API used server-side for keyword search.
 - Ensure JS key + Web domain registration for SDK.
+- SDK is preloaded in app layout to reduce first map load latency.
 
 ## Env Vars
 - `NEXT_PUBLIC_SUPABASE_URL`

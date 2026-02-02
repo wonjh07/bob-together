@@ -8,6 +8,7 @@
 - CONTEXT_DB_RLS.md: RLS policies and DB access summary.
 - CONTEXT_ROUTES.md: Route-to-file mapping index.
 - CONTEXT_TROUBLESHOOTING.md: Common issues and fixes.
+- STYLE_GUIDE.md: Styling rules and conventions.
 - CHANGELOG_AI.md: AI-driven changes summary (rolling).
 - TEMPLATE.md: AI docs template (KR).
 - TEMPLATE_EN.md: AI docs template (EN).

@@ -45,7 +45,7 @@ export const searchRow = style({
 });
 
 export const searchButton = style({
-  padding: '12px 16px',
+  padding: '12px 20px',
   borderRadius: vars.radius.sm,
   border: 'none',
   fontSize: vars.fontSize.caption,
@@ -59,7 +59,6 @@ export const searchButton = style({
 export const helperText = style({
   fontSize: vars.fontSize.caption,
   color: vars.color.alert,
-  minHeight: '16px',
 });
 
 export const locationRow = style({
@@ -77,7 +76,6 @@ export const locationInfo = style({
   display: 'flex',
   flexDirection: 'column',
   gap: '4px',
-  flex: 1,
 });
 
 export const locationTitle = style({
@@ -115,8 +113,7 @@ export const locationButton = style({
 });
 
 export const mapWrapper = style({
-  marginTop: '8px',
-  marginBottom: '12px',
+  padding: '0 24px',
 });
 
 export const results = style({
@@ -124,9 +121,8 @@ export const results = style({
   flexDirection: 'column',
   gap: '10px',
   width: '100%',
-  maxHeight: '50vh',
+  marginBottom: '20px',
   overflowY: 'auto',
-  paddingRight: '4px',
 });
 
 export const resultItem = style({
@@ -173,11 +169,14 @@ export const emptyResult = style({
 });
 
 export const primaryButton = style({
+  position: 'absolute',
+  top: 0,
+  right: 0,
+  margin: '16px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: '100%',
-  padding: '12px 16px',
+  padding: '8px 12px',
   borderRadius: vars.radius.md,
   border: 'none',
   fontSize: vars.fontSize.text,

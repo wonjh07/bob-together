@@ -10,6 +10,10 @@
   - Fix: ensure `NEXT_PUBLIC_KAKAO_MAP_APP_KEY` is a JS key and domain is registered.
   - Check Network tab for `sdk.js` status and any adblock extensions.
 
+- Error: `kakao-map-timeout`
+  - Cause: SDK never became ready (often unregistered domain or blocked script).
+  - Fix: verify Web domain registration and network access to `dapi.kakao.com`.
+
 ## Supabase RLS
 - Error: `PostgREST 403 (error=42501)`
   - Cause: missing RLS policy or grants for table.
@@ -19,3 +23,7 @@
 - Error: `ERR_CONNECTION_REFUSED` on server action fetch
   - Cause: `npm run dev` not running or crashed.
   - Fix: restart dev server and retry.
+
+- Error: `NextRouter was not mounted`
+  - Cause: using `next/router` in App Router.
+  - Fix: use `next/navigation` hooks instead.

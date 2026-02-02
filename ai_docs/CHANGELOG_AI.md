@@ -1,5 +1,9 @@
 # AI Changelog (Rolling)
 
+## 2026-02-02 (late)
+- Moved appointment routes from `(app)` to `(app-plain)` for step-based flow layout.
+- Updated CONTEXT_ROUTES.md to reflect new route structure.
+
 ## 2026-02-02
 - Added group onboarding flow pages and server actions.
 - Added group RLS migration and middleware group gate for dashboard.
@@ -22,6 +26,10 @@
 - Restored place map preview rendering inside the place step after refactors.
 - Reverted Moveback changes and reused its existing styles for the create step back button.
 - Fixed onboarding signup router hook to use next/navigation in App Router.
+- Added AI styling rules doc for Vanilla Extract and layout conventions.
+- Added rules-by-example section to the styling guide.
+- Refreshed context docs for appointments, Kakao, routes, session notes, and troubleshooting.
+- Added Kakao map preview to the appointment confirm step.
 
 ## 2026-02-02 (docs)
 - Added CONTEXT_SESSION/DB_RLS/ROUTES/TROUBLESHOOTING.

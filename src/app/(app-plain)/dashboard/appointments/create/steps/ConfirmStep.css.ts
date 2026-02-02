@@ -30,6 +30,11 @@ export const summaryValue = style({
   fontWeight: vars.fontWeight.semibold,
 });
 
+export const mapWrapper = style({
+  marginTop: '16px',
+  marginBottom: '16px',
+});
+
 export const helperText = style({
   fontSize: vars.fontSize.caption,
   color: vars.color.alert,

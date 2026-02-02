@@ -29,7 +29,7 @@ import {
   resultButton,
   emptyResult,
 } from './page.css';
-import { useOnboardingLayout } from '../../provider/moveback-provider';
+import { useOnboardingLayout } from '@/provider/moveback-provider';
 
 import type { GroupSummary } from '@/actions/group';
 import type { GroupSearchFormInput } from '@/schemas/group';

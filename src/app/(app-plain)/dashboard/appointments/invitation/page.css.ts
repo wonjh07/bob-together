@@ -5,6 +5,7 @@ import { vars } from '@/styles/theme.css';
 export const invitationPage = style({
   minHeight: '100%',
   width: '100%',
+  maxWidth: '480px',
   display: 'flex',
 });
 

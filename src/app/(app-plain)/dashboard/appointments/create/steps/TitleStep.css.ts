@@ -6,13 +6,13 @@ export const stepTitle = style({
   fontSize: vars.fontSize.instruction,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.text,
+  marginBottom: '16px',
 });
 
 export const section = style({
   display: 'flex',
   flexDirection: 'column',
   width: '100%',
-  gap: '12px',
 });
 
 export const inputLabel = style({

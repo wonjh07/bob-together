@@ -1,3 +1,4 @@
+import { container } from '../page.css';
 import {
   helperText,
   inputLabel,
@@ -21,7 +22,7 @@ export function TitleStep({
   onNext,
 }: TitleStepProps) {
   return (
-    <>
+    <div className={container}>
       <div className={stepTitle}>약속 제목을 입력해주세요</div>
       <div className={section}>
         <label className={inputLabel} htmlFor="appointment-title">
@@ -39,6 +40,6 @@ export function TitleStep({
       <button className={primaryButton} onClick={onNext}>
         확인
       </button>
-    </>
+    </div>
   );
 }

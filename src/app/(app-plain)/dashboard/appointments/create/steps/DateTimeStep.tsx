@@ -1,3 +1,4 @@
+import { container } from '../page.css';
 import {
   helperText,
   inputLabel,
@@ -31,7 +32,7 @@ export function DateTimeStep({
   onNext,
 }: DateTimeStepProps) {
   return (
-    <>
+    <div className={container}>
       <div className={stepTitle}>약속 일자를 입력해주세요</div>
       <div className={section}>
         <label className={inputLabel} htmlFor="appointment-date">
@@ -66,6 +67,6 @@ export function DateTimeStep({
       <button className={primaryButton} onClick={onNext}>
         확인
       </button>
-    </>
+    </div>
   );
 }

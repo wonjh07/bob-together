@@ -27,6 +27,7 @@ import {
 
 import type { PlaceSummary } from '@/actions/place';
 import type { FormEvent } from 'react';
+import { container } from '../page.css';
 
 interface PlaceStepProps {
   placeQuery: string;
@@ -68,8 +69,11 @@ export function PlaceStep({
       : '허용하기';
 
   return (
-    <>
-      <div className={stepTitle}>약속 장소를 입력해주세요</div>
+    <div className={container}>
+      <button className={primaryButton} onClick={onNext}>
+        다음
+      </button>
+      <div className={stepTitle}>약속 장소를 검색해주세요</div>
       <div className={locationRow}>
         <div className={locationInfo}>
           <div className={locationTitle}>현재 위치 사용</div>
@@ -104,6 +108,16 @@ export function PlaceStep({
         </form>
       </div>
       <div className={helperText}>{errorMessage}</div>
+      {selectedPlace && (
+        <div className={mapWrapper}>
+          <KakaoMapPreview
+            latitude={selectedPlace.latitude}
+            longitude={selectedPlace.longitude}
+            title={selectedPlace.name}
+            address={selectedPlace.roadAddress || selectedPlace.address}
+          />
+        </div>
+      )}
 
       <div className={results}>
         {placeResults.map((place) => {
@@ -128,10 +142,6 @@ export function PlaceStep({
           <div className={emptyResult}>검색 결과가 없습니다.</div>
         )}
       </div>
-
-      <button className={primaryButton} onClick={onNext}>
-        확인
-      </button>
-    </>
+    </div>
   );
 }

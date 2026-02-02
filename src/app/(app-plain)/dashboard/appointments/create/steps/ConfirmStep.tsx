@@ -1,5 +1,8 @@
+import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
+
 import {
   helperText,
+  mapWrapper,
   primaryButton,
   stepTitle,
   summaryCard,
@@ -8,6 +11,7 @@ import {
 } from './ConfirmStep.css';
 
 import type { PlaceSummary } from '@/actions/place';
+import { container } from '../page.css';
 
 interface ConfirmStepProps {
   title: string;
@@ -33,8 +37,16 @@ export function ConfirmStep({
   onCreate,
 }: ConfirmStepProps) {
   return (
-    <>
+    <div className={container}>
       <div className={stepTitle}>약속 정보를 확인해주세요</div>
+      <div className={mapWrapper}>
+        <KakaoMapPreview
+          latitude={selectedPlace.latitude}
+          longitude={selectedPlace.longitude}
+          title={selectedPlace.name}
+          address={selectedPlace.roadAddress || selectedPlace.address}
+        />
+      </div>
       <div className={summaryCard}>
         <div className={summaryRow}>
           <span>약속 제목</span>
@@ -73,6 +85,6 @@ export function ConfirmStep({
         disabled={isSubmitting}>
         {isSubmitting ? '생성 중...' : '생성하기'}
       </button>
-    </>
+    </div>
   );
 }

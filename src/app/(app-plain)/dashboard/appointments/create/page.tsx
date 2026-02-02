@@ -16,6 +16,7 @@ import { TitleStep } from './steps/TitleStep';
 import type { PlaceSummary } from '@/actions/place';
 
 import { movebackButton } from '@/components/ui/moveback.css';
+import { useRouter } from 'next/navigation';
 
 type Step = 'title' | 'datetime' | 'place' | 'confirm' | 'complete';
 
@@ -39,6 +40,7 @@ export default function AppointmentCreatePage() {
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
+  const router = useRouter();
 
   const currentGroupName = useMemo(() => {
     if (!currentGroupId) {
@@ -126,6 +128,10 @@ export default function AppointmentCreatePage() {
 
   const goBack = () => {
     setErrorMessage('');
+    if (step === 'title') {
+      router.back();
+      return;
+    }
     if (step === 'datetime') setStep('title');
     if (step === 'place') setStep('datetime');
     if (step === 'confirm') setStep('place');
@@ -204,7 +210,7 @@ export default function AppointmentCreatePage() {
 
   return (
     <div className={page}>
-      {step !== 'title' && step !== 'complete' && (
+      {step !== 'complete' && (
         <div className={headerRow}>
           <button className={movebackButton} onClick={goBack} type="button">
             &lt;

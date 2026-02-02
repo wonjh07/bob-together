@@ -5,6 +5,5 @@ export const dashboardContainer = style({
   minHeight: 'calc(100dvh - 140px)', // topNav + bottomNav 높이만큼 제외
   display: 'flex',
   justifyContent: 'center',
-  padding: '20px',
   boxSizing: 'border-box',
 });

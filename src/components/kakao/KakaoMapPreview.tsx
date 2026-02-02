@@ -72,9 +72,7 @@ export function KakaoMapPreview({
   if (error) {
     return (
       <div className={mapFrame}>
-        <div className={mapPlaceholder}>
-          지도를 불러올 수 없습니다.
-        </div>
+        <div className={mapPlaceholder}>지도를 불러올 수 없습니다.</div>
       </div>
     );
   }
