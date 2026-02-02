@@ -130,7 +130,7 @@ export async function signupAction(
   }
 
   // Signup success
-  redirect('/signup/success');
+  return { ok: true };
 }
 
 // ============================================================================

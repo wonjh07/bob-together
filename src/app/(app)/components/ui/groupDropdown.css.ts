@@ -37,14 +37,37 @@ export const dropdownMenu = style({
 });
 
 export const dropdownItem = style({
-  display: 'block',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  width: '100%',
   padding: '12px 16px',
+  border: 'none',
+  background: 'none',
   color: vars.color.text,
   textDecoration: 'none',
   fontSize: '14px',
+  textAlign: 'left',
+  cursor: 'pointer',
   transition: 'background-color 0.2s ease',
 
   ':hover': {
     backgroundColor: vars.color.stroke,
   },
+});
+
+export const dropdownItemActive = style({
+  color: vars.color.main,
+  fontWeight: vars.fontWeight.semibold,
+});
+
+export const dropdownEmpty = style({
+  padding: '12px 16px',
+  color: vars.color.subText,
+  fontSize: '13px',
+});
+
+export const dropdownMeta = style({
+  fontSize: '12px',
+  color: vars.color.subText,
 });

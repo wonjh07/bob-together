@@ -46,3 +46,12 @@ export type ValidationErrorCode =
   | 'name-required'
   | 'nickname-required'
   | 'check-failed';
+
+// 그룹 관련 에러
+export type GroupErrorCode =
+  | CommonErrorCode
+  | 'group-not-found'
+  | 'group-name-taken'
+  | 'group-name-duplicated'
+  | 'already-member'
+  | 'invite-already-sent';

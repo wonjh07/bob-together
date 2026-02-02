@@ -1,15 +1,68 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+import { getMyGroupsAction } from '@/actions/group';
 
 import { topNav, logoSection, navRight, userIcon } from './topNav.css';
 import { GroupDropdown } from './ui/groupDropdown';
 import { ProfileDropdown } from './ui/profileDropdown';
 
+import type { GroupSummary } from '@/actions/group';
+
 export function TopNav() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [groups, setGroups] = useState<GroupSummary[]>([]);
+  const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(false);
+
+  const currentGroupName = useMemo(() => {
+    if (!currentGroupId) {
+      return groups.length > 0 ? groups[0].name : '그룹 선택';
+    }
+    const selected = groups.find((group) => group.groupId === currentGroupId);
+    return selected?.name || '그룹 선택';
+  }, [groups, currentGroupId]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const fetchGroups = async () => {
+      setIsLoadingGroups(true);
+      const result = await getMyGroupsAction();
+      setIsLoadingGroups(false);
+
+      if (!isActive) {
+        return;
+      }
+
+      if (!result.ok) {
+        setGroups([]);
+        setCurrentGroupId(null);
+        return;
+      }
+
+      if (!result.data) {
+        setGroups([]);
+        setCurrentGroupId(null);
+        return;
+      }
+
+      const nextGroups = result.data.groups;
+      setGroups(nextGroups);
+      if (nextGroups.length > 0) {
+        setCurrentGroupId((prev) => prev ?? nextGroups[0].groupId);
+      }
+    };
+
+    fetchGroups();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   return (
     <header className={topNav}>
@@ -31,7 +84,11 @@ export function TopNav() {
             setIsProfileDropdownOpen(false);
             setIsDropdownOpen(open);
           }}
-          currentGroup="그룹1"
+          groups={groups}
+          currentGroupId={currentGroupId}
+          currentGroupName={currentGroupName}
+          isLoading={isLoadingGroups}
+          onGroupSelect={setCurrentGroupId}
         />
 
         <button

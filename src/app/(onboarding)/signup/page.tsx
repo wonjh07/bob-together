@@ -2,8 +2,10 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 
 import { signupAction } from '@/actions/auth';
 import { SubmitButton } from '@/components/ui/button';
@@ -35,6 +37,7 @@ export default function SignupPage() {
 
   const { setShowMoveback } = useOnboardingLayout();
   const email = watch('email');
+  const router = useRouter();
 
   const { emailCheckSuccess } = useEmailValidation({
     email,
@@ -49,10 +52,23 @@ export default function SignupPage() {
   }, [setShowMoveback]);
 
   const onSubmit = async (data: SignupInput) => {
-    const result = await signupAction(data);
+    try {
+      const result = await signupAction(data);
 
-    if (result.ok === false) {
-      setError('root', { message: result.message });
+      if (!result.ok) {
+        setError('root', { message: result.message });
+      }
+
+      if (!result.ok) {
+        toast.error(result.message || '회원가입에 실패했습니다.');
+        return;
+      }
+
+      toast.success('회원가입 성공!');
+      router.push('/signup/success');
+    } catch (err) {
+      toast.error('회원가입 중 오류가 발생했습니다.');
+      console.error('Signup error:', err);
     }
   };
 

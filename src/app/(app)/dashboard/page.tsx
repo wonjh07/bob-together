@@ -1,5 +1,8 @@
 'use server';
 
+import { redirect } from 'next/navigation';
+
+import { getMyGroupsAction } from '@/actions/group';
 import { getUserData } from '@/actions/user';
 
 import { dashboardContainer, userInfo, loadingContainer } from './page.css';
@@ -19,6 +22,11 @@ export default async function DashboardPage() {
   }
 
   const user = result.data;
+
+  const groupResult = await getMyGroupsAction();
+  if (groupResult.ok && groupResult.data?.groups.length === 0) {
+    redirect('/group');
+  }
 
   return (
     <div className={dashboardContainer}>
