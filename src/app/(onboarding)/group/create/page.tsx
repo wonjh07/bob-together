@@ -23,7 +23,7 @@ import {
   lineInput,
   compactButton,
 } from './page.css';
-import { useOnboardingLayout } from '@/provider/moveback-provider';
+import { useOnboardingLayout } from '@/provider/layout-context';
 
 import type { GroupFormInput } from '@/schemas/group';
 

@@ -21,6 +21,16 @@
 - `/dashboard/search` -> `src/app/(app)/dashboard/search/`
 - App layout -> `src/app/(app)/layout.tsx`
 
+### Dashboard Components
+- GroupContext -> `src/app/(app)/contexts/group-context.tsx`
+- AppointmentList -> `src/app/(app)/dashboard/components/AppointmentList.tsx`
+- AppointmentCard -> `src/app/(app)/dashboard/components/AppointmentCard.tsx`
+- PeriodFilter -> `src/app/(app)/dashboard/components/PeriodFilter.tsx`
+- TypeFilter -> `src/app/(app)/dashboard/components/TypeFilter.tsx`
+
+### Shared Hooks
+- useInfiniteScroll -> `src/hooks/useInfiniteScroll.ts`
+
 ## App Plain (step-based flows, no TopNav)
 - Plain layout -> `src/app/(app-plain)/dashboard/layout.tsx`
 

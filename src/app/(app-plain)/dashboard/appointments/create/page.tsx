@@ -1,22 +1,22 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 
 import { createAppointmentAction } from '@/actions/appointment';
 import { searchPlacesAction } from '@/actions/place';
 
-import { useCreateAppointmentContext } from './create-appointment-context';
+import { CompleteStep } from './components/CompleteStep';
+import { ConfirmStep } from './components/ConfirmStep';
+import { DateTimeStep } from './components/DateTimeStep';
+import { PlaceStep } from './components/PlaceStep';
+import { TitleStep } from './components/TitleStep';
 import { headerRow, page, panel } from './page.css';
-import { CompleteStep } from './steps/CompleteStep';
-import { ConfirmStep } from './steps/ConfirmStep';
-import { DateTimeStep } from './steps/DateTimeStep';
-import { PlaceStep } from './steps/PlaceStep';
-import { TitleStep } from './steps/TitleStep';
+import { useCreateAppointmentContext } from '../../../../../provider/create-appointment-context';
 
 import type { PlaceSummary } from '@/actions/place';
 
 import { movebackButton } from '@/components/ui/moveback.css';
-import { useRouter } from 'next/navigation';
 
 type Step = 'title' | 'datetime' | 'place' | 'confirm' | 'complete';
 

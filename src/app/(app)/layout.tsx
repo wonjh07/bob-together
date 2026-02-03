@@ -1,7 +1,8 @@
 import { getMyGroupsAction } from '@/actions/group';
 import { BottomNav } from '@/app/(app)/components/bottomNav';
-import { KakaoMapPreload } from '@/components/kakao/KakaoMapPreload';
 import { TopNav } from '@/app/(app)/components/topNav';
+import { KakaoMapPreload } from '@/components/kakao/KakaoMapPreload';
+import { GroupProvider } from '@/provider/group-provider';
 
 import { layoutContainer } from './layout.css';
 
@@ -17,8 +18,10 @@ export default async function dashboardLayout({
   return (
     <div className={layoutContainer}>
       <KakaoMapPreload />
-      <TopNav initialGroups={groups} initialGroupId={initialGroupId} />
-      {children}
+      <GroupProvider initialGroups={groups} initialGroupId={initialGroupId}>
+        <TopNav />
+        {children}
+      </GroupProvider>
       <BottomNav />
     </div>
   );

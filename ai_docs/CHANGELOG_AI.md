@@ -1,5 +1,16 @@
 # AI Changelog (Rolling)
 
+## 2026-02-03
+- Added dashboard appointment list with GroupContext for shared group selection state.
+- Created `listAppointmentsAction` with cursor-based pagination, period/type filters.
+- Added `useInfiniteScroll` hook with IntersectionObserver for infinite scroll.
+- Created filter components: `PeriodFilter` (dropdown), `TypeFilter` (chip buttons).
+- Created `AppointmentCard` with status badges (confirmed/pending/canceled), participant info, edit button.
+- Created `AppointmentList` integrating filters, cards, and infinite scroll.
+- Refactored `TopNav` to use `useGroupContext()` instead of props.
+- Wrapped app layout children with `GroupProvider` for shared group state.
+- Updated dashboard page to render `AppointmentList` component.
+
 ## 2026-02-02 (late)
 - Moved appointment routes from `(app)` to `(app-plain)` for step-based flow layout.
 - Updated CONTEXT_ROUTES.md to reflect new route structure.

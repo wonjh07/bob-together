@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import Moveback from '@/components/ui/moveback';
-import LayoutContext from '@/provider/moveback-provider';
+import LayoutContext from '@/provider/layout-context';
 
 import { loginLayoutContainer } from './layout.css';
 

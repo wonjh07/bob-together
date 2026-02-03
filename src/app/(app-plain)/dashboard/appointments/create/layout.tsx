@@ -1,6 +1,6 @@
 import { getMyGroupsAction } from '@/actions/group';
 
-import { CreateAppointmentProvider } from './create-appointment-context';
+import { CreateAppointmentProvider } from '../../../../../provider/create-appointment-context';
 
 export default async function CreateAppointmentLayout({
   children,

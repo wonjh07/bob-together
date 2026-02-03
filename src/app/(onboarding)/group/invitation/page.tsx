@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 
 import { searchUsersAction, sendGroupInvitationAction } from '@/actions/group';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useOnboardingLayout } from '@/provider/moveback-provider';
+import { useOnboardingLayout } from '@/provider/layout-context';
 import { groupSearchFormSchema } from '@/schemas/group';
 
 import {

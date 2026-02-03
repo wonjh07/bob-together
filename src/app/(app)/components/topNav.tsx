@@ -1,35 +1,20 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
+
+import { useGroupContext } from '@/provider/group-provider';
 
 import { topNav, logoSection, navRight, userIcon } from './topNav.css';
 import { GroupDropdown } from './ui/groupDropdown';
 import { ProfileDropdown } from './ui/profileDropdown';
 
-import type { GroupSummary } from '@/actions/group';
-
-interface TopNavProps {
-  initialGroups: GroupSummary[];
-  initialGroupId: string | null;
-}
-
-export function TopNav({ initialGroups, initialGroupId }: TopNavProps) {
+export function TopNav() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [currentGroupId, setCurrentGroupId] = useState<string | null>(
-    initialGroupId ?? initialGroups[0]?.groupId ?? null,
-  );
 
-  const currentGroupName = useMemo(() => {
-    if (!currentGroupId) {
-      return initialGroups.length > 0 ? initialGroups[0].name : '그룹 선택';
-    }
-    const selected = initialGroups.find(
-      (group) => group.groupId === currentGroupId,
-    );
-    return selected?.name || '그룹 선택';
-  }, [initialGroups, currentGroupId]);
+  const { groups, currentGroupId, setCurrentGroupId, currentGroupName } =
+    useGroupContext();
 
   return (
     <header className={topNav}>
@@ -51,7 +36,7 @@ export function TopNav({ initialGroups, initialGroupId }: TopNavProps) {
             setIsProfileDropdownOpen(false);
             setIsDropdownOpen(open);
           }}
-          groups={initialGroups}
+          groups={groups}
           currentGroupId={currentGroupId}
           currentGroupName={currentGroupName}
           isLoading={false}

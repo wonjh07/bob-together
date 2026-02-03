@@ -11,7 +11,7 @@ import { signupAction } from '@/actions/auth';
 import { SubmitButton } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEmailValidation } from '@/hooks/useEmailValidation';
-import { useOnboardingLayout } from '@/provider/moveback-provider';
+import { useOnboardingLayout } from '@/provider/layout-context';
 import { signupSchema } from '@/schemas/auth';
 
 import { signupPage, signupForm, title, buttonContainer } from './page.css';
