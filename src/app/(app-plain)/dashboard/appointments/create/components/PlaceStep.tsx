@@ -24,10 +24,10 @@ import {
   stepTitle,
   underlineInput,
 } from './PlaceStep.css';
+import { container } from '../page.css';
 
 import type { PlaceSummary } from '@/actions/place';
 import type { FormEvent } from 'react';
-import { container } from '../page.css';
 
 interface PlaceStepProps {
   placeQuery: string;

@@ -25,6 +25,7 @@ export const container = style({
   maxWidth: '480px',
   display: 'flex',
   flexDirection: 'column',
+  padding: '24px',
   gap: '24px',
 });
 

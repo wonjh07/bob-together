@@ -10,6 +10,16 @@
 - Refactored `TopNav` to use `useGroupContext()` instead of props.
 - Wrapped app layout children with `GroupProvider` for shared group state.
 - Updated dashboard page to render `AppointmentList` component.
+- Switched onboarding back button control to a route-based client gate and removed onboarding layout context usage.
+- Converted onboarding group completion pages to Server Components using `searchParams` props.
+- Split onboarding login into a Server page with a client `LoginForm` component to reduce `use client` scope.
+- Split onboarding signup into a Server page with a client `SignupForm` component and moved root error styling to CSS.
+- Split onboarding group create into a Server page with a client `GroupCreateForm` component.
+- Split onboarding group invitation into a Server page with a client `GroupInvitationClient` for search/invite interactions.
+- Split onboarding group join into a Server page with a client `GroupJoinClient` for search and navigation interactions.
+- Split onboarding group join confirm into a Server page with a client `GroupJoinConfirmClient`, moving the join action to the client and resolving group name on the server when possible.
+- Added `FormError` UI component and replaced the signup root error inline style with the shared component.
+- Added `getActionErrorMessage` utility and adopted it across onboarding client actions for consistent error handling.
 
 ## 2026-02-02 (late)
 - Moved appointment routes from `(app)` to `(app-plain)` for step-based flow layout.

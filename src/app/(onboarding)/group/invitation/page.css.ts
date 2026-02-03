@@ -7,7 +7,7 @@ export const invitationPage = style({
   width: '100%',
   background: vars.color.mainSoft,
   display: 'flex',
-  justifyContent: 'flex-start',
+  justifyContent: 'center',
   alignItems: 'center',
   padding: '24px 20px 32px',
 });

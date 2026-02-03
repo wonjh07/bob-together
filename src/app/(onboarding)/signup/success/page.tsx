@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 
 import {
@@ -9,6 +7,7 @@ import {
   message,
   buttonContainer,
 } from './page.css';
+
 export default function SignupSuccessPage() {
   return (
     <div className={successPage}>

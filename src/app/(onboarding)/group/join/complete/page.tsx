@@ -1,7 +1,4 @@
-'use client';
-
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 
 import CheckIcon from '@/components/icons/CheckIcon';
 
@@ -16,9 +13,17 @@ import {
   linkButton,
 } from '../../shared.css';
 
-export default function GroupJoinCompletePage() {
-  const searchParams = useSearchParams();
-  const groupName = searchParams.get('groupName');
+type GroupJoinCompletePageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default function GroupJoinCompletePage({
+  searchParams,
+}: GroupJoinCompletePageProps) {
+  const groupName =
+    typeof searchParams?.groupName === 'string'
+      ? searchParams.groupName
+      : undefined;
 
   return (
     <div className={page}>

@@ -22,6 +22,7 @@ export const mapPlaceholder = style({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  padding: '16px',
   fontSize: vars.fontSize.caption,
   color: vars.color.subText,
   background: 'white',

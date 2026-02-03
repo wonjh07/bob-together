@@ -1,7 +1,4 @@
-'use client';
-
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon';
 
@@ -16,9 +13,17 @@ import {
   linkButton,
 } from '../../shared.css';
 
-export default function GroupInvitationCompletePage() {
-  const searchParams = useSearchParams();
-  const groupName = searchParams.get('groupName');
+type GroupInvitationCompletePageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default function GroupInvitationCompletePage({
+  searchParams,
+}: GroupInvitationCompletePageProps) {
+  const groupName =
+    typeof searchParams?.groupName === 'string'
+      ? searchParams.groupName
+      : undefined;
 
   return (
     <div className={page}>

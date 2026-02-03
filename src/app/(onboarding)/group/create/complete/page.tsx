@@ -1,7 +1,4 @@
-'use client';
-
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 
 import GroupIcon from '@/components/icons/GroupIcon';
 
@@ -17,10 +14,19 @@ import {
   linkButton,
 } from '../../shared.css';
 
-export default function GroupCreateCompletePage() {
-  const searchParams = useSearchParams();
-  const currentGroupName = searchParams.get('groupName');
-  const groupId = searchParams.get('groupId');
+type GroupCreateCompletePageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default function GroupCreateCompletePage({
+  searchParams,
+}: GroupCreateCompletePageProps) {
+  const currentGroupName =
+    typeof searchParams?.groupName === 'string'
+      ? searchParams.groupName
+      : undefined;
+  const groupId =
+    typeof searchParams?.groupId === 'string' ? searchParams.groupId : undefined;
 
   return (
     <div className={page}>

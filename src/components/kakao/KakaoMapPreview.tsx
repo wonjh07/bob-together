@@ -51,9 +51,9 @@ export function KakaoMapPreview({
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
-      const content = `<div style="padding:8px 10px;font-size:12px;color:#343739;">
-        <div style="font-weight:600;margin-bottom:4px;">${safeTitle}</div>
-        ${safeAddress ? `<div>${safeAddress}</div>` : ''}
+      const content = `<div style="padding:4px 6px;font-size:12px;color:#b7470b;">
+        <div style="font-weight:700;margin-bottom:4px;">${safeTitle}</div>
+        ${safeAddress ? `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${safeAddress}</div>` : ''}
       </div>`;
 
       const infoWindow = new window.kakao.maps.InfoWindow({

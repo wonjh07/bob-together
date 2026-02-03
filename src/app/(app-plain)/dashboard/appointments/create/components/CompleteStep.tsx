@@ -11,6 +11,7 @@ import {
   summaryRow,
   summaryValue,
 } from './CompleteStep.css';
+import { container } from '../page.css';
 
 interface CompleteStepProps {
   title: string;
@@ -34,7 +35,7 @@ export function CompleteStep({
     : '/dashboard/appointments/invitation';
 
   return (
-    <>
+    <div className={container}>
       <div className={headerRow}>
         <div className={stepTitle}>약속 생성 완료</div>
       </div>
@@ -55,6 +56,6 @@ export function CompleteStep({
       <Link href="/dashboard" className={secondaryButton}>
         나중에 초대하기
       </Link>
-    </>
+    </div>
   );
 }
