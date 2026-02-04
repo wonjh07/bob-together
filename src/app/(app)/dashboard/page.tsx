@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 
 import { getMyGroupsAction } from '@/actions/group';
+import { getSelectedGroupIdFromCookies } from '@/libs/server/groupSelection';
 import { GroupProvider } from '@/provider/group-provider';
-import { getSelectedGroupIdFromCookies } from '@/server/groupSelection';
 
 import { AppointmentList } from './_components/AppointmentList';
 import { DashboardHeader } from './_components/DashboardHeader';

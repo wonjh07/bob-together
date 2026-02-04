@@ -11,7 +11,5 @@ export const layoutContainer = style({
   minHeight: '100dvh',
   paddingTop: '60px', // topNav 높이만큼 패딩 추가
   paddingBottom: '80px', // bottomNav 높이만큼 패딩 추가
-  paddingLeft: '16px',
-  paddingRight: '16px',
   backgroundColor: vars.color.background,
 });

@@ -1,4 +1,4 @@
-import { BottomNav } from '@/app/(app)/_components/bottomNav';
+import { BottomNav } from '@/app/(app)/_components/BottomNavigation';
 
 import { layoutContainer } from './layout.css';
 

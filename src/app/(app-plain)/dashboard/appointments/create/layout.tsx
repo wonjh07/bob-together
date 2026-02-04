@@ -1,6 +1,6 @@
 import { getMyGroupsAction } from '@/actions/group';
+import { getSelectedGroupIdFromCookies } from '@/libs/server/groupSelection';
 import { CreateAppointmentProvider } from '@/provider/create-appointment-context';
-import { getSelectedGroupIdFromCookies } from '@/server/groupSelection';
 
 export default async function CreateAppointmentLayout({
   children,

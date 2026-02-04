@@ -1,5 +1,17 @@
 # AI Changelog (Rolling)
 
+## 2026-02-04
+- Added a sliding indicator animation to the search type toggle and aligned segments to equal widths.
+- Documented DESIGN_SCAN.md usage in AGENTS.md and added it to the AI docs index.
+- Added a search input component to the dashboard search page based on the design scan image.
+- Removed mobile tap highlight and default button chrome from the search type toggle.
+- Tuned the search toggle indicator transition to a springy cubic-bezier easing.
+- Added appointment search result card/list components with dummy data for the search page.
+- Added the missing appointment title line to the search result card.
+- Added group search result card/list components with dummy data on the search page.
+- Added a title line to the group search result cards.
+- Wired the search type toggle to switch between appointment and group results via a client wrapper.
+
 ## 2026-02-03
 - Added dashboard appointment list with GroupContext for shared group selection state.
 - Created `listAppointmentsAction` with cursor-based pagination, period/type filters.
@@ -47,6 +59,9 @@
 - Split appointment create page into a Server page with a client AppointmentCreateClient.
 - Extracted current location logic into `useCurrentLocation` hook for appointment creation.
 - Extracted place search logic into `usePlaceSearch` hook for appointment creation.
+- Moved group selection cookie helper to `src/libs/server` and updated imports.
+- Added search page header toggle UI based on the design scan.
+- Added active toggle state and transition animation for the search type switch.
 - Split appointment invitation page into a Server page and a client `AppointmentInvitationClient`.
 
 ## 2026-02-02 (late)

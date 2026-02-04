@@ -1,5 +1,5 @@
-import { BottomNav } from '@/app/(app)/_components/bottomNav';
-import { TopNav } from '@/app/(app)/_components/topNav';
+import { BottomNav } from '@/app/(app)/_components/BottomNavigation';
+import { TopNav } from '@/app/(app)/_components/TopNavigation';
 
 import { layoutContainer } from './layout.css';
 

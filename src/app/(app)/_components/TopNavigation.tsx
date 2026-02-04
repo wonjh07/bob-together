@@ -3,8 +3,8 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
-import { topNav, logoSection, navRight, userIcon } from './topNav.css';
-import { ProfileDropdown } from './ui/profileDropdown';
+import { topNav, logoSection, navRight, userIcon } from './TopNavigation.css';
+import { ProfileDropdown } from './ui/ProfileDrop';
 
 export function TopNav() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);

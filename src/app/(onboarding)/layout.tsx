@@ -1,4 +1,4 @@
-import BackButtonGate from '@/components/backButtonGate';
+import BackButtonGate from '@/components/BackButtonGate';
 
 import { loginLayoutContainer } from './layout.css';
 

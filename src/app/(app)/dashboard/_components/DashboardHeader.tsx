@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 
-import { GroupDropdown } from '@/app/(app)/dashboard/_components/groupDropdown';
+import { GroupDropdown } from '@/app/(app)/dashboard/_components/GroupsDropdown';
 import { useGroupContext } from '@/provider/group-provider';
 
-import { header, headerTitle } from '../page.css';
+import { header, headerTitle } from './DashboardHeader.css';
 
 export function DashboardHeader() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

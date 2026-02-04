@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { bottomNav, navItem, active } from './bottomNav.css';
+import { bottomNav, navItem, active } from './BottomNavigation.css';
 
 export function BottomNav() {
   const pathname = usePathname();

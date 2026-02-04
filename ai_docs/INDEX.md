@@ -9,5 +9,5 @@
 - ACTIONS.md: Server action responsibilities and inputs.
 - ERRORS_AND_LESSONS.md: Error analysis and prevention notes.
 - STYLE_GUIDE.md: Styling rules and conventions.
+- DESIGN_SCAN.md: UI scan notes and component mapping from design images.
 - CHANGELOG_AI.md: AI-driven changes summary (rolling).
-

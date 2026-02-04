@@ -6,7 +6,7 @@
 - `src/provider`: Context/Provider
 - `src/components`: 공용 UI/도메인 컴포넌트
 - `src/hooks`: 공용 훅
-- `src/libs`: 외부 서비스 클라이언트
+- `src/libs`: 외부 서비스 클라이언트 및 서버 전용 유틸
 - `src/styles`: 디자인 토큰/테마
 
 ## 핵심 엔트리 포인트

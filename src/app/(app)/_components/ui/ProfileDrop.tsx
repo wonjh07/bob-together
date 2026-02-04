@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 
 import { logoutAction } from '@/actions/auth';
 
-import { dropdownContent, logoutButton } from './profileDropdown.css';
+import { dropdownContent, logoutButton } from './ProfileDrop.css';
 
 interface ProfileDropdownProps {
   isOpen: boolean;

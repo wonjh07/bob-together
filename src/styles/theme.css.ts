@@ -22,6 +22,7 @@ export const [themeClass, vars] = createTheme({
     sm: '10px',
     md: '14px',
     lg: '18px',
+    xlg: '22px',
   },
 
   font: {

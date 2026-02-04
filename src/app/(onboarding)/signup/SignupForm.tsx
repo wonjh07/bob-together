@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
 import { signupAction } from '@/actions/auth';
-import { SubmitButton } from '@/components/ui/button';
+import { SubmitButton } from '@/components/ui/Buttons';
 import FormError from '@/components/ui/FormError';
 import { Input } from '@/components/ui/input';
 import { useEmailValidation } from '@/hooks/useEmailValidation';

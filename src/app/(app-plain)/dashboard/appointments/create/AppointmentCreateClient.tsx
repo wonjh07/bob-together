@@ -16,7 +16,7 @@ import { PlaceStep } from './_components/PlaceStep';
 import { TitleStep } from './_components/TitleStep';
 import { headerRow, panel } from './page.css';
 
-import { movebackButton } from '@/components/ui/moveback.css';
+import { movebackButton } from '@/components/ui/BackButton.css';
 
 type Step = 'group' | 'title' | 'datetime' | 'place' | 'confirm' | 'complete';
 

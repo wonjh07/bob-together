@@ -10,7 +10,7 @@ import {
   dropdownItemActive,
   dropdownEmpty,
   dropdownMeta,
-} from './groupDropdown.css';
+} from './GroupsDropdown.css';
 
 import type { GroupSummary } from '@/actions/group';
 

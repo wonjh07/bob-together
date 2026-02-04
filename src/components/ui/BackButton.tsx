@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 
-import { movebackButton, movebackContainer } from './moveback.css';
+import { movebackButton, movebackContainer } from './BackButton.css';
 
 export default function Moveback() {
   const router = useRouter();

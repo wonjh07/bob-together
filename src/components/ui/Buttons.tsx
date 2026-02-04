@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import React from 'react';
 
-import { button as buttonClass, submitButton } from './button.css';
+import { button as buttonClass, submitButton } from './Buttons.css';
 
 import { vars } from '@/styles/theme.css';
 

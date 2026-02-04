@@ -1,6 +1,6 @@
 import Image from 'next/image';
 
-import { LoginButton } from '@/components/ui/button';
+import { LoginButton } from '@/components/ui/Buttons';
 
 import LoginForm from './LoginForm';
 import { loginPage, serviceTitle, title, buttonContainer } from './page.css';
