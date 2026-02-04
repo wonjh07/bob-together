@@ -6,15 +6,15 @@ import { useMemo, useState } from 'react';
 import { createAppointmentAction } from '@/actions/appointment';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
 import { usePlaceSearch } from '@/hooks/usePlaceSearch';
+import { useCreateAppointmentContext } from '@/provider/create-appointment-context';
 
-import { CompleteStep } from './components/CompleteStep';
-import { ConfirmStep } from './components/ConfirmStep';
-import { DateTimeStep } from './components/DateTimeStep';
-import { GroupStep } from './components/GroupStep';
-import { PlaceStep } from './components/PlaceStep';
-import { TitleStep } from './components/TitleStep';
+import { CompleteStep } from './_components/CompleteStep';
+import { ConfirmStep } from './_components/ConfirmStep';
+import { DateTimeStep } from './_components/DateTimeStep';
+import { GroupStep } from './_components/GroupStep';
+import { PlaceStep } from './_components/PlaceStep';
+import { TitleStep } from './_components/TitleStep';
 import { headerRow, panel } from './page.css';
-import { useCreateAppointmentContext } from '../../../../../provider/create-appointment-context';
 
 import { movebackButton } from '@/components/ui/moveback.css';
 

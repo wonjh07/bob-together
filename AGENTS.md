@@ -32,14 +32,14 @@
 - When a request is complex, analyze first, then provide a short plan before coding
 - Before any code changes, show the proposed before/after snippets, explain why the change is justified, and get approval
 - Apply changes only after approval, then proceed to the next step
-- After code changes, run `npm run type-check` and `npm run lint`, then report results
+- After code changes, run `npm run type-check` and `npm run lint`, then report results (skip for `*.md`-only changes)
+- After each task, update relevant `ai_docs/*.md` files and note the update in `ai_docs/CHANGELOG_AI.md`
 
 ### Context Management
 - Update `ai_docs/CHANGELOG_AI.md` when making material changes
 - If new AI docs are added, register them in `ai_docs/INDEX.md`
 - Keep `ai_docs` concise, factual, and free of secrets/keys
 - Use short sections with clear headings and bullet points
-- Also kepp other 'CONTEXT.md's updated
 
 ---
 
