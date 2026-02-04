@@ -1,12 +1,12 @@
 'use client';
 
-import type { TypeFilter as TypeFilterType } from '@/actions/appointment';
-
 import {
   filterContainer,
   chipButton,
   chipButtonActive,
 } from './TypeFilter.css';
+
+import type { TypeFilter as TypeFilterType } from '@/actions/appointment';
 
 interface TypeFilterProps {
   value: TypeFilterType;

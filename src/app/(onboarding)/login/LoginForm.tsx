@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 import { loginAction } from '@/actions/auth';
 import { Input } from '@/components/ui/input';
 import { loginSchema } from '@/schemas/auth';
-import { getActionErrorMessage } from '@/utils/actionResult';
 
 import { loginForm, linkContainer, submitButton } from './page.css';
 
@@ -32,9 +31,8 @@ export default function LoginForm() {
     try {
       const result = await loginAction(data.email, data.password);
 
-      const error = getActionErrorMessage(result, '로그인에 실패했습니다.');
-      if (error) {
-        toast.error(error);
+      if (!result.ok) {
+        toast.error(result.message || '로그인에 실패했습니다.');
         return;
       }
 

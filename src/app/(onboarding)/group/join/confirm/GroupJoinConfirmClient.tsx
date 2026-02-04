@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { joinGroupAction } from '@/actions/group';
-import { getActionErrorMessage } from '@/utils/actionResult';
 
 import { buttonBase, primaryButton, helperText } from '../../shared.css';
 
@@ -32,9 +31,8 @@ export default function GroupJoinConfirmClient({
     const result = await joinGroupAction(groupId);
     setIsJoining(false);
 
-    const error = getActionErrorMessage(result, '그룹 가입에 실패했습니다.');
-    if (error) {
-      setErrorMessage(error);
+    if (!result.ok) {
+      setErrorMessage(result.message || '그룹 가입에 실패했습니다.');
       return;
     }
 

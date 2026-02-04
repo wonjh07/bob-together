@@ -8,6 +8,19 @@ export const dashboardContainer = style({
   backgroundColor: vars.color.background,
 });
 
+export const header = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '16px',
+});
+
+export const headerTitle = style({
+  fontSize: vars.fontSize.title,
+  fontWeight: vars.fontWeight.bold,
+  color: vars.color.text,
+});
+
 export const loadingContainer = style({
   width: '100%',
   height: '200px',

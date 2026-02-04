@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 
 import { createGroupAction } from '@/actions/group';
 import { groupFormSchema } from '@/schemas/group';
-import { getActionErrorMessage } from '@/utils/actionResult';
 
 import { buttonBase, primaryButton, helperText } from '../shared.css';
 import {
@@ -38,10 +37,7 @@ export default function GroupCreateForm() {
     const result = await createGroupAction(data.groupName);
 
     if (!result.ok) {
-      setErrorMessage(
-        getActionErrorMessage(result, '그룹 생성에 실패했습니다.') ??
-          '그룹 생성에 실패했습니다.',
-      );
+      setErrorMessage(result.message || '그룹 생성에 실패했습니다.');
       return;
     }
 

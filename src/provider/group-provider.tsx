@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react';
 
+import { setSelectedGroupAction } from '@/actions/groupSelection';
+
 import type { GroupSummary } from '@/actions/group';
 
 interface GroupContextValue {
@@ -30,9 +32,14 @@ export function GroupProvider({
   initialGroups,
   initialGroupId,
 }: GroupProviderProps) {
-  const [currentGroupId, setCurrentGroupId] = useState<string | null>(
+  const [currentGroupId, setCurrentGroupIdState] = useState<string | null>(
     initialGroupId ?? initialGroups[0]?.groupId ?? null,
   );
+
+  const setCurrentGroupId = (id: string | null) => {
+    setCurrentGroupIdState(id);
+    void setSelectedGroupAction(id);
+  };
 
   const currentGroupName = useMemo(() => {
     if (!currentGroupId) {

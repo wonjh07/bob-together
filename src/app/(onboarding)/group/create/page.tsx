@@ -1,6 +1,6 @@
 import { page, panel } from '../shared.css';
-import { formTitle } from './page.css';
 import GroupCreateForm from './GroupCreateForm';
+import { formTitle } from './page.css';
 
 export default function GroupCreatePage() {
   return (

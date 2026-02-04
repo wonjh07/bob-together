@@ -4,7 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { searchUsersAction, sendGroupInvitationAction } from '@/actions/group';
+import { sendAppointmentInvitationAction } from '@/actions/appointment';
+import { searchUsersAction } from '@/actions/group';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { groupSearchFormSchema } from '@/schemas/group';
 
@@ -23,18 +24,19 @@ import {
   invitedButton,
   helperText,
 } from './page.css';
-import { buttonBase, primaryButton } from '../shared.css';
 
 import type { UserSummary } from '@/actions/group';
 import type { GroupSearchFormInput } from '@/schemas/group';
 
-type GroupInvitationClientProps = {
-  groupId: string;
+import { buttonBase, primaryButton } from '@/app/(onboarding)/group/shared.css';
+
+type AppointmentInvitationClientProps = {
+  appointmentId: string;
 };
 
-export default function GroupInvitationClient({
-  groupId,
-}: GroupInvitationClientProps) {
+export default function AppointmentInvitationClient({
+  appointmentId,
+}: AppointmentInvitationClientProps) {
   const [resultUsers, setResultUsers] = useState<UserSummary[]>([]);
   const [invitedIds, setInvitedIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
@@ -56,8 +58,8 @@ export default function GroupInvitationClient({
 
   const performSearch = useCallback(
     async (query: string) => {
-      if (!groupId) {
-        setErrorMessage('그룹 정보가 필요합니다.');
+      if (!appointmentId) {
+        setErrorMessage('약속 정보가 필요합니다.');
         return;
       }
 
@@ -84,7 +86,7 @@ export default function GroupInvitationClient({
 
       setResultUsers(result.data.users);
     },
-    [groupId],
+    [appointmentId],
   );
 
   useEffect(() => {
@@ -101,15 +103,15 @@ export default function GroupInvitationClient({
   };
 
   const handleInvite = async (userId: string) => {
-    if (!groupId) {
-      setErrorMessage('그룹 정보가 필요합니다.');
+    if (!appointmentId) {
+      setErrorMessage('약속 정보가 필요합니다.');
       return;
     }
 
     setIsInviting((prev) => ({ ...prev, [userId]: true }));
     setErrorMessage('');
 
-    const result = await sendGroupInvitationAction(groupId, userId);
+    const result = await sendAppointmentInvitationAction(appointmentId, userId);
 
     setIsInviting((prev) => ({ ...prev, [userId]: false }));
 
@@ -125,7 +127,7 @@ export default function GroupInvitationClient({
     <>
       <form className={searchBlock} onSubmit={handleSubmit(onSubmit)}>
         <label className={searchLabel} htmlFor="query">
-          새멤버 검색
+          닉네임 검색
         </label>
         <div className={searchRow}>
           <input
@@ -164,7 +166,9 @@ export default function GroupInvitationClient({
               </div>
               <button
                 type="button"
-                className={`${inviteButton} ${isInvited ? invitedButton : ''}`}
+                className={`${inviteButton} ${
+                  isInvited ? invitedButton : ''
+                }`}
                 onClick={() => handleInvite(user.userId)}
                 disabled={isInvited || isLoading}>
                 {isInvited ? '초대됨' : isLoading ? '전송 중' : '초대하기'}

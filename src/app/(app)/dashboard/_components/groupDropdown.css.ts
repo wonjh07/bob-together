@@ -24,9 +24,9 @@ export const groupButton = style({
 });
 
 export const dropdownMenu = style({
-  position: 'fixed',
-  top: '60px',
-  right: '16px',
+  position: 'absolute',
+  top: 'calc(100% + 8px)',
+  right: '0',
   border: `1px solid ${vars.color.stroke}`,
   borderRadius: '8px',
   boxShadow: '0 2px 12px rgba(0, 0, 0, 0.15)',

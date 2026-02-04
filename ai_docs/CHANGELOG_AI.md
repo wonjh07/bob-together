@@ -20,6 +20,34 @@
 - Split onboarding group join confirm into a Server page with a client `GroupJoinConfirmClient`, moving the join action to the client and resolving group name on the server when possible.
 - Added `FormError` UI component and replaced the signup root error inline style with the shared component.
 - Added `getActionErrorMessage` utility and adopted it across onboarding client actions for consistent error handling.
+- Added group selection cookie actions to persist the selected group across navigations.
+- Updated `GroupProvider` to persist selected group changes into cookies.
+- Updated app layout to initialize group selection from the persisted cookie when available.
+- Updated appointment create layout to initialize group selection from the persisted cookie when available.
+- Guarded appointment creation to require a selected group.
+- Moved cookie read helper to a server-only module to avoid client import issues.
+- Removed group dropdown usage from `TopNav` in preparation for moving group selection to the dashboard page.
+- Moved `GroupProvider` and group list initialization to the dashboard page.
+- Added dashboard header with group dropdown for group selection.
+- Added group selection step with a new dropdown in appointment create flow.
+- Added new AI docs: DECISIONS, CODEMAP, ACTIONS, ERRORS_AND_LESSONS and registered them in INDEX.
+- Removed outdated CONTEXT_SESSION.md and unlinked it from INDEX.
+- Trimmed GROUP_FLOW.md to focus on routes, actions, and shared styles.
+- Trimmed and updated APPOINTMENTS_FLOW.md to reflect current entry points and routes.
+- Updated CONTEXT_ROUTES.md to match current route structure and appointment step locations.
+- Merged CONTEXT_TROUBLESHOOTING.md into ERRORS_AND_LESSONS.md and removed the old file.
+- Merged CONTEXT_ROUTES.md into CODEMAP.md and removed the standalone routes doc.
+- Centralized action lists in ACTIONS.md and removed action sections from flow docs.
+- Recorded recent decisions in DECISIONS.md (without impact/verification sections).
+- Renamed context docs: PROJECT.md, GROUP_FLOW.md, APPOINTMENTS_FLOW.md, KAKAO_INTEGRATION.md, DB_RLS.md.
+- Merged GROUP_FLOW.md and APPOINTMENTS_FLOW.md into FLOWS.md and removed the originals.
+- Removed unused TEMPLATE.md and TEMPLATE_EN.md from ai_docs.
+- Removed unused scripts/update_ai_docs.sh.
+- Removed getActionErrorMessage utility and restored direct result handling.
+- Split appointment create page into a Server page with a client AppointmentCreateClient.
+- Extracted current location logic into `useCurrentLocation` hook for appointment creation.
+- Extracted place search logic into `usePlaceSearch` hook for appointment creation.
+- Split appointment invitation page into a Server page and a client `AppointmentInvitationClient`.
 
 ## 2026-02-02 (late)
 - Moved appointment routes from `(app)` to `(app-plain)` for step-based flow layout.

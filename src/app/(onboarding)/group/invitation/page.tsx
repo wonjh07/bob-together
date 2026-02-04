@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import GroupInvitationClient from './GroupInvitationClient';
 import {
   invitationPage,
   invitationPanel,
@@ -8,8 +9,6 @@ import {
   actionLink,
   headerMeta,
 } from './page.css';
-
-import GroupInvitationClient from './GroupInvitationClient';
 
 type GroupInvitationPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;

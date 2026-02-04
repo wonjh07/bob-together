@@ -8,7 +8,6 @@ import { useForm } from 'react-hook-form';
 import { searchGroupsAction } from '@/actions/group';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { groupSearchFormSchema } from '@/schemas/group';
-import { getActionErrorMessage } from '@/utils/actionResult';
 
 import { buttonBase, primaryButton, helperText } from '../shared.css';
 import {
@@ -60,10 +59,7 @@ export default function GroupJoinClient() {
     const result = await searchGroupsAction(trimmedQuery);
 
     if (!result.ok) {
-      setErrorMessage(
-        getActionErrorMessage(result, '그룹을 찾을 수 없습니다.') ??
-          '그룹을 찾을 수 없습니다.',
-      );
+      setErrorMessage(result.message || '그룹을 찾을 수 없습니다.');
       return;
     }
 

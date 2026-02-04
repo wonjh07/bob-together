@@ -7,12 +7,10 @@ import toast from 'react-hot-toast';
 
 import { signupAction } from '@/actions/auth';
 import { SubmitButton } from '@/components/ui/button';
+import FormError from '@/components/ui/FormError';
 import { Input } from '@/components/ui/input';
 import { useEmailValidation } from '@/hooks/useEmailValidation';
 import { signupSchema } from '@/schemas/auth';
-import { getActionErrorMessage } from '@/utils/actionResult';
-
-import FormError from '@/components/ui/FormError';
 
 import { signupForm } from './page.css';
 
@@ -46,10 +44,9 @@ export default function SignupForm() {
     try {
       const result = await signupAction(data);
 
-      const error = getActionErrorMessage(result, '회원가입에 실패했습니다.');
-      if (error) {
-        setError('root', { message: error });
-        toast.error(error);
+      if (!result.ok) {
+        setError('root', { message: result.message });
+        toast.error(result.message || '회원가입에 실패했습니다.');
         return;
       }
 

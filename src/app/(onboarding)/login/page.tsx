@@ -1,13 +1,9 @@
 import Image from 'next/image';
+
 import { LoginButton } from '@/components/ui/button';
 
-import {
-  loginPage,
-  serviceTitle,
-  title,
-  buttonContainer,
-} from './page.css';
 import LoginForm from './LoginForm';
+import { loginPage, serviceTitle, title, buttonContainer } from './page.css';
 
 import { vars } from '@/styles/theme.css';
 

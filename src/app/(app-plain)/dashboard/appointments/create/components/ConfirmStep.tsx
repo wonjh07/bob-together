@@ -9,9 +9,9 @@ import {
   summaryRow,
   summaryValue,
 } from './ConfirmStep.css';
+import { container } from '../page.css';
 
 import type { PlaceSummary } from '@/actions/place';
-import { container } from '../page.css';
 
 interface ConfirmStepProps {
   title: string;

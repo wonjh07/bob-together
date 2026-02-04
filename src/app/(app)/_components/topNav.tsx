@@ -3,18 +3,11 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
-import { useGroupContext } from '@/provider/group-provider';
-
 import { topNav, logoSection, navRight, userIcon } from './topNav.css';
-import { GroupDropdown } from './ui/groupDropdown';
 import { ProfileDropdown } from './ui/profileDropdown';
 
 export function TopNav() {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-
-  const { groups, currentGroupId, setCurrentGroupId, currentGroupName } =
-    useGroupContext();
 
   return (
     <header className={topNav}>
@@ -30,23 +23,9 @@ export function TopNav() {
       </div>
 
       <div className={navRight}>
-        <GroupDropdown
-          isOpen={isDropdownOpen}
-          onOpenChange={(open) => {
-            setIsProfileDropdownOpen(false);
-            setIsDropdownOpen(open);
-          }}
-          groups={groups}
-          currentGroupId={currentGroupId}
-          currentGroupName={currentGroupName}
-          isLoading={false}
-          onGroupSelect={setCurrentGroupId}
-        />
-
         <button
           className={userIcon}
           onClick={() => {
-            setIsDropdownOpen(false);
             setIsProfileDropdownOpen(!isProfileDropdownOpen);
           }}>
           <Image
