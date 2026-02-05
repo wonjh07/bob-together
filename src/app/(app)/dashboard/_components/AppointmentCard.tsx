@@ -1,25 +1,6 @@
 'use client';
 
-import {
-  card,
-  cardHeader,
-  titleRow,
-  title,
-  statusBadge,
-  editButton,
-  placeInfo,
-  placeName,
-  placeDetail,
-  categoryTag,
-  dateTimeInfo,
-  dateTimeItem,
-  icon,
-  cardFooter,
-  participantInfo,
-  meBadge,
-  hostName,
-  memberCount,
-} from './AppointmentCard.css';
+import * as styles from './AppointmentCard.css';
 
 import type { AppointmentListItem } from '@/actions/appointment';
 
@@ -73,36 +54,38 @@ export function AppointmentCard({ appointment, onEdit }: AppointmentCardProps) {
   const displayName = creatorNickname || creatorName || '알 수 없음';
 
   return (
-    <div className={card}>
-      <div className={cardHeader}>
-        <div className={titleRow}>
-          <h3 className={title}>{appointmentTitle}</h3>
-          <span className={statusBadge[status]}>{STATUS_LABELS[status]}</span>
+    <div className={styles.card}>
+      <div className={styles.cardHeader}>
+        <div className={styles.titleRow}>
+          <h3 className={styles.title}>{appointmentTitle}</h3>
+          <span className={styles.statusBadge[status]}>
+            {STATUS_LABELS[status]}
+          </span>
         </div>
         {isOwner && (
           <button
             type="button"
-            className={editButton}
+            className={styles.editButton}
             onClick={() => onEdit?.(appointmentId)}>
             수정
           </button>
         )}
       </div>
 
-      <div className={placeInfo}>
-        <div className={placeName}>{place.name}</div>
-        <div className={placeDetail}>
+      <div className={styles.placeInfo}>
+        <div className={styles.placeName}>{place.name}</div>
+        <div className={styles.placeDetail}>
           <span>{place.address}</span>
           {place.category && (
-            <span className={categoryTag}>{place.category}</span>
+            <span className={styles.categoryTag}>{place.category}</span>
           )}
         </div>
       </div>
 
-      <div className={dateTimeInfo}>
-        <div className={dateTimeItem}>
+      <div className={styles.dateTimeInfo}>
+        <div className={styles.dateTimeItem}>
           <svg
-            className={icon}
+            className={styles.icon}
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -114,9 +97,9 @@ export function AppointmentCard({ appointment, onEdit }: AppointmentCardProps) {
           </svg>
           <span>{formatDate(startAt)}</span>
         </div>
-        <div className={dateTimeItem}>
+        <div className={styles.dateTimeItem}>
           <svg
-            className={icon}
+            className={styles.icon}
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -128,12 +111,12 @@ export function AppointmentCard({ appointment, onEdit }: AppointmentCardProps) {
         </div>
       </div>
 
-      <div className={cardFooter}>
-        <div className={participantInfo}>
-          {isMember && <span className={meBadge}>me</span>}
-          <span className={hostName}>{displayName}</span>
+      <div className={styles.cardFooter}>
+        <div className={styles.participantInfo}>
+          {isMember && <span className={styles.meBadge}>me</span>}
+          <span className={styles.hostName}>{displayName}</span>
         </div>
-        <span className={memberCount}>{count}명 참여</span>
+        <span className={styles.memberCount}>{count}명 참여</span>
       </div>
     </div>
   );

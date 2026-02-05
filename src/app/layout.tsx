@@ -4,6 +4,7 @@ import '@/styles/globals.css';
 import localFont from 'next/font/local';
 import { Toaster } from 'react-hot-toast';
 
+import Providers from '@/app/providers';
 import { KakaoMapPreload } from '@/components/kakao/KakaoMapPreload';
 
 import type { Metadata } from 'next';
@@ -49,9 +50,11 @@ export default function RootLayout({
           }}
         />
         <KakaoMapPreload />
-        <div className={appShell}>
-          <div className={appFrame}>{children}</div>
-        </div>
+        <Providers>
+          <div className={appShell}>
+            <div className={appFrame}>{children}</div>
+          </div>
+        </Providers>
       </body>
     </html>
   );

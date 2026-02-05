@@ -1,13 +1,13 @@
 'use client';
 
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 
 import type { GroupSummary } from '@/actions/group';
 
 type CreateAppointmentContextValue = {
   groups: GroupSummary[];
-  currentGroupId: string | null;
-  setCurrentGroupId: React.Dispatch<React.SetStateAction<string | null>>;
+  initialGroupId: string | null;
+  isLoading: boolean;
 };
 
 const CreateAppointmentContext =
@@ -22,24 +22,21 @@ export function useCreateAppointmentContext() {
 }
 
 interface CreateAppointmentProviderProps {
-  initialGroups: GroupSummary[];
+  groups: GroupSummary[];
   initialGroupId: string | null;
+  isLoading: boolean;
   children: React.ReactNode;
 }
 
 export function CreateAppointmentProvider({
-  initialGroups,
+  groups,
   initialGroupId,
+  isLoading,
   children,
 }: CreateAppointmentProviderProps) {
-  const [groups] = useState<GroupSummary[]>(initialGroups);
-  const [currentGroupId, setCurrentGroupId] = useState<string | null>(
-    initialGroupId ?? initialGroups[0]?.groupId ?? null,
-  );
-
   const value = useMemo(
-    () => ({ groups, currentGroupId, setCurrentGroupId }),
-    [groups, currentGroupId],
+    () => ({ groups, initialGroupId, isLoading }),
+    [groups, initialGroupId, isLoading],
   );
 
   return (

@@ -2,10 +2,17 @@ import { style } from '@vanilla-extract/css';
 
 import { vars } from '@/styles/theme.css';
 
+export const container = style({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+});
+
 export const stepTitle = style({
   fontSize: vars.fontSize.instruction,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.text,
+  marginBottom: '16px',
 });
 
 export const summaryCard = style({
@@ -15,14 +22,13 @@ export const summaryCard = style({
   padding: '16px',
   display: 'flex',
   flexDirection: 'column',
-  gap: '8px',
 });
 
 export const summaryRow = style({
   display: 'flex',
-  gap: '8px',
   fontSize: vars.fontSize.subText,
   color: vars.color.subText,
+  gap: '4px',
 });
 
 export const summaryValue = style({
@@ -31,7 +37,6 @@ export const summaryValue = style({
 });
 
 export const mapWrapper = style({
-  marginTop: '16px',
   marginBottom: '16px',
 });
 

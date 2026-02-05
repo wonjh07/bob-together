@@ -6,7 +6,7 @@ import {
   inputFieldError,
   caption,
   successCaption,
-} from './input.css';
+} from './FormInput.css';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;

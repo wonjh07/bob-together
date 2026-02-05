@@ -13,6 +13,7 @@ export interface UserData {
   email?: string;
   name?: string;
   nickname?: string;
+  profileImage?: string;
 }
 
 export type GetUserDataResult = ActionResult<UserData, AuthErrorCode>;
@@ -32,12 +33,21 @@ export async function getUserData(): Promise<GetUserDataResult> {
     }
 
     // Extract name, nickname from user_metadata
+    const profileImage =
+      data.user.user_metadata?.profileImage ??
+      data.user.user_metadata?.avatar_url ??
+      null;
+
     const user: UserData = {
       id: data.user.id,
       email: data.user.email,
       name: data.user.user_metadata?.name,
       nickname: data.user.user_metadata?.nickname,
     };
+
+    if (profileImage) {
+      user.profileImage = profileImage;
+    }
 
     return { ok: true, data: user };
   } catch (err) {

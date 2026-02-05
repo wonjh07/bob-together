@@ -1,5 +1,5 @@
 import GroupSearchCard from './GroupSearchCard';
-import { list } from './GroupSearchResults.css';
+import * as styles from './GroupSearchResults.css';
 
 const dummyGroups = [
   {
@@ -20,7 +20,7 @@ const dummyGroups = [
 
 export default function GroupSearchResults() {
   return (
-    <div className={list}>
+    <div className={styles.list}>
       {dummyGroups.map((group) => (
         <GroupSearchCard key={group.id} {...group} />
       ))}

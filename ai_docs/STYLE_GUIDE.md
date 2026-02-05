@@ -15,6 +15,10 @@
 - Component styles must live in a same-name `*.css.ts` file.
 - Example: `MyCard.tsx` -> `MyCard.css.ts`.
 
+## Styling Imports
+- Prefer `import * as styles from './Component.css'` and use `styles.xxx`.
+- Avoid destructured style imports for consistency.
+
 ## Rules By Example
 
 ### Vanilla Extract

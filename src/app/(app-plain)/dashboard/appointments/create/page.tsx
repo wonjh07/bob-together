@@ -1,11 +1,15 @@
-import AppointmentCreateClient from './AppointmentCreateClient';
+import { getSelectedGroupIdFromCookies } from '@/libs/server/groupSelection';
+
+import MultiStepFormClient from './MultiStepFormClient';
 import { page, panel } from './page.css';
 
-export default function AppointmentCreatePage() {
+export default async function AppointmentCreatePage() {
+  const initialGroupId = getSelectedGroupIdFromCookies() ?? null;
+
   return (
     <div className={page}>
       <div className={panel}>
-        <AppointmentCreateClient />
+        <MultiStepFormClient initialGroupId={initialGroupId} />
       </div>
     </div>
   );

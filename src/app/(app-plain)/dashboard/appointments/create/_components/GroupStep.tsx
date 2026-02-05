@@ -1,65 +1,93 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
-import {
-  container,
-  title,
-  dropdown,
-  dropdownButton,
-  dropdownMenu,
-  dropdownItem,
-  dropdownItemActive,
-  buttonRow,
-  nextButton,
-  helperText,
-} from './GroupStep.css';
+import { setSelectedGroupAction } from '@/actions/groupSelection';
+import { useCreateAppointmentContext } from '@/provider/create-appointment-context';
 
-import type { GroupSummary } from '@/actions/group';
+import * as styles from './GroupStep.css';
+
+import type { CreateAppointmentForm } from '../types';
+import NextButton from './ui/NextButton';
 
 type GroupStepProps = {
-  groups: GroupSummary[];
-  currentGroupId: string | null;
-  currentGroupName: string;
-  errorMessage: string;
-  onSelectGroup: (groupId: string) => void;
   onNext: () => void;
 };
 
-export function GroupStep({
-  groups,
-  currentGroupId,
-  currentGroupName,
-  errorMessage,
-  onSelectGroup,
-  onNext,
-}: GroupStepProps) {
+export function GroupStep({ onNext }: GroupStepProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { groups, initialGroupId, isLoading } = useCreateAppointmentContext();
+  const {
+    setValue,
+    watch,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = useFormContext<CreateAppointmentForm>();
+  const groupId = watch('groupId');
+
+  const currentGroupName = isLoading
+    ? '그룹 불러오는 중...'
+    : groups.length === 0
+      ? '가입한 그룹이 없습니다.'
+      : (groups.find((group) => group.groupId === groupId)?.name ??
+        '그룹 선택');
+
+  const handleSelectGroup = (groupId: string) => {
+    setValue('groupId', groupId, { shouldDirty: true });
+    clearErrors('groupId');
+    void setSelectedGroupAction(groupId);
+  };
+
+  useEffect(() => {
+    if (groupId) return;
+    if (
+      initialGroupId &&
+      groups.some((group) => group.groupId === initialGroupId)
+    ) {
+      setValue('groupId', initialGroupId, { shouldDirty: false });
+      return;
+    }
+    if (groups[0]) {
+      setValue('groupId', groups[0].groupId, { shouldDirty: false });
+    }
+  }, [groupId, groups, initialGroupId, setValue]);
+
+  const handleNext = () => {
+    if (!groupId) {
+      setError('groupId', { message: '그룹을 선택해주세요.' });
+      return;
+    }
+    clearErrors('groupId');
+    onNext();
+  };
 
   return (
-    <div className={container}>
-      <div className={title}>어떤 그룹에 약속을 만들까요?</div>
-      <div className={dropdown}>
+    <div className={styles.container}>
+      <NextButton handleNext={handleNext} />
+      <div className={styles.title}>어떤 그룹에 약속을 만들까요?</div>
+      <div className={styles.dropdown}>
         <button
           type="button"
-          className={dropdownButton}
+          className={styles.dropdownButton}
           onClick={() => setIsOpen((prev) => !prev)}>
           {currentGroupName}
           <span>▼</span>
         </button>
         {isOpen && (
-          <div className={dropdownMenu}>
+          <div className={styles.dropdownMenu}>
             {groups.map((group) => {
-              const isActive = group.groupId === currentGroupId;
+              const isActive = group.groupId === groupId;
               return (
                 <button
                   key={group.groupId}
                   type="button"
-                  className={`${dropdownItem} ${
-                    isActive ? dropdownItemActive : ''
+                  className={`${styles.dropdownItem} ${
+                    isActive ? styles.dropdownItemActive : ''
                   }`}
                   onClick={() => {
-                    onSelectGroup(group.groupId);
+                    handleSelectGroup(group.groupId);
                     setIsOpen(false);
                   }}>
                   {group.name}
@@ -69,11 +97,13 @@ export function GroupStep({
           </div>
         )}
       </div>
-      <div className={helperText}>{errorMessage}</div>
-      <div className={buttonRow}>
-        <button type="button" className={nextButton} onClick={onNext}>
-          다음
-        </button>
+      <div className={styles.helperText}>
+        {errors.groupId?.message?.toString() ??
+          (isLoading
+            ? '그룹을 불러오고 있어요.'
+            : groups.length === 0
+              ? '가입한 그룹이 없습니다.'
+              : '')}
       </div>
     </div>
   );

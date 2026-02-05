@@ -1,115 +1,114 @@
+import { useEffect, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
+import { useCurrentLocation } from '@/hooks/useCurrentLocation';
+import { usePlaceSearch } from '@/hooks/usePlaceSearch';
 
-import {
-  emptyResult,
-  helperText,
-  inputLabel,
-  locationButton,
-  locationError,
-  locationHint,
-  locationInfo,
-  locationRow,
-  locationTitle,
-  mapWrapper,
-  primaryButton,
-  resultAddress,
-  resultInfo,
-  resultItem,
-  resultName,
-  results,
-  searchButton,
-  searchRow,
-  section,
-  selectedTag,
-  stepTitle,
-  underlineInput,
-} from './PlaceStep.css';
-import { container } from '../page.css';
+import * as styles from './PlaceStep.css';
 
-import type { PlaceSummary } from '@/actions/place';
-import type { FormEvent } from 'react';
+import type { CreateAppointmentForm } from '../types';
+import NextButton from './ui/NextButton';
 
 interface PlaceStepProps {
-  placeQuery: string;
-  placeResults: PlaceSummary[];
-  selectedPlace: PlaceSummary | null;
-  isPlaceSearched: boolean;
-  errorMessage: string;
-  locationMessage: string;
-  locationErrorMessage: string;
-  isLocating: boolean;
-  hasLocation: boolean;
-  onQueryChange: (value: string) => void;
-  onSearchSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onSelectPlace: (place: PlaceSummary) => void;
-  onRequestLocation: () => void;
   onNext: () => void;
 }
 
-export function PlaceStep({
-  placeQuery,
-  placeResults,
-  selectedPlace,
-  isPlaceSearched,
-  errorMessage,
-  locationMessage,
-  locationErrorMessage,
-  isLocating,
-  hasLocation,
-  onQueryChange,
-  onSearchSubmit,
-  onSelectPlace,
-  onRequestLocation,
-  onNext,
-}: PlaceStepProps) {
+export function PlaceStep({ onNext }: PlaceStepProps) {
+  const [errorMessage, setErrorMessage] = useState('');
+  const {
+    setValue,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = useFormContext<CreateAppointmentForm>();
+  const { currentLocation, isLocating, locationError, requestLocation } =
+    useCurrentLocation();
+
+  const {
+    placeQuery,
+    setPlaceQuery,
+    placeResults,
+    selectedPlace,
+    setSelectedPlace,
+    isPlaceSearched,
+    setIsPlaceSearched,
+    handlePlaceSearchSubmit,
+  } = usePlaceSearch({
+    currentLocation,
+    setErrorMessage,
+  });
+
+  const locationMessage = currentLocation
+    ? '현재 위치 기준으로 가까운 순으로 검색됩니다.'
+    : '현재 위치를 허용하면 가까운 순으로 정렬됩니다.';
+
+  const hasLocation = Boolean(currentLocation);
   const locationButtonLabel = isLocating
     ? '위치 확인 중...'
     : hasLocation
       ? '위치 갱신'
       : '허용하기';
 
+  const handleNext = () => {
+    if (!selectedPlace) {
+      setError('place', { message: '장소를 선택해주세요.' });
+      return;
+    }
+    clearErrors('place');
+    onNext();
+  };
+
+  useEffect(() => {
+    if (!selectedPlace) return;
+    setValue('place', selectedPlace, { shouldDirty: true });
+    clearErrors('place');
+  }, [selectedPlace, setValue, clearErrors]);
+
   return (
-    <div className={container}>
-      <button className={primaryButton} onClick={onNext}>
-        다음
-      </button>
-      <div className={stepTitle}>약속 장소를 검색해주세요</div>
-      <div className={locationRow}>
-        <div className={locationInfo}>
-          <div className={locationTitle}>현재 위치 사용</div>
-          <div className={locationHint}>{locationMessage}</div>
-          {locationErrorMessage && (
-            <div className={locationError}>{locationErrorMessage}</div>
-          )}
+    <div className={styles.container}>
+      <NextButton handleNext={handleNext} />
+      <div className={styles.stepTitle}>약속 장소를 검색해주세요</div>
+      <div className={styles.locationRow}>
+        <div className={styles.locationInfo}>
+          <div className={styles.locationTitle}>현재 위치 사용</div>
         </div>
+        {locationError && (
+          <div className={styles.locationError}>{locationError}</div>
+        )}
         <button
           type="button"
-          className={locationButton}
-          onClick={onRequestLocation}
+          className={styles.locationButton}
+          onClick={requestLocation}
           disabled={isLocating}>
           {locationButtonLabel}
         </button>
       </div>
-      <div className={section}>
-        <label className={inputLabel} htmlFor="appointment-place">
+      <div className={styles.section}>
+        <label className={styles.inputLabel} htmlFor="appointment-place">
           장소 검색
         </label>
-        <form className={searchRow} onSubmit={onSearchSubmit}>
+        <form className={styles.searchRow} onSubmit={handlePlaceSearchSubmit}>
           <input
             id="appointment-place"
-            className={underlineInput}
+            className={styles.underlineInput}
             value={placeQuery}
-            onChange={(event) => onQueryChange(event.target.value)}
+            onChange={(event) => {
+              setPlaceQuery(event.target.value);
+              setIsPlaceSearched(false);
+            }}
             placeholder="장소를 검색하세요"
           />
-          <button type="submit" className={searchButton}>
+          <button type="submit" className={styles.searchButton}>
             검색
           </button>
         </form>
       </div>
-      <div className={helperText}>{errorMessage}</div>
+      <div className={styles.helperText}>
+        {errorMessage || errors.place?.message?.toString() || ''}
+      </div>
       {selectedPlace && (
-        <div className={mapWrapper}>
+        <div className={styles.mapWrapper}>
           <KakaoMapPreview
             latitude={selectedPlace.latitude}
             longitude={selectedPlace.longitude}
@@ -119,7 +118,7 @@ export function PlaceStep({
         </div>
       )}
 
-      <div className={results}>
+      <div className={styles.results}>
         {placeResults.map((place) => {
           const isSelected = selectedPlace?.kakaoId === place.kakaoId;
           const address = place.roadAddress || place.address;
@@ -127,19 +126,21 @@ export function PlaceStep({
             <div key={place.kakaoId}>
               <button
                 type="button"
-                className={resultItem}
-                onClick={() => onSelectPlace(place)}>
-                <div className={resultInfo}>
-                  <div className={resultName}>{place.name}</div>
-                  <div className={resultAddress}>{address}</div>
+                className={styles.resultItem}
+                onClick={() => setSelectedPlace(place)}>
+                <div className={styles.resultInfo}>
+                  <div className={styles.resultName}>{place.name}</div>
+                  <div className={styles.resultAddress}>{address}</div>
                 </div>
-                {isSelected && <span className={selectedTag}>선택됨</span>}
+                {isSelected && (
+                  <span className={styles.selectedTag}>선택됨</span>
+                )}
               </button>
             </div>
           );
         })}
         {isPlaceSearched && placeResults.length === 0 && (
-          <div className={emptyResult}>검색 결과가 없습니다.</div>
+          <div className={styles.emptyResult}>검색 결과가 없습니다.</div>
         )}
       </div>
     </div>

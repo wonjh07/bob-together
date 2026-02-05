@@ -11,6 +11,34 @@
 - Added group search result card/list components with dummy data on the search page.
 - Added a title line to the group search result cards.
 - Wired the search type toggle to switch between appointment and group results via a client wrapper.
+- Added TanStack Query provider and migrated the appointment list to useInfiniteQuery (client-only).
+- Fixed React Query type errors and lint ordering warnings after the migration.
+- Added SSR prefetch + HydrationBoundary for the dashboard appointment list.
+-- Reverted server QueryClient util extraction (inlined again in dashboard page).
+- Added shared appointment query keys utility for SSR/client consistency.
+- Documented always considering type-check/lint in AGENTS.md and fixed query key typing.
+- Extracted client QueryClient defaults into a utility and wired Providers to use it.
+- Shared appointment list query options between SSR prefetch and client list.
+- Added group query keys and group query options utilities.
+- Switched dashboard group dropdown to useQuery and slimmed GroupProvider to selection state only.
+- Prefetched group list data on the dashboard to hydrate the group dropdown.
+- Switched create appointment flow to use group queries via the client component and synced provider state.
+- Standardized create appointment step components to use `import * as styles` and documented the rule in STYLE_GUIDE.
+- Refactored appointment creation to store draft data in provider and move step-specific state/handlers into each step.
+- Migrated appointment create flow to react-hook-form with FormProvider/useFormContext and step-level validation.
+- Centralized appointment schema usage by reusing `src/schemas/appointment.ts` in the create form types.
+- Added Zod schema validation for appointment create form and wired zodResolver.
+- Standardized dashboard css imports to `import * as styles` within `(app)/dashboard`.
+- Inlined create-appointment group loading into the create page and removed the route layout wrapper.
+- Renamed the appointment create client component to `MultiStepFormClient`.
+- Split appointment create schema into a base schema and derived UI/server schemas.
+- Moved time-order validation to UI-only schema and left server checks in action logic.
+- Removed the duplicate PlaceStep next button to prevent skipping validation.
+- Added loading/empty-state handling for group selection in the create flow.
+- Limited ConfirmStep subscriptions to needed fields with useWatch.
+- Added profile summary and quick-link components to the dashboard profile page.
+- Set appointment create default date/time to now and +1 hour.
+- Moved default date/time helper to `src/utils` and ensured DateTimeStep applies defaults.
 
 ## 2026-02-03
 - Added dashboard appointment list with GroupContext for shared group selection state.

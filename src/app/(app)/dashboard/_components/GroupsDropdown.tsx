@@ -2,15 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-import {
-  groupDropdown,
-  groupButton,
-  dropdownMenu,
-  dropdownItem,
-  dropdownItemActive,
-  dropdownEmpty,
-  dropdownMeta,
-} from './GroupsDropdown.css';
+import * as styles from './GroupsDropdown.css';
 
 import type { GroupSummary } from '@/actions/group';
 
@@ -60,18 +52,20 @@ export function GroupDropdown({
   };
 
   return (
-    <div className={groupDropdown}>
+    <div className={styles.groupDropdown}>
       <button
         ref={groupButtonRef}
-        className={groupButton}
+        className={styles.groupButton}
         onClick={() => onOpenChange(!isOpen)}>
         {currentGroupName} <span>▼</span>
       </button>
       {isOpen && (
-        <div ref={dropdownRef} className={dropdownMenu}>
-          {isLoading && <div className={dropdownEmpty}>불러오는 중...</div>}
+        <div ref={dropdownRef} className={styles.dropdownMenu}>
+          {isLoading && (
+            <div className={styles.dropdownEmpty}>불러오는 중...</div>
+          )}
           {!isLoading && groups.length === 0 && (
-            <div className={dropdownEmpty}>가입한 그룹이 없습니다.</div>
+            <div className={styles.dropdownEmpty}>가입한 그룹이 없습니다.</div>
           )}
           {!isLoading &&
             groups.map((group) => {
@@ -80,12 +74,11 @@ export function GroupDropdown({
                 <button
                   key={group.groupId}
                   type="button"
-                  className={`${dropdownItem} ${
-                    isActive ? dropdownItemActive : ''
+                  className={`${styles.dropdownItem} ${
+                    isActive ? styles.dropdownItemActive : ''
                   }`}
                   onClick={() => handleGroupClick(group.groupId)}>
                   <span>{group.name}</span>
-                  {isActive && <span className={dropdownMeta}>선택됨</span>}
                 </button>
               );
             })}

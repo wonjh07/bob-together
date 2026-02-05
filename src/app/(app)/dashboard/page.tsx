@@ -1,12 +1,15 @@
+import { HydrationBoundary, QueryClient, dehydrate } from '@tanstack/react-query';
 import { redirect } from 'next/navigation';
 
 import { getMyGroupsAction } from '@/actions/group';
+import { createAppointmentListQueryOptions } from '@/libs/query/appointmentQueries';
+import { createMyGroupsQueryOptions } from '@/libs/query/groupQueries';
 import { getSelectedGroupIdFromCookies } from '@/libs/server/groupSelection';
 import { GroupProvider } from '@/provider/group-provider';
 
 import { AppointmentList } from './_components/AppointmentList';
 import { DashboardHeader } from './_components/DashboardHeader';
-import { dashboardContainer } from './page.css';
+import * as styles from './page.css';
 
 export default async function DashboardPage() {
   const groupResult = await getMyGroupsAction();
@@ -25,11 +28,23 @@ export default async function DashboardPage() {
         ? groups[0].groupId
         : null;
 
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery(createMyGroupsQueryOptions());
+
+  if (initialGroupId) {
+    await queryClient.prefetchInfiniteQuery(
+      createAppointmentListQueryOptions(initialGroupId, 'all', 'all'),
+    );
+  }
+
   return (
-    <GroupProvider initialGroups={groups} initialGroupId={initialGroupId}>
-      <div className={dashboardContainer}>
+    <GroupProvider initialGroupId={initialGroupId}>
+      <div className={styles.dashboardContainer}>
         <DashboardHeader />
-        <AppointmentList />
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <AppointmentList />
+        </HydrationBoundary>
       </div>
     </GroupProvider>
   );

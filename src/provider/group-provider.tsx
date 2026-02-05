@@ -1,39 +1,24 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 import { setSelectedGroupAction } from '@/actions/groupSelection';
 
-import type { GroupSummary } from '@/actions/group';
-
 interface GroupContextValue {
-  groups: GroupSummary[];
   currentGroupId: string | null;
   setCurrentGroupId: (id: string | null) => void;
-  currentGroupName: string;
 }
 
 const GroupContext = createContext<GroupContextValue | null>(null);
 
 interface GroupProviderProps {
   children: ReactNode;
-  initialGroups: GroupSummary[];
   initialGroupId: string | null;
 }
 
-export function GroupProvider({
-  children,
-  initialGroups,
-  initialGroupId,
-}: GroupProviderProps) {
+export function GroupProvider({ children, initialGroupId }: GroupProviderProps) {
   const [currentGroupId, setCurrentGroupIdState] = useState<string | null>(
-    initialGroupId ?? initialGroups[0]?.groupId ?? null,
+    initialGroupId ?? null,
   );
 
   const setCurrentGroupId = (id: string | null) => {
@@ -41,25 +26,7 @@ export function GroupProvider({
     void setSelectedGroupAction(id);
   };
 
-  const currentGroupName = useMemo(() => {
-    if (!currentGroupId) {
-      return initialGroups.length > 0 ? initialGroups[0].name : '그룹 선택';
-    }
-    const selected = initialGroups.find(
-      (group) => group.groupId === currentGroupId,
-    );
-    return selected?.name || '그룹 선택';
-  }, [initialGroups, currentGroupId]);
-
-  const value = useMemo(
-    () => ({
-      groups: initialGroups,
-      currentGroupId,
-      setCurrentGroupId,
-      currentGroupName,
-    }),
-    [initialGroups, currentGroupId, currentGroupName],
-  );
+  const value = { currentGroupId, setCurrentGroupId };
 
   return (
     <GroupContext.Provider value={value}>{children}</GroupContext.Provider>

@@ -29,6 +29,15 @@
 - When making changes, always base work on the current file state (users may edit before requesting)
 - When an image is attached for a UI request, treat it as a component implementation request and reference `ai_docs/DESIGN_SCAN.md`
 - For image-based UI work, list all visible text first and use that list to ensure no text is missed in implementation
+- Always consider type-check and lint requirements while writing code
+
+### Design Guardrails
+- Own only the state this component must manage.
+- Prefer derived state over stored state.
+- Eliminate duplicated state across components.
+- Group related props (e.g., `formState`, `handlers`) to reduce prop drilling.
+- Use Provider only when shared state is truly required; prefer local state otherwise.
+- Separate UI rendering concerns from data-loading concerns.
 
 ### Collaboration Workflow
 - When a request is complex, analyze first, then provide a short plan before coding

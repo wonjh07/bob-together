@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
 import { loginAction } from '@/actions/auth';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/FormInput';
 import { loginSchema } from '@/schemas/auth';
 
 import { loginForm, linkContainer, submitButton } from './page.css';

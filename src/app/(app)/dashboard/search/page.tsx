@@ -1,9 +1,9 @@
 import SearchResultsClient from './_components/SearchResultsClient';
-import { page } from './page.css';
+import * as styles from './page.css';
 
 export default function SearchPage() {
   return (
-    <div className={page}>
+    <div className={styles.page}>
       <SearchResultsClient />
     </div>
   );

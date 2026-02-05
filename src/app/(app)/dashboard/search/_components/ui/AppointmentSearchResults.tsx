@@ -1,5 +1,5 @@
 import AppointmentSearchCard from './AppointmentSearchCard';
-import { list } from './AppointmentSearchResults.css';
+import * as styles from './AppointmentSearchResults.css';
 
 const dummyResults = [
   {
@@ -22,7 +22,7 @@ const dummyResults = [
 
 export default function AppointmentSearchResults() {
   return (
-    <div className={list}>
+    <div className={styles.list}>
       {dummyResults.map((result) => (
         <AppointmentSearchCard key={result.id} {...result} />
       ))}

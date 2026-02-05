@@ -2,16 +2,23 @@ import { style } from '@vanilla-extract/css';
 
 import { vars } from '@/styles/theme.css';
 
+export const container = style({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '16px',
+});
+
 export const headerRow = style({
   display: 'flex',
   alignItems: 'center',
-  gap: '12px',
 });
 
 export const stepTitle = style({
   fontSize: vars.fontSize.instruction,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.text,
+  marginBottom: '16px',
 });
 
 export const summaryCard = style({
@@ -22,6 +29,7 @@ export const summaryCard = style({
   display: 'flex',
   flexDirection: 'column',
   gap: '8px',
+  marginBottom: '16px',
 });
 
 export const summaryRow = style({

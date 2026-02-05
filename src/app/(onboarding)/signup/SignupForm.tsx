@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { signupAction } from '@/actions/auth';
 import { SubmitButton } from '@/components/ui/Buttons';
 import FormError from '@/components/ui/FormError';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/FormInput';
 import { useEmailValidation } from '@/hooks/useEmailValidation';
 import { signupSchema } from '@/schemas/auth';
 

@@ -2,16 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 
-import {
-  filterContainer,
-  filterButton,
-  filterButtonActive,
-  dropdownMenu,
-  dropdownItem,
-  dropdownItemSelected,
-  chevronIcon,
-  chevronIconOpen,
-} from './PeriodFilter.css';
+import * as styles from './PeriodFilter.css';
 
 import type { PeriodFilter as PeriodFilterType } from '@/actions/appointment';
 
@@ -54,14 +45,18 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
   };
 
   return (
-    <div className={filterContainer} ref={containerRef}>
+    <div className={styles.filterContainer} ref={containerRef}>
       <button
         type="button"
-        className={`${filterButton} ${isOpen ? filterButtonActive : ''}`}
+        className={`${styles.filterButton} ${
+          isOpen ? styles.filterButtonActive : ''
+        }`}
         onClick={() => setIsOpen(!isOpen)}>
         <span>{selectedLabel}</span>
         <svg
-          className={`${chevronIcon} ${isOpen ? chevronIconOpen : ''}`}
+          className={`${styles.chevronIcon} ${
+            isOpen ? styles.chevronIconOpen : ''
+          }`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -71,12 +66,12 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
       </button>
 
       {isOpen && (
-        <div className={dropdownMenu}>
+        <div className={styles.dropdownMenu}>
           {PERIOD_OPTIONS.map((option) => (
             <div
               key={option.value}
-              className={`${dropdownItem} ${
-                value === option.value ? dropdownItemSelected : ''
+              className={`${styles.dropdownItem} ${
+                value === option.value ? styles.dropdownItemSelected : ''
               }`}
               onClick={() => handleSelect(option.value)}>
               {option.label}

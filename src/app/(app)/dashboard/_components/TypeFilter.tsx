@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  filterContainer,
-  chipButton,
-  chipButtonActive,
-} from './TypeFilter.css';
+import * as styles from './TypeFilter.css';
 
 import type { TypeFilter as TypeFilterType } from '@/actions/appointment';
 
@@ -21,13 +17,13 @@ const TYPE_OPTIONS: { value: TypeFilterType; label: string }[] = [
 
 export function TypeFilter({ value, onChange }: TypeFilterProps) {
   return (
-    <div className={filterContainer}>
+    <div className={styles.filterContainer}>
       {TYPE_OPTIONS.map((option) => (
         <button
           key={option.value}
           type="button"
-          className={`${chipButton} ${
-            value === option.value ? chipButtonActive : ''
+          className={`${styles.chipButton} ${
+            value === option.value ? styles.chipButtonActive : ''
           }`}
           onClick={() => onChange(option.value)}>
           {option.label}
