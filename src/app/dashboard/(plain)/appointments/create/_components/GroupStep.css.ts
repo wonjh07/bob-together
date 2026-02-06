@@ -54,6 +54,9 @@ export const dropdownItem = style({
   padding: '12px 16px',
   cursor: 'pointer',
   color: vars.color.text,
+  ':hover': {
+    backgroundColor: vars.color.stroke,
+  },
 });
 
 export const dropdownItemActive = style({
@@ -66,4 +69,3 @@ export const helperText = style({
   fontSize: vars.fontSize.text,
   color: vars.color.alert,
 });
-

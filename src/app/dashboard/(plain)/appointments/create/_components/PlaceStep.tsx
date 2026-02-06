@@ -107,7 +107,7 @@ export function PlaceStep({ onNext }: PlaceStepProps) {
       <div className={styles.helperText}>
         {errorMessage || errors.place?.message?.toString() || ''}
       </div>
-      {selectedPlace && (
+      {/* {selectedPlace && (
         <div className={styles.mapWrapper}>
           <KakaoMapPreview
             latitude={selectedPlace.latitude}
@@ -116,7 +116,7 @@ export function PlaceStep({ onNext }: PlaceStepProps) {
             address={selectedPlace.roadAddress || selectedPlace.address}
           />
         </div>
-      )}
+      )} */}
 
       <div className={styles.results}>
         {placeResults.map((place) => {

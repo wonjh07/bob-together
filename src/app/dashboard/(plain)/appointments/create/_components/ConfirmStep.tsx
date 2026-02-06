@@ -3,7 +3,7 @@ import { useFormContext, useWatch } from 'react-hook-form';
 
 import { createAppointmentAction } from '@/actions/appointment';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
-import { useCreateAppointmentContext } from '@/provider/create-appointment-context';
+import { useCreateAppointmentContext } from '@/app/dashboard/(plain)/appointments/create/providers';
 
 import * as styles from './ConfirmStep.css';
 
@@ -82,6 +82,7 @@ export function ConfirmStep({ onCreated }: ConfirmStepProps) {
             longitude={place.longitude}
             title={place.name}
             address={place.roadAddress || place.address}
+            isInteractive={false}
           />
         )}
       </div>

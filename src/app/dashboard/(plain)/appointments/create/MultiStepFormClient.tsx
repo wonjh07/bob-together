@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { createMyGroupsQueryOptions } from '@/libs/query/groupQueries';
-import { CreateAppointmentProvider } from '@/provider/create-appointment-context';
+import { CreateAppointmentProvider } from '@/app/dashboard/(plain)/appointments/create/providers';
 import { getDefaultDateTimeValues } from '@/utils/dateTime';
 
 import { CompleteStep } from './_components/CompleteStep';

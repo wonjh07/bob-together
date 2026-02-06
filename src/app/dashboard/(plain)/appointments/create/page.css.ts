@@ -19,21 +19,3 @@ export const panel = style({
   alignItems: 'center',
   overflowY: 'scroll',
 });
-
-export const container = style({
-  width: '100%',
-  maxWidth: '480px',
-  display: 'flex',
-  flexDirection: 'column',
-  padding: '24px',
-  gap: '24px',
-});
-
-export const headerRow = style({
-  width: '100%',
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  height: '60px',
-  padding: '0 16px',
-});

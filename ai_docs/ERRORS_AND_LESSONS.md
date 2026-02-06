@@ -1,60 +1,37 @@
 # ERRORS_AND_LESSONS
 
-## Mistake
-- Server Action 내부에서 client 훅/상태 사용
+## 이슈제목
+- Context:
+- Cause:
+- Fix:
+- Lesson:
 
-## Lesson
-- Server/Client boundary를 명확히 구분
+## Server Action에서 client 훅 사용
+- Context: Server Action 내부 로직
+- Cause: client 훅/상태 사용
+- Fix: Server Action은 side-effect만 담당하고 React 훅을 제거한다
+- Lesson: Server/Client boundary를 명확히 구분한다
 
-## Preventive Rule
-- Server Action은 side-effect만 담당하고 React 훅은 사용하지 않는다.
+## `window.kakao.maps.LatLng is not a constructor`
+- Context: Kakao map 초기화
+- Cause: SDK load 완료 전에 LatLng 호출
+- Fix: `kakao.maps.load` 콜백 내부에서만 사용한다
+- Lesson: SDK 준비 완료 이후에만 API를 호출한다
 
+## `kakao-map-script-error` 또는 `kakao-map-timeout`
+- Context: Kakao SDK 로딩
+- Cause: JS 키/도메인 설정 문제
+- Fix: `NEXT_PUBLIC_KAKAO_MAP_APP_KEY`는 JS 키로 유지하고 웹 도메인을 등록한다
+- Lesson: 키/도메인 설정이 로딩 성공의 전제 조건이다
 
-## Mistake
-- `window.kakao.maps.LatLng is not a constructor`
+## `PostgREST 403 (error=42501)`
+- Context: Supabase RLS 접근
+- Cause: RLS 정책 누락
+- Fix: 정책 추가와 마이그레이션 후 `ai_docs/DB_RLS.md`를 갱신한다
+- Lesson: 정책 변경은 문서/마이그레이션과 함께 갱신한다
 
-## Lesson
-- Kakao SDK는 `kakao.maps.load` 완료 전에 사용할 수 없다.
-
-## Preventive Rule
-- SDK 호출은 `kakao.maps.load` 콜백 내부에서만 수행한다.
-
-
-## Mistake
-- `kakao-map-script-error` 또는 `kakao-map-timeout`
-
-## Lesson
-- JS 키/도메인 설정 문제로 SDK가 로드되지 않는다.
-
-## Preventive Rule
-- `NEXT_PUBLIC_KAKAO_MAP_APP_KEY`는 JS 키로 유지하고, 웹 도메인을 등록한다.
-
-
-## Mistake
-- `PostgREST 403 (error=42501)`
-
-## Lesson
-- RLS 정책이 누락되면 인증된 사용자도 접근할 수 없다.
-
-## Preventive Rule
-- 정책 추가 시 `ai_docs/DB_RLS.md`와 마이그레이션을 함께 갱신한다.
-
-
-## Mistake
-- `ERR_CONNECTION_REFUSED` on server action fetch
-
-## Lesson
-- 개발 서버가 죽었거나 실행되지 않았다.
-
-## Preventive Rule
-- server action 에러 발생 시 dev server 상태를 먼저 확인한다.
-
-
-## Mistake
-- `NextRouter was not mounted`
-
-## Lesson
-- App Router에서 `next/router`를 사용했다.
-
-## Preventive Rule
-- App Router에서는 `next/navigation`만 사용한다.
+## `NextRouter was not mounted`
+- Context: App Router 컴포넌트
+- Cause: `next/router` 사용
+- Fix: `next/navigation`으로 교체한다
+- Lesson: App Router에서는 `next/navigation`만 사용한다

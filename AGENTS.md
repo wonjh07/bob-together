@@ -1,8 +1,9 @@
 # AGENTS.md
 
 ## 📋 Table of Contents
-1. [Coding Rules](#-coding-rules) - 코드 작성 규칙
-2. [Debugging](#-debugging) - 문제 해결 방법
+1. [Coding Rules](#️-coding-rules)
+1. [Context Management](#context-management)
+2. [Debugging](#-debugging)
 
 ---
 
@@ -11,45 +12,34 @@
 ### Framework & Architecture
 - Always use local MCP `context7` first
 - Check official docs before assumptions
-- Parse versions from `package.json`
-- Prefer framework-native features
-- Justify any custom implementation
-- Read `ai_docs/INDEX.md` first and follow linked context docs before making changes
+- Check dependencies from `package.json`
+- Read `ai_docs/INDEX.md` first and selectively read task-related docs
 
-### Component Development
-- Try to Reuse `utils/`, `libs/`, `hooks/`, `provider/` 
-- Always consider reusable components
-- Never use inline styles
-- Make server components page using client components
-
-### Code Quality
+### Workflow (Must Do)
+- Complex requests: analyze and plan first
+- Before code changes: show before/after, justify, get approval, proceed to the next step
+- Always base work on the current file state (users may edit before requesting)
+- If user edits overlap with planned changes, confirm before proceeding
 - If unsure, ask before changing code
-- Write tests for new features
-- Follow existing patterns in codebase
-- When making changes, always base work on the current file state (users may edit before requesting)
-- When an image is attached for a UI request, treat it as a component implementation request and reference `ai_docs/DESIGN_SCAN.md`
-- For image-based UI work, list all visible text first and use that list to ensure no text is missed in implementation
-- Always consider type-check and lint requirements while writing code
-
-### Design Guardrails
-- Own only the state this component must manage.
-- Prefer derived state over stored state.
-- Eliminate duplicated state across components.
-- Group related props (e.g., `formState`, `handlers`) to reduce prop drilling.
-- Use Provider only when shared state is truly required; prefer local state otherwise.
-- Separate UI rendering concerns from data-loading concerns.
-
-### Collaboration Workflow
-- When a request is complex, analyze first, then provide a short plan before coding
-- Before any code changes, show the proposed before/after snippets, explain why the change is justified, and get approval
-- Apply changes only after approval, then proceed to the next step
 - After massive code changes, run `npm run type-check` and `npm run lint`, then report results (skip for `*.md`-only changes)
+- If a change involves structural/architectural decisions, record it in `ai_docs/DECISIONS.md`.
 
-### Context Management
+---
+
+## Context Management
+
+### Ai docs
 - Update `ai_docs/CHANGELOG_AI.md` and relevant `ai_docs/*.md` files when making material changes
 - If new AI docs are added, register them in `ai_docs/INDEX.md`
 - Keep `ai_docs` concise, factual, and free of secrets/keys
 - Use short sections with clear headings and bullet points
+
+### Recommended Docs by Task
+- Data/State: `ai_docs/DATA_STATE_STRATEGY.md`
+- Styling: `ai_docs/STYLE_GUIDE.md`
+- Image Parse: `ai_docs/DESIGN_SCAN.md`
+- Project Conventions: `ai_docs/PROJECT.md`
+- Server Actions: `ai_docs/ACTIONS.md`
 
 ---
 
@@ -61,3 +51,6 @@
 - Fix the cause, not the symptom
 - Avoid speculative fixes
 - Change one thing at a time
+
+### Documentation
+- After debugging, summarize the issue and fix in `ai_docs/ERRORS_AND_LESSONS.md`.

@@ -8,7 +8,7 @@
 - Loader: `src/libs/kakao/loadKakaoMapScript.ts`
 - Hook: `src/hooks/useKakaoMap.ts`
 - Preview component: `src/components/kakao/KakaoMapPreview.tsx`
-- Preload component: `src/app/(app)/components/KakaoMapPreload.tsx` (wired in app layout)
+- Preload component: `src/components/kakao/KakaoMapPreload.tsx` (wired in `src/app/layout.tsx`)
 
 ## Place Search (Server)
 - Action: `src/actions/place.ts`

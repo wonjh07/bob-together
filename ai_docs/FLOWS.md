@@ -2,40 +2,38 @@
 
 ## Group Flow
 
-### Routes
-- `/group`
-- `/group/join`
-- `/group/join/confirm`
-- `/group/join/complete`
-- `/group/create`
-- `/group/create/complete`
-- `/group/invitation`
-- `/group/invitation/complete`
+### Routes -> Files
+- `/group` -> `src/app/(onboarding)/group/page.tsx`
+- `/group/join` -> `src/app/(onboarding)/group/join/page.tsx`
+- `/group/join/confirm` -> `src/app/(onboarding)/group/join/confirm/page.tsx`
+- `/group/join/complete` -> `src/app/(onboarding)/group/join/complete/page.tsx`
+- `/group/create` -> `src/app/(onboarding)/group/create/page.tsx`
+- `/group/create/complete` -> `src/app/(onboarding)/group/create/complete/page.tsx`
+- `/group/invitation` -> `src/app/(onboarding)/group/invitation/page.tsx`
+- `/group/invitation/complete` -> `src/app/(onboarding)/group/invitation/complete/page.tsx`
 
 ### Shared Styles
 - `src/app/(onboarding)/group/shared.css.ts`
+
+### Actions/Rules
+- 상세는 `ai_docs/ACTIONS.md`, `ai_docs/ERRORS_AND_LESSONS.md` 참고
 
 ---
 
 ## Appointment Flow
 
-### Routes
-- `/dashboard`
-- `/dashboard/appointments/create`
-- `/dashboard/appointments/invitation`
-- `/dashboard/appointments/invitation/complete`
+### Routes -> Files
+- `/dashboard` -> `src/app/dashboard/(nav)/page.tsx`
+- `/dashboard/appointments/create` -> `src/app/dashboard/(plain)/appointments/create/page.tsx`
+- `/dashboard/appointments/invitation` -> `src/app/dashboard/(plain)/appointments/invitation/page.tsx`
+- `/dashboard/appointments/invitation/complete` -> `src/app/dashboard/(plain)/appointments/invitation/complete/page.tsx`
 
-### Entry Points
-- Dashboard list: `src/app/(app)/dashboard/page.tsx`
-- Appointment list UI: `src/app/(app)/dashboard/components/AppointmentList.tsx`
-- Create flow UI: `src/app/(app-plain)/dashboard/appointments/create/page.tsx`
-- Create flow layout: `src/app/(app-plain)/dashboard/appointments/create/layout.tsx`
+### Key UI Entry Points
+- Appointment list UI: `src/app/dashboard/_components/AppointmentList.tsx`
+- Create multi-step: `src/app/dashboard/(plain)/appointments/create/MultiStepFormClient.tsx`
 
 ### Schemas
 - `src/schemas/appointment.ts`
 
-### Create Flow Notes
-- Date/time split inputs
-- Place search via Kakao REST API
-- Optional current-location sorting (radius 5km)
-- Selected place shows map preview
+### External Integrations
+- Kakao Map/Place search: `ai_docs/KAKAO_INTEGRATION.md`

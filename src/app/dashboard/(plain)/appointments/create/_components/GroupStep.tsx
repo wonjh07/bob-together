@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { setSelectedGroupAction } from '@/actions/groupSelection';
-import { useCreateAppointmentContext } from '@/provider/create-appointment-context';
+import { useCreateAppointmentContext } from '@/app/dashboard/(plain)/appointments/create/providers';
 
 import * as styles from './GroupStep.css';
 
@@ -37,7 +37,6 @@ export function GroupStep({ onNext }: GroupStepProps) {
   const handleSelectGroup = (groupId: string) => {
     setValue('groupId', groupId, { shouldDirty: true });
     clearErrors('groupId');
-    void setSelectedGroupAction(groupId);
   };
 
   useEffect(() => {

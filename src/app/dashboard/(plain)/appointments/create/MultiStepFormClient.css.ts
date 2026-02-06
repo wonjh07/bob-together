@@ -26,4 +26,5 @@ export const formContainer = style({
   width: '100%',
   maxWidth: '480px',
   padding: '16px',
+  overflowY: 'scroll',
 });

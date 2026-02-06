@@ -1,6 +1,6 @@
 # Figma Component Image Scan Guide
 
-Using a Figma Component Image, build the component design.
+Use the image to implement the component UI in code (tsx + css.ts).
 
 ## Basic Rules
 
@@ -9,23 +9,19 @@ Using a Figma Component Image, build the component design.
 - Use design tokens in `styles/theme.css.ts`
 - Add tokens if it is needed
 
-### Analyze the Image considering with:
+### Analyze the image considering:
 
-- The image's pixel size means actual pixel from Original Figma Design
-- All color variables
-- Typography scale (font sizes, weights, line heights)
-- Spacing scale (using Tailwind's spacing conventions)
-- Border radius values
-- Shadow definitions
-- Breakpoints for responsive design
+- Treat the PNG as 1x unless the export scale is known
+- List all visible text first and use the list to verify no text is missed.
+- Spacing scale (use `ai_docs/STYLE_GUIDE.md` spacing rules)
 
 ## Workflow Steps
 
 ### 1. Initial Setup
 
-- Create a `{component name}.tsx` and `{component name}.css.ts`
+- Create `{component}.tsx` and `{component}.css.ts` in the feature folder where the UI belongs.
 
-### 2. Analyze Figma Design
+### 2. Analyze Design
 
 ### 3. Generate Component Specifications
 
@@ -40,7 +36,6 @@ Using a Figma Component Image, build the component design.
 
 - Interactive states (hover, active, focus, disabled)
 - Animations and transitions
-- Resporsive behavior and breakpoints
 - Accessibility requirements (ARIA labels, keyboard navigation)
 - Spacing and alignment rules
 
@@ -53,4 +48,3 @@ Using a Figma Component Image, build the component design.
 - Add proper TypeScript types/interfaces
 - Include all variants from the tokens
 - Ensure responsive design implementation
-- Add proper error handling and edge cases

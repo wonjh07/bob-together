@@ -7,8 +7,8 @@ import { createMyGroupsQueryOptions } from '@/libs/query/groupQueries';
 import { getSelectedGroupIdFromCookies } from '@/libs/server/groupSelection';
 import { GroupProvider } from '@/provider/group-provider';
 
-import { AppointmentList } from './_components/AppointmentList';
-import { DashboardHeader } from './_components/DashboardHeader';
+import { AppointmentList } from '@/app/dashboard/_components/AppointmentList';
+import { DashboardHeader } from '@/app/dashboard/_components/DashboardHeader';
 import * as styles from './page.css';
 
 export default async function DashboardPage() {

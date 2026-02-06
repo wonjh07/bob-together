@@ -11,6 +11,7 @@ interface KakaoMapPreviewProps {
   longitude: number;
   title: string;
   address?: string | null;
+  isInteractive?: boolean;
 }
 
 export function KakaoMapPreview({
@@ -18,6 +19,7 @@ export function KakaoMapPreview({
   longitude,
   title,
   address,
+  isInteractive = true,
 }: KakaoMapPreviewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const { isReady, error } = useKakaoMap();
@@ -39,7 +41,12 @@ export function KakaoMapPreview({
       const map = new window.kakao.maps.Map(mapRef.current, {
         center,
         level: 4,
+        draggable: isInteractive,
+        scrollwheel: isInteractive,
       });
+      if (!isInteractive) {
+        map.setZoomable(false);
+      }
 
       const marker = new window.kakao.maps.Marker({
         position: center,
@@ -67,7 +74,7 @@ export function KakaoMapPreview({
     return () => {
       container.replaceChildren();
     };
-  }, [isReady, latitude, longitude, title, address]);
+  }, [isReady, latitude, longitude, title, address, isInteractive]);
 
   if (error) {
     return (

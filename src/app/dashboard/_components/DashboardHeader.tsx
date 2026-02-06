@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { GroupDropdown } from '@/app/(app)/dashboard/_components/GroupsDropdown';
+import { GroupDropdown } from '@/app/dashboard/_components/GroupsDropdown';
 import { createMyGroupsQueryOptions } from '@/libs/query/groupQueries';
 import { useGroupContext } from '@/provider/group-provider';
 

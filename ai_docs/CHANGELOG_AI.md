@@ -1,5 +1,26 @@
 # AI Changelog (Rolling)
 
+## 2026-02-06
+- Moved dashboard route groups to `src/app/dashboard/(nav)` and `src/app/dashboard/(plain)`.
+- Relocated nav components under `src/app/dashboard/_components/nav` and shared dashboard components under `src/app/dashboard/_components`.
+- Removed legacy `(app)` and `(app-plain)` route groups.
+- Reworked CODEMAP into a “start-here” navigation map and trimmed routes from it.
+- Reorganized FLOWS to be the single source of route-to-file mappings.
+- Added DESIGN_GUARDRAILS.md to centralize state/props/provider/query design rules.
+- Linked AGENTS to the new guardrails doc.
+- Refined DESIGN_GUARDRAILS.md into a decision checklist with query/provider/hydration guidance.
+- Renamed DESIGN_GUARDRAILS.md to “Data Fetching & State Strategy” and expanded practical guardrails.
+- Slimmed AGENTS.md to workflow + doc references and moved conventions into PROJECT.md.
+- Standardized ERRORS_AND_LESSONS.md entries to a short template format.
+- Updated DECISIONS.md to a short template and normalized the existing entry.
+- Added a Korean decision entry for the dashboard route group restructure.
+- Translated the existing DECISIONS.md entry into Korean for consistency.
+- Added a workflow rule in AGENTS.md to record structural decisions in DECISIONS.md.
+- Added CSS property order guidance to STYLE_GUIDE.md.
+- Added practical CSS guidelines for layout-first, container responsibilities, and text overflow handling.
+- Clarified DESIGN_SCAN.md wording for image usage, pixel scale, and file placement.
+- Disabled Kakao map interaction in the appointment confirm step via a preview option.
+
 ## 2026-02-04
 - Added a sliding indicator animation to the search type toggle and aligned segments to equal widths.
 - Documented DESIGN_SCAN.md usage in AGENTS.md and added it to the AI docs index.

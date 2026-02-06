@@ -3,6 +3,7 @@
 ## Stack
 - Next.js 14 App Router
 - Supabase (Auth/Postgres/RLS)
+- TanStack Query (React Query)
 - Vanilla Extract for styling
 - React Hook Form + Zod
 - Jest for tests
@@ -10,10 +11,15 @@
 ## Conventions
 - Server Actions in `src/actions/*`
 - Supabase clients in `src/libs/supabase/*`
-- No inline styles (existing code may contain a few legacy inline uses)
+- Prefer reusing `utils/`, `libs/`, `hooks/`, `provider/` before creating new ones
+- Always consider reusable components
+- Prefer Server Components for pages; isolate Client Components when needed
+- Write tests for new features
+- Follow existing patterns in the codebase
 - Routes:
   - Onboarding: `src/app/(onboarding)`
-  - App shell: `src/app/(app)`
+  - Dashboard (nav): `src/app/dashboard/(nav)`
+  - Dashboard (plain): `src/app/dashboard/(plain)`
 
 ## Env Vars
 - `NEXT_PUBLIC_SUPABASE_URL`
