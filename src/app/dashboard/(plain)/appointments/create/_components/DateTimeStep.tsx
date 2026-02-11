@@ -4,9 +4,9 @@ import { useFormContext } from 'react-hook-form';
 import { getDefaultDateTimeValues } from '@/utils/dateTime';
 
 import * as styles from './DateTimeStep.css';
+import NextButton from './ui/NextButton';
 
 import type { CreateAppointmentForm } from '../types';
-import NextButton from './ui/NextButton';
 
 interface DateTimeStepProps {
   onNext: () => void;

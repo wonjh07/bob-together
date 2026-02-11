@@ -36,6 +36,7 @@
 
 ### Recommended Docs by Task
 - Data/State: `ai_docs/DATA_STATE_STRATEGY.md`
+- Supabase: `ai_docs/SUPABASE.md`
 - Styling: `ai_docs/STYLE_GUIDE.md`
 - Image Parse: `ai_docs/DESIGN_SCAN.md`
 - Project Conventions: `ai_docs/PROJECT.md`

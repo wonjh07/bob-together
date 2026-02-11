@@ -1,7 +1,9 @@
 import { getUserData } from '@/actions/user';
 
 import { ProfileQuickLinks } from './_components/ProfileQuickLinks';
+import ProfileReviewHeader from './_components/ProfileReviewHeader';
 import { ProfileSummary } from './_components/ProfileSummary';
+import { ReviewsWaitList } from './_components/ReviewsWaitList';
 import * as styles from './page.css';
 
 export default async function ProfilePage() {
@@ -20,6 +22,8 @@ export default async function ProfilePage() {
         />
         <ProfileQuickLinks />
       </div>
+      <ProfileReviewHeader />
+      <ReviewsWaitList />
     </div>
   );
 }

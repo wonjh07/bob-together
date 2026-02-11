@@ -1,22 +1,10 @@
 'use server';
 
-import { createSupabaseServerClient } from '@/libs/supabase/server';
+import {
+  createSupabaseServerClient,
+} from '@/libs/supabase/server';
 
-import type { ActionResult, AuthErrorCode } from '@/types/result';
-
-// ============================================================================
-// User Data
-// ============================================================================
-
-export interface UserData {
-  id?: string;
-  email?: string;
-  name?: string;
-  nickname?: string;
-  profileImage?: string;
-}
-
-export type GetUserDataResult = ActionResult<UserData, AuthErrorCode>;
+import type { GetUserDataResult, UserData } from './_shared';
 
 export async function getUserData(): Promise<GetUserDataResult> {
   const supabase = createSupabaseServerClient();
@@ -32,8 +20,15 @@ export async function getUserData(): Promise<GetUserDataResult> {
       };
     }
 
-    // Extract name, nickname from user_metadata
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('name,nickname,profile_image')
+      .eq('user_id', data.user.id)
+      .maybeSingle();
+
+    // Source of truth: users table, fallback to auth metadata
     const profileImage =
+      userRow?.profile_image ??
       data.user.user_metadata?.profileImage ??
       data.user.user_metadata?.avatar_url ??
       null;
@@ -41,8 +36,8 @@ export async function getUserData(): Promise<GetUserDataResult> {
     const user: UserData = {
       id: data.user.id,
       email: data.user.email,
-      name: data.user.user_metadata?.name,
-      nickname: data.user.user_metadata?.nickname,
+      name: userRow?.name ?? data.user.user_metadata?.name,
+      nickname: userRow?.nickname ?? data.user.user_metadata?.nickname,
     };
 
     if (profileImage) {

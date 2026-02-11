@@ -1,9 +1,9 @@
 import { useFormContext } from 'react-hook-form';
 
 import * as styles from './TitleStep.css';
+import NextButton from './ui/NextButton';
 
 import type { CreateAppointmentForm } from '../types';
-import NextButton from './ui/NextButton';
 
 interface TitleStepProps {
   onNext: () => void;

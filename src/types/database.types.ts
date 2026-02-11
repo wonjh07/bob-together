@@ -475,22 +475,28 @@ export type Database = {
       users: {
         Row: {
           created_at: string
+          email: string | null
           name: string
           nickname: string
+          profile_image: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          email?: string | null
           name?: string
           nickname?: string
+          profile_image?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          email?: string | null
           name?: string
           nickname?: string
+          profile_image?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -501,7 +507,66 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_email_exists: { Args: { p_email: string }; Returns: boolean }
+      get_appointment_detail_with_count: {
+        Args: { p_appointment_id: string; p_user_id: string }
+        Returns: {
+          appointment_id: string
+          created_at: string
+          creator_id: string
+          creator_name: string
+          creator_nickname: string
+          creator_profile_image: string
+          ends_at: string
+          member_count: number
+          place_address: string
+          place_category: string
+          place_id: string
+          place_latitude: number
+          place_longitude: number
+          place_name: string
+          review_avg: number
+          review_count: number
+          start_at: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          title: string
+        }[]
+      }
+      search_appointments_with_count: {
+        Args: {
+          p_cursor_appointment_id?: string
+          p_cursor_start_at?: string
+          p_limit?: number
+          p_query: string
+          p_user_id: string
+        }
+        Returns: {
+          appointment_id: string
+          ends_at: string
+          host_name: string
+          host_nickname: string
+          member_count: number
+          start_at: string
+          title: string
+        }[]
+      }
+      search_groups_with_count: {
+        Args: {
+          p_cursor_group_id?: string
+          p_cursor_name?: string
+          p_limit?: number
+          p_query: string
+          p_user_id: string
+        }
+        Returns: {
+          group_id: string
+          group_name: string
+          is_member: boolean
+          member_count: number
+          owner_name: string
+          owner_nickname: string
+        }[]
+      }
     }
     Enums: {
       appointment_member_role: "owner" | "member"

@@ -4,6 +4,7 @@
 - FLOWS.md: Route-to-file mapping for group + appointment flows.
 - KAKAO_INTEGRATION.md: Kakao Map/Place search integration, env vars, troubleshooting.
 - DB_RLS.md: RLS policies and DB access summary.
+- SUPABASE.md: Practical Supabase development guide (Auth/DB/RLS/Storage/RPC).
 - DECISIONS.md: Decision log for why changes were made.
 - CODEMAP.md: Start-here map for fast entry points and navigation.
 - ACTIONS.md: Server action responsibilities and inputs.

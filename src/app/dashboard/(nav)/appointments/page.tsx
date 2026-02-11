@@ -1,3 +1,3 @@
 export default function AppointmentsPage() {
-  return <div>여기는 약속 페이지입니다.</div>;
+  return <div>약속 캘린더 기능이 추가될 예정입니다.</div>;
 }

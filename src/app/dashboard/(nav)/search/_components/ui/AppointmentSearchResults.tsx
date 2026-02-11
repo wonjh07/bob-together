@@ -1,31 +1,113 @@
+'use client';
+
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
+
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import {
+  createAppointmentSearchQueryOptions,
+  type AppointmentSearchPage,
+} from '@/libs/query/appointmentQueries';
+
 import AppointmentSearchCard from './AppointmentSearchCard';
 import * as styles from './AppointmentSearchResults.css';
 
-const dummyResults = [
-  {
-    id: '1',
-    title: '마라탕 약속',
-    date: '2025.01.14',
-    timeRange: '13:00-14:00',
-    hostName: '원짜게',
-    memberCount: 2,
-  },
-  {
-    id: '2',
-    title: '카페 모임',
-    date: '2025.01.20',
-    timeRange: '18:00-19:30',
-    hostName: '모구',
-    memberCount: 3,
-  },
-];
+interface AppointmentSearchResultsProps {
+  query: string;
+}
 
-export default function AppointmentSearchResults() {
+function formatDate(isoString: string): string {
+  const date = new Date(isoString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+}
+
+function formatTime(isoString: string): string {
+  const date = new Date(isoString);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+function formatTimeRange(startAt: string, endsAt: string): string {
+  return `${formatTime(startAt)}-${formatTime(endsAt)}`;
+}
+
+export default function AppointmentSearchResults({
+  query,
+}: AppointmentSearchResultsProps) {
+  const normalizedQuery = query.trim();
+  const queryOptions = createAppointmentSearchQueryOptions(normalizedQuery);
+
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    ...queryOptions,
+    enabled: normalizedQuery.length >= 2,
+  });
+
+  const appointments =
+    data?.pages.flatMap((page: AppointmentSearchPage) => page.appointments) ?? [];
+  const hasMore = Boolean(hasNextPage);
+
+  const handleLoadMore = useCallback(async () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      await fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const { loadMoreRef } = useInfiniteScroll({
+    onLoadMore: handleLoadMore,
+    hasMore,
+    isLoading: isLoading || isFetchingNextPage,
+  });
+
+  if (normalizedQuery.length < 2) {
+    return <div className={styles.status}>검색어를 2자 이상 입력해주세요.</div>;
+  }
+
+  if (isLoading) {
+    return <div className={styles.status}>검색 중...</div>;
+  }
+
+  if (isError) {
+    return (
+      <div className={styles.status}>
+        {error instanceof Error ? error.message : '약속 검색에 실패했습니다.'}
+      </div>
+    );
+  }
+
+  if (appointments.length === 0) {
+    return <div className={styles.status}>검색 결과가 없습니다.</div>;
+  }
+
   return (
     <div className={styles.list}>
-      {dummyResults.map((result) => (
-        <AppointmentSearchCard key={result.id} {...result} />
+      {appointments.map((appointment) => (
+        <AppointmentSearchCard
+          key={appointment.appointmentId}
+          title={appointment.title}
+          date={formatDate(appointment.startAt)}
+          timeRange={formatTimeRange(appointment.startAt, appointment.endsAt)}
+          hostName={
+            appointment.hostNickname || appointment.hostName || '알 수 없음'
+          }
+          memberCount={appointment.memberCount}
+        />
       ))}
+      {isFetchingNextPage && <div className={styles.status}>더 불러오는 중...</div>}
+      {hasMore && !isFetchingNextPage && (
+        <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
+      )}
     </div>
   );
 }

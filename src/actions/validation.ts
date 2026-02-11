@@ -1,6 +1,6 @@
 'use server';
 
-import { createSupabaseAdminClient } from '@/libs/supabase/server';
+import { createSupabaseServerClient } from '@/libs/supabase/server';
 
 import type { ActionResult, ValidationErrorCode } from '@/types/result';
 
@@ -36,15 +36,11 @@ export async function checkEmailExists(
   }
 
   try {
-    // Use Admin client (bypass RLS)
-    const supabase = createSupabaseAdminClient();
-
-    // Check if email exists in users table
-    const { data, error } = await supabase
-      .from('users')
-      .select('user_id')
-      .eq('email', normalizedEmail)
-      .maybeSingle();
+    // Use RPC to avoid exposing table-level permissions for anonymous checks.
+    const supabase = createSupabaseServerClient();
+    const { data, error } = await supabase.rpc('check_email_exists', {
+      p_email: normalizedEmail,
+    });
 
     if (error) {
       console.error('Email check error:', error);
@@ -55,7 +51,7 @@ export async function checkEmailExists(
       };
     }
 
-    return { ok: true, data: { exists: !!data } };
+    return { ok: true, data: { exists: Boolean(data) } };
   } catch (error) {
     console.error('Email check error:', error);
     return {

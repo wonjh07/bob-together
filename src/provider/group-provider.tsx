@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
-import { setSelectedGroupAction } from '@/actions/groupSelection';
+import { setSelectedGroupCookie } from '@/libs/server/groupSelection';
 
 interface GroupContextValue {
   currentGroupId: string | null;
@@ -23,7 +23,7 @@ export function GroupProvider({ children, initialGroupId }: GroupProviderProps) 
 
   const setCurrentGroupId = (id: string | null) => {
     setCurrentGroupIdState(id);
-    void setSelectedGroupAction(id);
+    void setSelectedGroupCookie(id);
   };
 
   const value = { currentGroupId, setCurrentGroupId };

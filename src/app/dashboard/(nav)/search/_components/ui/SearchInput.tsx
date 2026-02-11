@@ -2,20 +2,37 @@ import SearchIcon from '@/components/icons/SearchIcon';
 
 import * as styles from './SearchInput.css';
 
-export default function SearchInput() {
+interface SearchInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+}
+
+export default function SearchInput({
+  value,
+  onChange,
+  onSubmit,
+}: SearchInputProps) {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSubmit();
+  };
+
   return (
     <div className={styles.container}>
-      <div className={styles.wrapper}>
+      <form className={styles.wrapper} onSubmit={handleSubmit}>
         <input
           type="search"
           className={styles.input}
-          placeholder="마라탕"
+          placeholder="제목"
           aria-label="검색어 입력"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
         />
-        <button className={styles.icon} aria-hidden="true">
+        <button type="submit" className={styles.icon} aria-label="검색">
           <SearchIcon width="28" height="28" />
         </button>
-      </div>
+      </form>
     </div>
   );
 }

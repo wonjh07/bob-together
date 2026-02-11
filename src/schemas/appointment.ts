@@ -6,6 +6,12 @@ export const appointmentTitleSchema = z
   .min(1, '약속 제목을 입력해주세요.')
   .max(50, '약속 제목은 50자 이내로 입력해주세요.');
 
+export const appointmentSearchSchema = z
+  .string()
+  .trim()
+  .min(2, '검색어를 2자 이상 입력해주세요.')
+  .max(50, '검색어는 50자 이내로 입력해주세요.');
+
 export const appointmentDateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, '약속 날짜를 선택해주세요.');

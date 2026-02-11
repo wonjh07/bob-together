@@ -68,8 +68,8 @@ export function AppointmentList() {
     isLoading: isLoading || isFetchingNextPage,
   });
 
-  const handleEdit = (appointmentId: string) => {
-    router.push(`/dashboard/appointments/${appointmentId}/edit`);
+  const handleOpenDetail = (appointmentId: string) => {
+    router.push(`/dashboard/appointments/${appointmentId}`);
   };
 
   const handleRetry = () => {
@@ -152,7 +152,7 @@ export function AppointmentList() {
               <AppointmentCard
                 key={appointment.appointmentId}
                 appointment={appointment}
-                onEdit={handleEdit}
+                onDetail={handleOpenDetail}
               />
             ))}
           </div>

@@ -1,5 +1,50 @@
 # AI Changelog (Rolling)
 
+## 2026-02-11
+- Added `SUPABASE.md` for practical Supabase guardrails, checklists, and command-style prompts.
+- Removed admin-client dependency from `getUserData` and switched users-table read to authenticated server client + RLS.
+- Removed admin-client dependency from `updateProfileAction` and switched users-table update to authenticated server client + RLS.
+- Removed admin-client dependency from `deleteProfileImageAction` and switched users/storage delete path to authenticated server client + RLS.
+- Removed admin-client dependency from `uploadProfileImageAction` and switched users/storage upload path to authenticated server client + RLS.
+- Removed admin-client dependency from `getAppointmentMembersAction` and switched member-list fetch to authenticated server client + RLS.
+- Replaced admin-based email duplication check with RPC in `checkEmailExists` (`validation.ts`).
+- Added `updateProfileAction.test.ts` with success/failure coverage for auth/user-row/auth-metadata update paths.
+- Added `20260211201000_users_update_self_rls_policy.sql` migration (`users_update_self` policy + users update grant).
+- Added `20260211203000_profile_images_storage_rls_policies.sql` migration for own-object access in `profile-images` bucket.
+- Added `20260211210000_appointment_members_select_group_member.sql` migration to allow group members to read appointment member lists.
+- Added `20260211213000_check_email_exists_rpc.sql` migration for pre-login email duplication checks.
+- Updated appointment comment input to auto-resize textarea height on multiline input.
+- Updated appointment comment UX: max length reduced to 200 chars, textarea input enabled, `Enter` submit and `Shift+Enter` line break behavior added.
+- Added `appointment_comments` RLS migration (`20260211193000_appointment_comments_rls_policies.sql`).
+- Switched comment read/write actions to authenticated client path (removed admin-client dependency for comments).
+- Changed appointment comment permission from appointment-member-only to appointment-access-based (group member), allowing non-participant viewers to comment.
+- Added appointment detail comment feature (list + create) in `/dashboard/appointments/[appointmentId]`.
+- Added `getAppointmentCommentsAction` and `createAppointmentCommentAction`.
+- Added comment input UI and comment card list (right-side dots button UI only).
+- Added appointment edit submit flow for `/dashboard/appointments/[appointmentId]/edit`.
+- Added editable title/date/time fields and connected `완료` button to real save.
+- Added `updateAppointmentAction` with owner permission check and time validation.
+- Added place resolution on edit save (existing `place_id` reuse or `kakao_id` upsert fallback).
+- Added `updateAppointmentAction.test.ts` for invalid-time validation.
+- Preserved edit draft query params (`title/date/startTime/endTime`) across place-search roundtrip.
+- Included `placeKakaoId` in place-search selection query for update save compatibility.
+
+## 2026-02-10
+- Added appointment edit route `/dashboard/appointments/[appointmentId]/edit` UI with place-change CTA.
+- Added appointment edit place-search route `/dashboard/appointments/[appointmentId]/edit/place` using create flow place search pattern.
+- Added appointment members page at `/dashboard/appointments/[appointmentId]/members`.
+- Added `getAppointmentMembersAction` and connected detail `멤버보기` button routing.
+- Added appointment detail status actions (`확정`, `확정 취소`, `취소`, `활성화`) with toast feedback.
+- Added `updateAppointmentStatusAction` and wired detail page CTA state rendering.
+- Wired detail page `초대하기` button to appointment invitation page with query params.
+- Added real dashboard search for groups/appointments by title with TanStack Query.
+- Replaced search dummy data with server actions and cursor-based infinite scroll.
+- Added `searchGroupsWithCountAction` and `searchAppointmentsByTitleAction`.
+- Added Supabase RPC migration (`search_groups_with_count`, `search_appointments_with_count`) to return accurate member counts.
+- Added query key/options for search and connected them to search result components.
+- Added appointment detail page UI at `/dashboard/appointments/[appointmentId]` with detail top nav (`뒤로가기/수정`) and Kakao map preview.
+- Added `getAppointmentDetailAction` and detail RPC (`get_appointment_detail_with_count`) for appointment/place/creator/member-count payload.
+
 ## 2026-02-06
 - Moved dashboard route groups to `src/app/dashboard/(nav)` and `src/app/dashboard/(plain)`.
 - Relocated nav components under `src/app/dashboard/_components/nav` and shared dashboard components under `src/app/dashboard/_components`.
@@ -20,6 +65,30 @@
 - Added practical CSS guidelines for layout-first, container responsibilities, and text overflow handling.
 - Clarified DESIGN_SCAN.md wording for image usage, pixel scale, and file placement.
 - Disabled Kakao map interaction in the appointment confirm step via a preview option.
+- Added a horizontal `ReviewsWaitList` dummy card component to the profile page.
+- Updated `ReviewsWaitList` cards to include appointment title and explicit rating count text.
+- Added profile edit UI with image preview/upload, plus user profile update actions and DB migration for `users.profile_image`.
+- Updated profile image upload flow to keep only the latest image by deleting the previous storage object after successful replacement.
+- Changed profile data source to prefer `users` table in `getUserData` (metadata fallback kept).
+- Adjusted profile image delete flow to update DB first, then remove storage file.
+- Changed profile image metadata sync to best-effort in upload/delete actions.
+- Improved profile edit submit flow to save text fields first, then apply image upload/delete.
+- Added partial-success error messaging for profile image operations after text save.
+- Fixed profile edit image control accessibility by removing nested button structure.
+- Expanded `getUserData` tests to cover users-table-priority and metadata-fallback behavior.
+- Added `uploadProfileImageAction`/`deleteProfileImageAction` tests for key edge cases (missing file, metadata sync failure, storage remove failure).
+- Added profile-image URL parse-failure test cases for upload/delete actions.
+- Split `src/actions/user.ts` into `src/actions/user/*` (index + per-action files + shared helpers/types).
+- Split `src/actions/user.test.ts` into per-action test files under `src/actions/user/`.
+- Split `src/actions/group.ts` into `src/actions/group/*` (index + per-action files + shared helpers/types) and removed the legacy single file.
+- Split `src/actions/group.test.ts` into per-action test files under `src/actions/group/`.
+- Added `src/actions/group/_testUtils.ts` and deduplicated repeated Supabase mock helpers across group action tests.
+- Split `src/actions/appointment.ts` into `src/actions/appointment/*` (index + per-action files + shared helpers/types) and removed the legacy single file.
+- Split `src/actions/appointment.test.ts` into `src/actions/appointment/createAppointmentAction.test.ts`.
+- Split `src/actions/auth.ts` into `src/actions/auth/*` (index + per-action files + shared helpers/types) and removed the legacy single file.
+- Split `src/actions/auth.test.ts` into per-action test files under `src/actions/auth/`.
+- Centralized selected-group cookie read/write logic in `src/libs/server/groupSelectionCookie.ts` and made action/server readers reuse it.
+- Consolidated `groupSelection` read/write into `src/libs/server/groupSelection.ts` and removed split helper/action files.
 
 ## 2026-02-04
 - Added a sliding indicator animation to the search type toggle and aligned segments to equal widths.

@@ -71,6 +71,16 @@ export const statusBadge = styleVariants({
   ],
 });
 
+export const joinedBadge = style({
+  padding: '4px 8px',
+  borderRadius: '4px',
+  fontSize: vars.fontSize.caption,
+  fontWeight: vars.fontWeight.medium,
+  whiteSpace: 'nowrap',
+  backgroundColor: '#E8F5E9',
+  color: vars.color.success,
+});
+
 export const editButton = style({
   padding: '6px 12px',
   backgroundColor: 'transparent',
@@ -146,14 +156,11 @@ export const cardFooter = style({
 export const participantInfo = style({
   display: 'flex',
   alignItems: 'center',
-  gap: '8px',
+  gap: '4px',
 });
 
 export const meBadge = style({
-  padding: '2px 8px',
-  backgroundColor: vars.color.button,
-  color: 'white',
-  borderRadius: '12px',
+  color: vars.color.main,
   fontSize: vars.fontSize.caption,
   fontWeight: vars.fontWeight.medium,
 });

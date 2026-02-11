@@ -3,13 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { setSelectedGroupAction } from '@/actions/groupSelection';
 import { useCreateAppointmentContext } from '@/app/dashboard/(plain)/appointments/create/providers';
 
 import * as styles from './GroupStep.css';
+import NextButton from './ui/NextButton';
 
 import type { CreateAppointmentForm } from '../types';
-import NextButton from './ui/NextButton';
 
 type GroupStepProps = {
   onNext: () => void;

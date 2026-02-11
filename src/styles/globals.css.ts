@@ -10,4 +10,9 @@ globalStyle('body', {
 globalStyle('html, body', {
   touchAction: 'pan-x pan-y',
   overscrollBehaviorY: 'none',
+  overscrollBehaviorX: 'none',
+});
+
+globalStyle(`::-webkit-scrollbar`, {
+  display: 'none',
 });

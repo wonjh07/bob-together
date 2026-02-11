@@ -6,7 +6,7 @@ import type { AppointmentListItem } from '@/actions/appointment';
 
 interface AppointmentCardProps {
   appointment: AppointmentListItem;
-  onEdit?: (appointmentId: string) => void;
+  onDetail?: (appointmentId: string) => void;
 }
 
 const STATUS_LABELS: Record<AppointmentListItem['status'], string> = {
@@ -36,7 +36,10 @@ function formatTimeRange(startAt: string, endsAt: string): string {
   return `${formatTime(startAt)} - ${formatTime(endsAt)}`;
 }
 
-export function AppointmentCard({ appointment, onEdit }: AppointmentCardProps) {
+export function AppointmentCard({
+  appointment,
+  onDetail,
+}: AppointmentCardProps) {
   const {
     appointmentId,
     title: appointmentTitle,
@@ -61,15 +64,16 @@ export function AppointmentCard({ appointment, onEdit }: AppointmentCardProps) {
           <span className={styles.statusBadge[status]}>
             {STATUS_LABELS[status]}
           </span>
+          {status === 'pending' && isMember ? (
+            <span className={styles.joinedBadge}>참여한 약속</span>
+          ) : null}
         </div>
-        {isOwner && (
-          <button
-            type="button"
-            className={styles.editButton}
-            onClick={() => onEdit?.(appointmentId)}>
-            수정
-          </button>
-        )}
+        <button
+          type="button"
+          className={styles.editButton}
+          onClick={() => onDetail?.(appointmentId)}>
+          상세보기
+        </button>
       </div>
 
       <div className={styles.placeInfo}>
@@ -112,11 +116,11 @@ export function AppointmentCard({ appointment, onEdit }: AppointmentCardProps) {
       </div>
 
       <div className={styles.cardFooter}>
+        <span className={styles.memberCount}>{count}명 참여</span>
         <div className={styles.participantInfo}>
-          {isMember && <span className={styles.meBadge}>me</span>}
+          {isOwner && <span className={styles.meBadge}>me</span>}
           <span className={styles.hostName}>{displayName}</span>
         </div>
-        <span className={styles.memberCount}>{count}명 참여</span>
       </div>
     </div>
   );

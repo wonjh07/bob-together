@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { createAppointmentAction } from '@/actions/appointment';
-import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
 import { useCreateAppointmentContext } from '@/app/dashboard/(plain)/appointments/create/providers';
+import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
 
 import * as styles from './ConfirmStep.css';
 

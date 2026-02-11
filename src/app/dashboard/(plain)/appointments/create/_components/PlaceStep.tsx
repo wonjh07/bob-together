@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
 import { usePlaceSearch } from '@/hooks/usePlaceSearch';
 
 import * as styles from './PlaceStep.css';
+import NextButton from './ui/NextButton';
 
 import type { CreateAppointmentForm } from '../types';
-import NextButton from './ui/NextButton';
 
 interface PlaceStepProps {
   onNext: () => void;
@@ -39,9 +38,6 @@ export function PlaceStep({ onNext }: PlaceStepProps) {
     setErrorMessage,
   });
 
-  const locationMessage = currentLocation
-    ? '현재 위치 기준으로 가까운 순으로 검색됩니다.'
-    : '현재 위치를 허용하면 가까운 순으로 정렬됩니다.';
 
   const hasLocation = Boolean(currentLocation);
   const locationButtonLabel = isLocating

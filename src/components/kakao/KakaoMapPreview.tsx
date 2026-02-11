@@ -4,7 +4,12 @@ import { useEffect, useRef } from 'react';
 
 import { useKakaoMap } from '@/hooks/useKakaoMap';
 
-import { mapFrame, mapContainer, mapPlaceholder } from './kakaoMapPreview.css';
+import {
+  mapFrame,
+  mapContainer,
+  mapContainerReadOnly,
+  mapPlaceholder,
+} from './kakaoMapPreview.css';
 
 interface KakaoMapPreviewProps {
   latitude: number;
@@ -46,6 +51,12 @@ export function KakaoMapPreview({
       });
       if (!isInteractive) {
         map.setZoomable(false);
+        const kakaoEvent = window.kakao?.maps?.event;
+        if (kakaoEvent) {
+          kakaoEvent.addListener(map, 'dblclick', () => {
+            kakaoEvent.preventMap();
+          });
+        }
       }
 
       const marker = new window.kakao.maps.Marker({
@@ -94,7 +105,10 @@ export function KakaoMapPreview({
 
   return (
     <div className={mapFrame}>
-      <div ref={mapRef} className={mapContainer} />
+      <div
+        ref={mapRef}
+        className={`${mapContainer} ${!isInteractive ? mapContainerReadOnly : ''}`}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { vars } from '@/styles/theme.css';
 
 export const mapFrame = style({
   width: '100%',
-  height: '280px',
+  aspectRatio: '4 / 3',
   borderRadius: vars.radius.md,
   border: `1px solid ${vars.color.stroke}`,
   background: 'white',
@@ -14,6 +14,12 @@ export const mapFrame = style({
 export const mapContainer = style({
   width: '100%',
   height: '100%',
+});
+
+export const mapContainerReadOnly = style({
+  pointerEvents: 'none',
+  touchAction: 'none',
+  userSelect: 'none',
 });
 
 export const mapPlaceholder = style({

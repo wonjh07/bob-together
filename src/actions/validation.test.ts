@@ -1,4 +1,4 @@
-import { createSupabaseAdminClient } from '@/libs/supabase/server';
+import { createSupabaseServerClient } from '@/libs/supabase/server';
 
 import { checkEmailExists } from './validation';
 
@@ -6,20 +6,14 @@ import { checkEmailExists } from './validation';
 jest.mock('@/libs/supabase/server');
 
 describe('checkEmailExists', () => {
-  const mockFromChain = {
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    maybeSingle: jest.fn(),
-  };
-
-  const mockAdminClient = {
-    from: jest.fn(() => mockFromChain),
+  const mockSupabaseClient = {
+    rpc: jest.fn(),
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    (createSupabaseAdminClient as jest.Mock).mockReturnValue(mockAdminClient);
+    (createSupabaseServerClient as jest.Mock).mockReturnValue(mockSupabaseClient);
   });
 
   afterEach(() => {
@@ -28,8 +22,8 @@ describe('checkEmailExists', () => {
 
   it('존재하는 이메일은 exists: true를 반환해야 한다', async () => {
     // Arrange
-    mockFromChain.maybeSingle.mockResolvedValue({
-      data: { id: '123' },
+    mockSupabaseClient.rpc.mockResolvedValue({
+      data: true,
       error: null,
     });
 
@@ -41,16 +35,15 @@ describe('checkEmailExists', () => {
       ok: true,
       data: { exists: true },
     });
-    expect(mockFromChain.eq).toHaveBeenCalledWith(
-      'email',
-      'existing@example.com',
-    );
+    expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('check_email_exists', {
+      p_email: 'existing@example.com',
+    });
   });
 
   it('존재하지 않는 이메일은 exists: false를 반환해야 한다', async () => {
     // Arrange
-    mockFromChain.maybeSingle.mockResolvedValue({
-      data: null,
+    mockSupabaseClient.rpc.mockResolvedValue({
+      data: false,
       error: null,
     });
 
@@ -74,7 +67,7 @@ describe('checkEmailExists', () => {
       error: 'invalid-format',
       message: 'Invalid email format',
     });
-    expect(mockAdminClient.from).not.toHaveBeenCalled();
+    expect(mockSupabaseClient.rpc).not.toHaveBeenCalled();
   });
 
   it('잘못된 이메일 형식은 invalid-format 에러를 반환해야 한다', async () => {
@@ -87,13 +80,13 @@ describe('checkEmailExists', () => {
       error: 'invalid-format',
       message: 'Invalid email format',
     });
-    expect(mockAdminClient.from).not.toHaveBeenCalled();
+    expect(mockSupabaseClient.rpc).not.toHaveBeenCalled();
   });
 
   it('DB 에러 발생 시 check-failed를 반환해야 한다', async () => {
     // Arrange
-    mockFromChain.maybeSingle.mockResolvedValue({
-      data: null,
+    mockSupabaseClient.rpc.mockResolvedValue({
+      data: false,
       error: { message: 'Database connection failed' },
     });
 
@@ -110,7 +103,7 @@ describe('checkEmailExists', () => {
 
   it('예외 발생 시 server-error를 반환해야 한다', async () => {
     // Arrange
-    mockFromChain.maybeSingle.mockRejectedValue(new Error('Network error'));
+    mockSupabaseClient.rpc.mockRejectedValue(new Error('Network error'));
 
     // Act
     const result = await checkEmailExists('test@example.com');
@@ -125,8 +118,8 @@ describe('checkEmailExists', () => {
 
   it('이메일을 정규화(소문자, trim)하여 검색해야 한다', async () => {
     // Arrange
-    mockFromChain.maybeSingle.mockResolvedValue({
-      data: null,
+    mockSupabaseClient.rpc.mockResolvedValue({
+      data: false,
       error: null,
     });
 
@@ -134,6 +127,8 @@ describe('checkEmailExists', () => {
     await checkEmailExists('  Test@Example.COM  ');
 
     // Assert
-    expect(mockFromChain.eq).toHaveBeenCalledWith('email', 'test@example.com');
+    expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('check_email_exists', {
+      p_email: 'test@example.com',
+    });
   });
 });
