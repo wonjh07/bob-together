@@ -10,7 +10,10 @@ import {
   leaveAppointmentAction,
   updateAppointmentStatusAction,
 } from '@/actions/appointment';
-import { appointmentKeys } from '@/libs/query/appointmentKeys';
+import {
+  invalidateAppointmentDetailQuery,
+  invalidateAppointmentListQueries,
+} from '@/libs/query/invalidateAppointmentQueries';
 
 import * as styles from '../page.css';
 
@@ -67,7 +70,10 @@ export default function AppointmentDetailActions({
       }
 
       setStatus(result.data.status);
-      await queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
+      await Promise.all([
+        invalidateAppointmentDetailQuery(queryClient, appointmentId),
+        invalidateAppointmentListQueries(queryClient),
+      ]);
 
       if (previousStatus === 'pending' && nextStatus === 'confirmed') {
         toast.success('약속이 확정되었습니다.');
@@ -102,8 +108,10 @@ export default function AppointmentDetailActions({
       }
 
       setIsMember(true);
-      await queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
-      router.refresh();
+      await Promise.all([
+        invalidateAppointmentDetailQuery(queryClient, appointmentId),
+        invalidateAppointmentListQueries(queryClient),
+      ]);
       toast.success('약속에 참여했습니다.');
     } finally {
       setIsSubmitting(false);
@@ -122,8 +130,10 @@ export default function AppointmentDetailActions({
       }
 
       setIsMember(false);
-      await queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
-      router.refresh();
+      await Promise.all([
+        invalidateAppointmentDetailQuery(queryClient, appointmentId),
+        invalidateAppointmentListQueries(queryClient),
+      ]);
       toast.success('약속에서 나갔습니다.');
     } finally {
       setIsSubmitting(false);

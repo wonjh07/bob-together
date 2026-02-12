@@ -64,9 +64,11 @@ export async function getAppointmentMembersAction(
     };
   }
 
-  const { data, error } = await supabase
+  const { data, count, error } = await supabase
     .from('appointment_members')
-    .select('user_id, role, users(name, nickname, profile_image)')
+    .select('user_id, role, users(name, nickname, profile_image)', {
+      count: 'exact',
+    })
     .eq('appointment_id', parsed.data)
     .order('joined_at', { ascending: true });
 
@@ -91,7 +93,7 @@ export async function getAppointmentMembersAction(
   return {
     ok: true,
     data: {
-      memberCount: members.length,
+      memberCount: count ?? members.length,
       members,
       currentUserId: userId,
     },

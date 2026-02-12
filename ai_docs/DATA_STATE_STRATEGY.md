@@ -67,3 +67,6 @@
 - Provider 필요: 여러 단계에서 공유되는 draft state
 - Provider 불필요: 단일 Step 내부의 입력값
 - Query 적합: 그룹 목록처럼 여러 화면에서 재사용되는 데이터
+
+## 참고 문서
+- 현재 프로젝트의 실제 소유 경계와 무효화 규칙은 `ai_docs/CACHE_OWNERSHIP.md`를 기준으로 한다.

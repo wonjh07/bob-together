@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import {
   useEffect,
@@ -12,17 +13,23 @@ import toast from 'react-hot-toast';
 
 import {
   createAppointmentCommentAction,
+  deleteAppointmentCommentAction,
+  updateAppointmentCommentAction,
   type AppointmentCommentItem,
 } from '@/actions/appointment';
 import CommentIcon from '@/components/icons/CommentIcon';
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon';
+import { appointmentKeys } from '@/libs/query/appointmentKeys';
+import {
+  createAppointmentCommentsQueryOptions,
+  type AppointmentCommentsData,
+} from '@/libs/query/appointmentQueries';
+import { invalidateAppointmentListQueries } from '@/libs/query/invalidateAppointmentQueries';
 
 import * as styles from './AppointmentCommentsSection.css';
 
 interface AppointmentCommentsSectionProps {
   appointmentId: string;
-  initialComments: AppointmentCommentItem[];
-  initialCommentCount: number;
 }
 
 function formatRelative(createdAt: string): string {
@@ -49,15 +56,22 @@ function formatRelative(createdAt: string): string {
 
 export default function AppointmentCommentsSection({
   appointmentId,
-  initialComments,
-  initialCommentCount,
 }: AppointmentCommentsSectionProps) {
-  const [comments, setComments] = useState(initialComments);
-  const [commentCount, setCommentCount] = useState(initialCommentCount);
+  const queryClient = useQueryClient();
+  const commentsQuery = useQuery(createAppointmentCommentsQueryOptions(appointmentId));
+  const comments = commentsQuery.data?.comments ?? [];
+  const commentCount = commentsQuery.data?.commentCount ?? 0;
+  const currentUserId = commentsQuery.data?.currentUserId ?? null;
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [openedMenuId, setOpenedMenuId] = useState<string | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const element = textareaRef.current;
@@ -66,6 +80,14 @@ export default function AppointmentCommentsSection({
     element.style.height = '0px';
     element.style.height = `${element.scrollHeight}px`;
   }, [content]);
+
+  useEffect(() => {
+    const element = editTextareaRef.current;
+    if (!element) return;
+
+    element.style.height = '0px';
+    element.style.height = `${element.scrollHeight}px`;
+  }, [editingContent]);
 
   const submitComment = async () => {
     if (isSubmitting) return;
@@ -96,9 +118,16 @@ export default function AppointmentCommentsSection({
     }
 
     const nextComment = result.data.comment;
-    const nextCount = result.data.commentCount;
-    setComments((prev) => [...prev, nextComment]);
-    setCommentCount(nextCount);
+    const nextComments = [...comments, nextComment];
+    queryClient.setQueryData<AppointmentCommentsData>(
+      appointmentKeys.comments(appointmentId),
+      {
+        comments: nextComments,
+        commentCount: nextComments.length,
+        currentUserId,
+      },
+    );
+    await invalidateAppointmentListQueries(queryClient);
     setContent('');
     toast.success('댓글이 등록되었습니다.');
   };
@@ -115,6 +144,117 @@ export default function AppointmentCommentsSection({
 
     event.preventDefault();
     event.currentTarget.form?.requestSubmit();
+  };
+
+  const toggleMenu = (commentId: string) => {
+    setOpenedMenuId((prev) => (prev === commentId ? null : commentId));
+  };
+
+  const startEdit = (comment: AppointmentCommentItem) => {
+    setOpenedMenuId(null);
+    setEditingCommentId(comment.commentId);
+    setEditingContent(comment.content);
+  };
+
+  const cancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingContent('');
+  };
+
+  const submitEdit = async () => {
+    if (!editingCommentId || isEditSubmitting || isDeleteSubmitting) return;
+
+    const trimmed = editingContent.trim();
+    if (!trimmed) {
+      toast.error('댓글을 입력해주세요.');
+      return;
+    }
+
+    setIsEditSubmitting(true);
+    const result = await updateAppointmentCommentAction({
+      appointmentId,
+      commentId: editingCommentId,
+      content: trimmed,
+    });
+    setIsEditSubmitting(false);
+
+    if (!result.ok || !result.data) {
+      const message = !result.ok
+        ? result.message || '댓글 수정에 실패했습니다.'
+        : '댓글 수정에 실패했습니다.';
+      toast.error(message);
+      return;
+    }
+
+    const updatedComment = result.data.comment;
+    const nextComments = comments.map((comment) =>
+        comment.commentId === editingCommentId ? updatedComment : comment,
+      );
+    queryClient.setQueryData<AppointmentCommentsData>(
+      appointmentKeys.comments(appointmentId),
+      {
+        comments: nextComments,
+        commentCount: nextComments.length,
+        currentUserId,
+      },
+    );
+    setEditingCommentId(null);
+    setEditingContent('');
+    toast.success('댓글이 수정되었습니다.');
+  };
+
+  const handleEditSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await submitEdit();
+  };
+
+  const handleEditInputKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== 'Enter') return;
+    if (event.shiftKey) return;
+    if (event.nativeEvent.isComposing) return;
+
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (isDeleteSubmitting || isEditSubmitting || isSubmitting) return;
+
+    setOpenedMenuId(null);
+    setIsDeleteSubmitting(true);
+
+    const result = await deleteAppointmentCommentAction({
+      appointmentId,
+      commentId,
+    });
+
+    setIsDeleteSubmitting(false);
+
+    if (!result.ok || !result.data) {
+      const message = !result.ok
+        ? result.message || '댓글 삭제에 실패했습니다.'
+        : '댓글 삭제에 실패했습니다.';
+      toast.error(message);
+      return;
+    }
+
+    const deletedCommentId = result.data.commentId;
+    const nextComments = comments.filter(
+      (comment) => comment.commentId !== deletedCommentId,
+    );
+    queryClient.setQueryData<AppointmentCommentsData>(
+      appointmentKeys.comments(appointmentId),
+      {
+        comments: nextComments,
+        commentCount: nextComments.length,
+        currentUserId,
+      },
+    );
+    await invalidateAppointmentListQueries(queryClient);
+    if (editingCommentId === deletedCommentId) {
+      cancelEdit();
+    }
+    toast.success('댓글이 삭제되었습니다.');
   };
 
   return (
@@ -169,15 +309,73 @@ export default function AppointmentCommentsSection({
                   <div className={styles.cardBody}>
                     <p className={styles.nickname}>{displayName}</p>
                     <p className={styles.meta}>{meta}</p>
-                    <p className={styles.content}>{comment.content}</p>
+                    {editingCommentId === comment.commentId ? (
+                      <form
+                        className={styles.editForm}
+                        onSubmit={handleEditSubmit}>
+                        <div className={styles.editInputWrap}>
+                          <textarea
+                            ref={editTextareaRef}
+                            value={editingContent}
+                            onChange={(event) =>
+                              setEditingContent(event.target.value)
+                            }
+                            onKeyDown={handleEditInputKeyDown}
+                            className={styles.input}
+                            placeholder="댓글을 입력해주세요"
+                            maxLength={200}
+                            rows={1}
+                          />
+                        </div>
+                        <div className={styles.editActions}>
+                          <button
+                            type="button"
+                            className={styles.editCancelButton}
+                            onClick={cancelEdit}
+                            disabled={isEditSubmitting}>
+                            취소
+                          </button>
+                          <button
+                            type="submit"
+                            className={styles.editSubmitButton}
+                            disabled={isEditSubmitting}>
+                            수정
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <p className={styles.content}>{comment.content}</p>
+                    )}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className={styles.moreButton}
-                  aria-label="댓글 메뉴">
-                  ⋮
-                </button>
+                {comment.userId === currentUserId ? (
+                  <div className={styles.menuWrap}>
+                    <button
+                      type="button"
+                      className={styles.moreButton}
+                      aria-label="댓글 메뉴"
+                      onClick={() => toggleMenu(comment.commentId)}
+                      disabled={isDeleteSubmitting}>
+                      ⋮
+                    </button>
+                    {openedMenuId === comment.commentId ? (
+                      <div className={styles.dropdown}>
+                        <button
+                          type="button"
+                          className={styles.dropdownItem}
+                          onClick={() => startEdit(comment)}>
+                          댓글 수정
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
+                          onClick={() => handleDelete(comment.commentId)}>
+                          댓글 삭제
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             );
           })}

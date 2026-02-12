@@ -124,6 +124,7 @@ export const avatar = style({
 });
 
 export const cardBody = style({
+  width: '100%',
   display: 'flex',
   flexDirection: 'column',
   minWidth: 0,
@@ -163,7 +164,111 @@ export const moreButton = style({
   cursor: 'pointer',
   padding: '6px 0',
   alignSelf: 'flex-start',
+  selectors: {
+    '&:disabled': {
+      opacity: 0.5,
+      cursor: 'not-allowed',
+    },
+  },
 });
+
+export const menuWrap = style({
+  position: 'relative',
+  alignSelf: 'flex-start',
+});
+
+export const dropdown = style({
+  position: 'absolute',
+  top: '34px',
+  right: 0,
+  width: '100px',
+  border: `1px solid ${vars.color.stroke}`,
+  borderRadius: vars.radius.sm,
+  backgroundColor: vars.color.background,
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+  overflow: 'hidden',
+  zIndex: 10,
+});
+
+export const dropdownItem = style({
+  width: '100%',
+  border: 'none',
+  borderBottom: `1px solid ${vars.color.stroke}`,
+  backgroundColor: 'transparent',
+  padding: '10px 12px',
+  color: vars.color.text,
+  fontSize: vars.fontSize.subText,
+  fontWeight: vars.fontWeight.semibold,
+  textAlign: 'left',
+  cursor: 'pointer',
+  selectors: {
+    '&:last-child': {
+      borderBottom: 'none',
+    },
+    '&:hover': {
+      backgroundColor: vars.color.mainSoft,
+    },
+  },
+});
+
+export const dropdownItemDanger = style({
+  color: vars.color.alert,
+});
+
+export const editForm = style({
+  marginTop: '8px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '8px',
+});
+
+export const editInputWrap = style({
+  display: 'flex',
+  alignItems: 'flex-end',
+  gap: '8px',
+  width: '100%',
+  border: `1px solid ${vars.color.main}`,
+  borderRadius: vars.radius.lg,
+  backgroundColor: vars.color.mainSoft,
+  padding: '10px 12px',
+});
+
+export const editActions = style({
+  display: 'flex',
+  justifyContent: 'flex-end',
+  gap: '8px',
+});
+
+const editButtonBase = style({
+  border: 'none',
+  borderRadius: vars.radius.sm,
+  padding: '8px 12px',
+  fontSize: vars.fontSize.subText,
+  fontWeight: vars.fontWeight.semibold,
+  cursor: 'pointer',
+  selectors: {
+    '&:disabled': {
+      opacity: 0.5,
+      cursor: 'not-allowed',
+    },
+  },
+});
+
+export const editCancelButton = style([
+  editButtonBase,
+  {
+    backgroundColor: vars.color.stroke,
+    color: vars.color.subText,
+  },
+]);
+
+export const editSubmitButton = style([
+  editButtonBase,
+  {
+    backgroundColor: vars.color.main,
+    color: vars.color.background,
+  },
+]);
 
 export const empty = style({
   margin: 0,

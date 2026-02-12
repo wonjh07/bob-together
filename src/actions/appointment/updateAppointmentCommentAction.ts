@@ -6,11 +6,12 @@ import { createSupabaseServerClient } from '@/libs/supabase/server';
 
 import type {
   AppointmentCommentItem,
-  CreateAppointmentCommentResult,
+  UpdateAppointmentCommentResult,
 } from './_shared';
 
-const createCommentSchema = z.object({
+const updateCommentSchema = z.object({
   appointmentId: z.string().uuid('유효한 약속 ID가 아닙니다.'),
+  commentId: z.string().uuid('유효한 댓글 ID가 아닙니다.'),
   content: z
     .string()
     .trim()
@@ -30,11 +31,12 @@ interface AppointmentCommentRow {
   } | null;
 }
 
-export async function createAppointmentCommentAction(params: {
+export async function updateAppointmentCommentAction(params: {
   appointmentId: string;
+  commentId: string;
   content: string;
-}): Promise<CreateAppointmentCommentResult> {
-  const parsed = createCommentSchema.safeParse(params);
+}): Promise<UpdateAppointmentCommentResult> {
+  const parsed = updateCommentSchema.safeParse(params);
   if (!parsed.success) {
     return {
       ok: false,
@@ -55,30 +57,35 @@ export async function createAppointmentCommentAction(params: {
     };
   }
 
-  const userId = userData.user.id;
-  const { appointmentId, content } = parsed.data;
+  const nowIso = new Date().toISOString();
+  const { appointmentId, commentId, content } = parsed.data;
 
-  const { data: commentData, error: insertError } = await supabase
+  const { data: updatedData, error: updateError } = await supabase
     .from('appointment_comments')
-    .insert({
-      appointment_id: appointmentId,
-      user_id: userId,
+    .update({
       content,
+      edited_at: nowIso,
+      updated_at: nowIso,
     })
+    .eq('appointment_id', appointmentId)
+    .eq('comment_id', commentId)
+    .eq('user_id', userData.user.id)
+    .eq('is_deleted', false)
+    .is('deleted_at', null)
     .select(
       'comment_id, content, created_at, user_id, users(name, nickname, profile_image)',
     )
-    .single();
+    .maybeSingle();
 
-  if (insertError || !commentData) {
+  if (updateError || !updatedData) {
     return {
       ok: false,
       error: 'forbidden',
-      message: '댓글 작성 권한이 없습니다.',
+      message: '댓글 수정 권한이 없습니다.',
     };
   }
 
-  const row = commentData as AppointmentCommentRow;
+  const row = updatedData as AppointmentCommentRow;
   const comment: AppointmentCommentItem = {
     commentId: row.comment_id,
     content: row.content,

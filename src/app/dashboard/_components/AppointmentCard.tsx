@@ -1,15 +1,19 @@
 'use client';
 
+import CommentIcon from '@/components/icons/CommentIcon';
+import GroupIcon from '@/components/icons/GroupIcon';
+
 import * as styles from './AppointmentCard.css';
 
-import type { AppointmentListItem } from '@/actions/appointment';
-
 interface AppointmentCardProps {
-  appointment: AppointmentListItem;
+  appointment: import('@/actions/appointment').AppointmentListItem;
   onDetail?: (appointmentId: string) => void;
 }
 
-const STATUS_LABELS: Record<AppointmentListItem['status'], string> = {
+const STATUS_LABELS: Record<
+  import('@/actions/appointment').AppointmentListItem['status'],
+  string
+> = {
   confirmed: '약속확정',
   pending: '모집중',
   canceled: '약속취소',
@@ -50,6 +54,7 @@ export function AppointmentCard({
     creatorName,
     place,
     memberCount: count,
+    commentCount,
     isOwner,
     isMember,
   } = appointment;
@@ -64,7 +69,9 @@ export function AppointmentCard({
           <span className={styles.statusBadge[status]}>
             {STATUS_LABELS[status]}
           </span>
-          {status === 'pending' && isMember ? (
+          {isOwner ? (
+            <span className={styles.createdBadge}>내가 만든 약속</span>
+          ) : isMember ? (
             <span className={styles.joinedBadge}>참여한 약속</span>
           ) : null}
         </div>
@@ -116,7 +123,16 @@ export function AppointmentCard({
       </div>
 
       <div className={styles.cardFooter}>
-        <span className={styles.memberCount}>{count}명 참여</span>
+        <div className={styles.statsInfo}>
+          <div className={styles.memberInfo}>
+            <GroupIcon className={styles.memberIcon} />
+            <span className={styles.memberCount}>{count}명</span>
+          </div>
+          <div className={styles.commentInfo}>
+            <CommentIcon className={styles.commentIcon} />
+            <span className={styles.commentCount}>{commentCount}</span>
+          </div>
+        </div>
         <div className={styles.participantInfo}>
           {isOwner && <span className={styles.meBadge}>me</span>}
           <span className={styles.hostName}>{displayName}</span>

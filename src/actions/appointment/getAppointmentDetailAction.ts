@@ -26,6 +26,7 @@ interface AppointmentDetailRow {
   place_latitude: number;
   place_longitude: number;
   member_count: number;
+  is_member: boolean;
   review_avg: number | null;
   review_count: number;
 }
@@ -101,17 +102,8 @@ export async function getAppointmentDetailAction(
     },
     memberCount: Number(row.member_count) || 0,
     isOwner: row.creator_id === userData.user.id,
-    isMember: false,
+    isMember: row.is_member,
   };
-
-  const { data: memberData } = await supabase
-    .from('appointment_members')
-    .select('user_id')
-    .eq('appointment_id', row.appointment_id)
-    .eq('user_id', userData.user.id)
-    .maybeSingle();
-
-  appointment.isMember = Boolean(memberData);
 
   return {
     ok: true,

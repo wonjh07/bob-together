@@ -1,10 +1,14 @@
 import {
+  getAppointmentCommentsAction,
+  getAppointmentDetailAction,
   listAppointmentsAction,
   searchAppointmentsByTitleAction,
 } from '@/actions/appointment';
 import { appointmentKeys } from '@/libs/query/appointmentKeys';
 
 import type {
+  AppointmentCommentItem,
+  AppointmentDetailItem,
   AppointmentSearchCursor,
   AppointmentSearchItem,
   AppointmentListItem,
@@ -23,10 +27,22 @@ export type AppointmentPage = {
 const APPOINTMENT_SEARCH_LIMIT = 10;
 
 type AppointmentSearchQueryKey = ReturnType<typeof appointmentKeys.search>;
+type AppointmentDetailQueryKey = ReturnType<typeof appointmentKeys.detail>;
+type AppointmentCommentsQueryKey = ReturnType<typeof appointmentKeys.comments>;
 
 export type AppointmentSearchPage = {
   appointments: AppointmentSearchItem[];
   nextCursor: AppointmentSearchCursor | null;
+};
+
+export type AppointmentDetailData = {
+  appointment: AppointmentDetailItem;
+};
+
+export type AppointmentCommentsData = {
+  comments: AppointmentCommentItem[];
+  commentCount: number;
+  currentUserId: string | null;
 };
 
 export type AppointmentQueryKey = readonly (string | null)[];
@@ -100,5 +116,43 @@ export function createAppointmentSearchQueryOptions(query: string) {
     initialPageParam: null as AppointmentSearchCursor | null,
     getNextPageParam: (lastPage: AppointmentSearchPage) =>
       lastPage.nextCursor ?? null,
+  };
+}
+
+export function createAppointmentDetailQueryOptions(appointmentId: string) {
+  return {
+    queryKey: appointmentKeys.detail(appointmentId) as AppointmentDetailQueryKey,
+    queryFn: async (_: QueryFunctionContext<AppointmentDetailQueryKey>) => {
+      const result = await getAppointmentDetailAction(appointmentId);
+
+      if (!result.ok || !result.data) {
+        throw new Error(
+          result.ok
+            ? '데이터가 없습니다.'
+            : result.message || '약속 정보를 불러올 수 없습니다.',
+        );
+      }
+
+      return result.data;
+    },
+  };
+}
+
+export function createAppointmentCommentsQueryOptions(appointmentId: string) {
+  return {
+    queryKey: appointmentKeys.comments(appointmentId) as AppointmentCommentsQueryKey,
+    queryFn: async (_: QueryFunctionContext<AppointmentCommentsQueryKey>) => {
+      const result = await getAppointmentCommentsAction(appointmentId);
+
+      if (!result.ok || !result.data) {
+        throw new Error(
+          result.ok
+            ? '데이터가 없습니다.'
+            : result.message || '댓글을 불러오지 못했습니다.',
+        );
+      }
+
+      return result.data;
+    },
   };
 }

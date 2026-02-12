@@ -18,6 +18,8 @@
 - `getAppointmentDetailAction`
 - `getAppointmentCommentsAction`
 - `createAppointmentCommentAction`
+- `updateAppointmentCommentAction`
+- `deleteAppointmentCommentAction`
 - `updateAppointmentAction`
 - `updateAppointmentStatusAction`
 - `getAppointmentMembersAction`
@@ -128,6 +130,20 @@
   - 로그인 사용자 식별
   - 약속 접근 가능 여부 확인(그룹 멤버 기준, 약속 참여 여부와 무관)
   - 댓글 저장 및 최신 댓글/댓글 수 반환
+
+## updateAppointmentCommentAction
+- 입력: appointmentId, commentId, content
+- 책임:
+  - 로그인 사용자 식별
+  - 본인 댓글 여부 확인
+  - 댓글 내용 수정 및 댓글/카운트 최신값 반환
+
+## deleteAppointmentCommentAction
+- 입력: appointmentId, commentId
+- 책임:
+  - 로그인 사용자 식별
+  - 본인 댓글 여부 확인
+  - 댓글 소프트 삭제(`is_deleted`, `deleted_at`) 및 댓글 수 최신값 반환
 
 ## uploadProfileImageAction
 - 입력: file(FormData)

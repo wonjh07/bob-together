@@ -5,6 +5,7 @@ export type {
   AppointmentSearchCursor,
   AppointmentSearchItem,
   CreateAppointmentCommentResult,
+  DeleteAppointmentCommentResult,
   AppointmentListItem,
   CreateAppointmentResult,
   GetAppointmentCommentsResult,
@@ -17,6 +18,7 @@ export type {
   PeriodFilter,
   SearchAppointmentsResult,
   SendAppointmentInvitationResult,
+  UpdateAppointmentCommentResult,
   UpdateAppointmentResult,
   UpdateAppointmentStatusResult,
   TypeFilter,
@@ -31,5 +33,7 @@ export { leaveAppointmentAction } from './leaveAppointmentAction';
 export { listAppointmentsAction } from './listAppointmentsAction';
 export { searchAppointmentsByTitleAction } from './searchAppointmentsByTitleAction';
 export { sendAppointmentInvitationAction } from './sendAppointmentInvitationAction';
+export { updateAppointmentCommentAction } from './updateAppointmentCommentAction';
 export { updateAppointmentAction } from './updateAppointmentAction';
 export { updateAppointmentStatusAction } from './updateAppointmentStatusAction';
+export { deleteAppointmentCommentAction } from './deleteAppointmentCommentAction';

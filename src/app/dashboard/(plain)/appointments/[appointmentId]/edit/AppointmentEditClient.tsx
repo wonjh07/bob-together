@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -9,6 +10,11 @@ import { updateAppointmentAction } from '@/actions/appointment';
 import CalendarIcon from '@/components/icons/CalendarIcon';
 import ClockIcon from '@/components/icons/ClockIcon';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
+import {
+  invalidateAppointmentDetailQuery,
+  invalidateAppointmentListQueries,
+  invalidateAppointmentSearchQueries,
+} from '@/libs/query/invalidateAppointmentQueries';
 
 import AppointmentEditTopNav from './_components/AppointmentEditTopNav';
 import * as styles from './page.css';
@@ -48,6 +54,7 @@ export default function AppointmentEditClient({
   initialPlace,
 }: AppointmentEditClientProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState(initialTitle);
   const [date, setDate] = useState(initialDate);
   const [startTime, setStartTime] = useState(initialStartTime);
@@ -120,8 +127,12 @@ export default function AppointmentEditClient({
     }
 
     toast.success('약속이 수정되었습니다.');
+    await Promise.all([
+      invalidateAppointmentDetailQuery(queryClient, appointmentId),
+      invalidateAppointmentListQueries(queryClient),
+      invalidateAppointmentSearchQueries(queryClient),
+    ]);
     router.replace(`/dashboard/appointments/${appointmentId}`);
-    router.refresh();
   };
 
   return (

@@ -81,6 +81,16 @@ export const joinedBadge = style({
   color: vars.color.success,
 });
 
+export const createdBadge = style({
+  padding: '4px 8px',
+  borderRadius: '4px',
+  fontSize: vars.fontSize.caption,
+  fontWeight: vars.fontWeight.medium,
+  whiteSpace: 'nowrap',
+  backgroundColor: vars.color.mainSoft,
+  color: vars.color.main,
+});
+
 export const editButton = style({
   padding: '6px 12px',
   backgroundColor: 'transparent',
@@ -171,6 +181,41 @@ export const hostName = style({
 });
 
 export const memberCount = style({
+  fontSize: vars.fontSize.subText,
+  color: vars.color.subText,
+});
+
+export const memberInfo = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '4px',
+});
+
+export const memberIcon = style({
+  width: '16px',
+  height: '16px',
+  color: vars.color.subText,
+});
+
+export const statsInfo = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '10px',
+});
+
+export const commentInfo = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '4px',
+});
+
+export const commentIcon = style({
+  width: '16px',
+  height: '16px',
+  color: vars.color.subText,
+});
+
+export const commentCount = style({
   fontSize: vars.fontSize.subText,
   color: vars.color.subText,
 });

@@ -34,6 +34,7 @@ export interface AppointmentListItem {
     category: string | null;
   };
   memberCount: number;
+  commentCount: number;
   isOwner: boolean;
   isMember: boolean;
 }
@@ -155,7 +156,20 @@ export type GetAppointmentCommentsResult = ActionResult<
 export type CreateAppointmentCommentResult = ActionResult<
   {
     comment: AppointmentCommentItem;
-    commentCount: number;
+  },
+  AppointmentErrorCode
+>;
+
+export type UpdateAppointmentCommentResult = ActionResult<
+  {
+    comment: AppointmentCommentItem;
+  },
+  AppointmentErrorCode
+>;
+
+export type DeleteAppointmentCommentResult = ActionResult<
+  {
+    commentId: string;
   },
   AppointmentErrorCode
 >;

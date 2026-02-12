@@ -518,6 +518,7 @@ export type Database = {
           creator_nickname: string
           creator_profile_image: string
           ends_at: string
+          is_member: boolean
           member_count: number
           place_address: string
           place_category: string
@@ -527,6 +528,34 @@ export type Database = {
           place_name: string
           review_avg: number
           review_count: number
+          start_at: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          title: string
+        }[]
+      }
+      list_appointments_with_stats: {
+        Args: {
+          p_cursor?: string
+          p_group_id: string
+          p_limit?: number
+          p_period?: string
+          p_type?: string
+          p_user_id: string
+        }
+        Returns: {
+          appointment_id: string
+          comment_count: number
+          creator_id: string
+          creator_name: string
+          creator_nickname: string
+          ends_at: string
+          is_member: boolean
+          is_owner: boolean
+          member_count: number
+          place_address: string
+          place_category: string
+          place_id: string
+          place_name: string
           start_at: string
           status: Database["public"]["Enums"]["appointment_status"]
           title: string

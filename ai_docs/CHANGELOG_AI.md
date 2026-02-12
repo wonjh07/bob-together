@@ -1,6 +1,25 @@
 # AI Changelog (Rolling)
 
+## 2026-02-12
+- Reworked `CACHE_OWNERSHIP.md` from high-level notes into a file-level ownership/invalidation matrix.
+- Added explicit query-key standard, screen ownership table, mutation invalidation matrix, and operational checklist.
+- Migrated appointment detail page to Query ownership with server prefetch + hydration (`AppointmentDetailClient`).
+- Added detail/comment query keys (`appointmentKeys.detail`, `appointmentKeys.comments`) and matching query options.
+- Removed `router.refresh()` calls from appointment detail status/join/leave actions and rely on query invalidation for sync.
+- Updated appointment comment create/update/delete UI flow to sync `appointmentKeys.comments(...)` cache and invalidate `appointmentKeys.all` on count-changing mutations.
+- Updated appointment edit completion flow to invalidate `appointmentKeys.all` and removed `router.refresh()` dependency.
+- Added `appointmentKeys.listRoot/searchRoot` and `invalidateAppointmentQueries` helpers to avoid broad `appointmentKeys.all` invalidation.
+- Narrowed detail/edit/comment invalidation to target detail/comments and collection roots instead of invalidating all appointment queries.
+- Removed `revalidatePath` from `updateAppointmentStatusAction` to align with Query-owned synchronization.
+- Removed comment-state duplication in `AppointmentCommentsSection` and switched it to direct Query subscription (`useQuery`) + cache updates via `setQueryData`.
+
 ## 2026-02-11
+- Added `CACHE_OWNERSHIP.md` to document current Server/Client cache ownership and invalidation rules.
+- Linked `CACHE_OWNERSHIP.md` from `INDEX.md` and referenced it in `DATA_STATE_STRATEGY.md`.
+- Added owner-only comment menu UI (`⋮`) and dropdown actions (`댓글 수정`, `댓글 삭제`) on appointment detail comments.
+- Added in-place comment edit flow (same input behavior as create: `Enter` submit, `Shift+Enter` newline, 200-char limit).
+- Added `updateAppointmentCommentAction` and `deleteAppointmentCommentAction`.
+- Added action tests: `updateAppointmentCommentAction.test.ts`, `deleteAppointmentCommentAction.test.ts`.
 - Added `SUPABASE.md` for practical Supabase guardrails, checklists, and command-style prompts.
 - Removed admin-client dependency from `getUserData` and switched users-table read to authenticated server client + RLS.
 - Removed admin-client dependency from `updateProfileAction` and switched users-table update to authenticated server client + RLS.
@@ -181,6 +200,7 @@
 - Added search page header toggle UI based on the design scan.
 - Added active toggle state and transition animation for the search type switch.
 - Split appointment invitation page into a Server page and a client `AppointmentInvitationClient`.
+- Removed unused `comment_count` from `get_appointment_detail_with_count` RPC payload and aligned detail action typing to the new shape.
 
 ## 2026-02-02 (late)
 - Moved appointment routes from `(app)` to `(app-plain)` for step-based flow layout.
