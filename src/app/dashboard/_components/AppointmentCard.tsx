@@ -2,6 +2,7 @@
 
 import CommentIcon from '@/components/icons/CommentIcon';
 import GroupIcon from '@/components/icons/GroupIcon';
+import { getEffectiveAppointmentStatus } from '@/utils/appointmentStatus';
 
 import * as styles from './AppointmentCard.css';
 
@@ -11,12 +12,12 @@ interface AppointmentCardProps {
 }
 
 const STATUS_LABELS: Record<
-  import('@/actions/appointment').AppointmentListItem['status'],
+  ReturnType<typeof getEffectiveAppointmentStatus>,
   string
 > = {
-  confirmed: '약속확정',
   pending: '모집중',
   canceled: '약속취소',
+  ended: '종료됨',
 };
 
 function formatDate(isoString: string): string {
@@ -58,6 +59,7 @@ export function AppointmentCard({
     isOwner,
     isMember,
   } = appointment;
+  const effectiveStatus = getEffectiveAppointmentStatus(status, endsAt);
 
   const displayName = creatorNickname || creatorName || '알 수 없음';
 
@@ -66,8 +68,8 @@ export function AppointmentCard({
       <div className={styles.cardHeader}>
         <div className={styles.titleRow}>
           <h3 className={styles.title}>{appointmentTitle}</h3>
-          <span className={styles.statusBadge[status]}>
-            {STATUS_LABELS[status]}
+          <span className={styles.statusBadge[effectiveStatus]}>
+            {STATUS_LABELS[effectiveStatus]}
           </span>
           {isOwner ? (
             <span className={styles.createdBadge}>내가 만든 약속</span>

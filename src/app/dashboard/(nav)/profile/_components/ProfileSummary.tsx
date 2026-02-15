@@ -20,7 +20,6 @@ export function ProfileSummary({
     <div className={styles.container}>
       <div className={styles.userInfo}>
         <Image
-          unoptimized
           src={profileSrc}
           alt="프로필"
           width={42}

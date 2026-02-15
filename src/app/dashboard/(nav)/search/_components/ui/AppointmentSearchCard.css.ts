@@ -48,13 +48,32 @@ export const subRow = style({
   color: vars.color.text,
 });
 
-export const userIcon = style({
-  display: 'flex',
+export const hostAvatar = style({
+  width: '28px',
+  height: '28px',
+  borderRadius: '9999px',
+  border: `1px solid ${vars.color.stroke}`,
+  objectFit: 'cover',
+  flexShrink: 0,
+});
+
+export const hostName = style({
+  fontWeight: vars.fontWeight.semibold,
+  color: vars.color.black,
+});
+
+export const memberMeta = style({
+  display: 'inline-flex',
   alignItems: 'center',
+  gap: '4px',
   color: vars.color.subText,
 });
 
 export const detailButton = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  textDecoration: 'none',
   padding: '10px 16px',
   borderRadius: vars.radius.lg,
   border: 'none',

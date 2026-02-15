@@ -119,6 +119,8 @@ export default async function AppointmentEditPage({
   return (
     <AppointmentEditClient
       appointmentId={appointmentId}
+      initialStatus={appointment.status}
+      initialEndsAt={appointment.endsAt}
       initialTitle={initialTitle}
       initialDate={initialDate}
       initialStartTime={initialStartTime}

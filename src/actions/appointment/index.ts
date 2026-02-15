@@ -15,25 +15,32 @@ export type {
   LeaveAppointmentResult,
   ListAppointmentsParams,
   ListAppointmentsResult,
+  ListReviewableAppointmentsResult,
   PeriodFilter,
+  ReviewableAppointmentItem,
   SearchAppointmentsResult,
   SendAppointmentInvitationResult,
   UpdateAppointmentCommentResult,
   UpdateAppointmentResult,
   UpdateAppointmentStatusResult,
   TypeFilter,
-} from './_shared';
-export { createAppointmentCommentAction } from './createAppointmentCommentAction';
-export { createAppointmentAction } from './createAppointmentAction';
-export { getAppointmentCommentsAction } from './getAppointmentCommentsAction';
-export { getAppointmentDetailAction } from './getAppointmentDetailAction';
-export { getAppointmentMembersAction } from './getAppointmentMembersAction';
-export { joinAppointmentAction } from './joinAppointmentAction';
-export { leaveAppointmentAction } from './leaveAppointmentAction';
-export { listAppointmentsAction } from './listAppointmentsAction';
-export { searchAppointmentsByTitleAction } from './searchAppointmentsByTitleAction';
-export { sendAppointmentInvitationAction } from './sendAppointmentInvitationAction';
-export { updateAppointmentCommentAction } from './updateAppointmentCommentAction';
-export { updateAppointmentAction } from './updateAppointmentAction';
-export { updateAppointmentStatusAction } from './updateAppointmentStatusAction';
-export { deleteAppointmentCommentAction } from './deleteAppointmentCommentAction';
+} from './types';
+
+export { createAppointmentAction } from './create';
+export { listAppointmentsAction } from './list';
+export { listReviewableAppointmentsAction } from './review/list';
+export { searchAppointmentsByTitleAction } from './search';
+
+export { getAppointmentDetailAction } from './[appointmentId]/get';
+export { updateAppointmentAction } from './[appointmentId]/update';
+export { updateAppointmentStatusAction } from './[appointmentId]/updateStatus';
+
+export { createAppointmentCommentAction } from './[appointmentId]/comments/create';
+export { getAppointmentCommentsAction } from './[appointmentId]/comments/list';
+export { deleteAppointmentCommentAction } from './[appointmentId]/comments/delete';
+export { updateAppointmentCommentAction } from './[appointmentId]/comments/update';
+
+export { getAppointmentMembersAction } from './[appointmentId]/members/get';
+export { joinAppointmentAction } from './[appointmentId]/members/join';
+export { leaveAppointmentAction } from './[appointmentId]/members/leave';
+export { sendAppointmentInvitationAction } from './[appointmentId]/members/invite';

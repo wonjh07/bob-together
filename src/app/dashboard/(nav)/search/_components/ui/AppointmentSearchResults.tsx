@@ -95,12 +95,14 @@ export default function AppointmentSearchResults({
       {appointments.map((appointment) => (
         <AppointmentSearchCard
           key={appointment.appointmentId}
+          appointmentId={appointment.appointmentId}
           title={appointment.title}
           date={formatDate(appointment.startAt)}
           timeRange={formatTimeRange(appointment.startAt, appointment.endsAt)}
           hostName={
             appointment.hostNickname || appointment.hostName || '알 수 없음'
           }
+          hostProfileImage={appointment.hostProfileImage}
           memberCount={appointment.memberCount}
         />
       ))}

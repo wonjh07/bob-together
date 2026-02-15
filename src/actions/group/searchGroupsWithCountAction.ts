@@ -20,6 +20,7 @@ interface SearchGroupsWithCountRow {
   group_name: string;
   owner_name: string | null;
   owner_nickname: string | null;
+  owner_profile_image: string | null;
   member_count: number;
   is_member: boolean;
 }
@@ -83,6 +84,7 @@ export async function searchGroupsWithCountAction(
     groupId: row.group_id,
     title: row.group_name,
     name: row.owner_nickname || row.owner_name || '알 수 없음',
+    ownerProfileImage: row.owner_profile_image,
     memberCount: Number(row.member_count) || 0,
     isMember: row.is_member,
   }));

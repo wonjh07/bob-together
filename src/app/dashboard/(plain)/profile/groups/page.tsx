@@ -1,3 +1,5 @@
+import ProfileGroupsClient from './ProfileGroupsClient';
+
 export default function GroupsPage() {
-  return <div>Enter</div>;
+  return <ProfileGroupsClient />;
 }

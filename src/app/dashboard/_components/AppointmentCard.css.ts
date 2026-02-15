@@ -48,13 +48,6 @@ export const statusBadgeBase = style({
 });
 
 export const statusBadge = styleVariants({
-  confirmed: [
-    statusBadgeBase,
-    {
-      backgroundColor: '#E8F5E9',
-      color: vars.color.success,
-    },
-  ],
   pending: [
     statusBadgeBase,
     {
@@ -67,6 +60,13 @@ export const statusBadge = styleVariants({
     {
       backgroundColor: '#FFEBEE',
       color: vars.color.alert,
+    },
+  ],
+  ended: [
+    statusBadgeBase,
+    {
+      backgroundColor: '#EAEAEA',
+      color: vars.color.subText,
     },
   ],
 });

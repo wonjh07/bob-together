@@ -12,6 +12,7 @@
 
 ## Appointment Actions
 - `listAppointmentsAction`
+- `listReviewableAppointmentsAction`
 - `createAppointmentAction`
 - `sendAppointmentInvitationAction`
 - `searchAppointmentsByTitleAction`
@@ -52,6 +53,14 @@
   - 권한/유효성 검증
   - 약속 생성
   - 멤버 기본 연결
+
+## listReviewableAppointmentsAction
+- 입력: 없음
+- 책임:
+  - 로그인 사용자 식별
+  - 사용자 참여 약속 중 종료된 약속만 조회
+  - 취소된 약속 제외
+  - 리뷰 대기 카드용 장소 리뷰 요약(평균/개수) 반환
 
 ## searchPlacesAction
 - 입력: query, latitude?, longitude?, radius?
@@ -95,11 +104,12 @@
   - 실제 참여 인원 및 장소 리뷰 요약 반환
 
 ## updateAppointmentStatusAction
-- 입력: appointmentId, status(`pending` | `confirmed` | `canceled`)
+- 입력: appointmentId, status(`pending` | `canceled`)
 - 책임:
   - 로그인 사용자 식별
   - 약속 작성자 권한 확인
-  - 약속 상태 전환(확정/확정취소/취소/재활성화)
+  - 약속 상태 전환(취소/재활성화)
+  - 종료시간 지난 약속 상태 변경 차단
 
 ## updateAppointmentAction
 - 입력: appointmentId, title, date, startTime, endTime, place

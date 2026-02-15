@@ -67,7 +67,7 @@ export function useEmailValidation({
         console.error('Email check error:', error);
         setEmailCheckSuccess(false);
       }
-    }, 500);
+    }, 300);
 
     return () => {
       if (debounceTimerRef.current) {

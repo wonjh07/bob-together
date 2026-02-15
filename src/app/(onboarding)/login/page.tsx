@@ -25,9 +25,9 @@ export default function LoginPage() {
         <LoginButton href="/signup" bg={vars.color.text}>
           이메일로 가입하기
         </LoginButton>
-        <LoginButton bg={vars.color.kakao} color={vars.color.text}>
+        {/* <LoginButton bg={vars.color.kakao} color={vars.color.text}>
           카카오로 시작
-        </LoginButton>
+        </LoginButton> */}
       </div>
     </div>
   );

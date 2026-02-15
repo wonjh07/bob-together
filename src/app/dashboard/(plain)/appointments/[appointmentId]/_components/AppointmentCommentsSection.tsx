@@ -304,7 +304,6 @@ export default function AppointmentCommentsSection({
                     width={56}
                     height={56}
                     className={styles.avatar}
-                    unoptimized
                   />
                   <div className={styles.cardBody}>
                     <p className={styles.nickname}>{displayName}</p>

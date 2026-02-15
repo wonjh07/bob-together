@@ -32,15 +32,16 @@
 | 대시보드 그룹 목록 | `/dashboard` | Client | `src/libs/query/groupQueries.ts` | `groupKeys.myGroups()` |
 | 검색(그룹/약속) | `/dashboard/search` | Client | `GroupSearchResults.tsx`, `AppointmentSearchResults.tsx` | `groupKeys.search(...)`, `appointmentKeys.search(...)` |
 | 약속 상세 | `/dashboard/appointments/[appointmentId]` | Client(Query) | `src/app/dashboard/(plain)/appointments/[appointmentId]/AppointmentDetailClient.tsx` | `appointmentKeys.detail(...)` |
+| 약속 수정(상태 버튼) | `/dashboard/appointments/[appointmentId]/edit` | Client(Query) | `src/app/dashboard/(plain)/appointments/[appointmentId]/edit/AppointmentEditClient.tsx` | `appointmentKeys.detail(...)` |
 | 약속 댓글 영역 | `/dashboard/appointments/[appointmentId]` | Client(Query) + Local UI State | `AppointmentDetailClient.tsx`, `AppointmentCommentsSection.tsx` | `appointmentKeys.comments(...)` + 로컬 상태 |
 
 ## Mutation 무효화 매트릭스 (현재 코드 기준)
 | Mutation | 파일 | 영향 데이터 | 필수 후처리 |
 | --- | --- | --- | --- |
-| 약속 상태 변경 | `src/actions/appointment/updateAppointmentStatusAction.ts` | 상세 + 목록/검색 | 클라: `invalidateAppointmentDetailQueries` + `invalidateAppointmentCollectionQueries` |
-| 약속 참여/나가기 | `joinAppointmentAction.ts`, `leaveAppointmentAction.ts` | 상세 + 목록/검색 | 클라: `invalidateAppointmentDetailQueries` + `invalidateAppointmentCollectionQueries` |
-| 약속 수정 | `src/actions/appointment/updateAppointmentAction.ts` | 상세 + 목록/검색 | 클라: `invalidateAppointmentDetailQueries` + `invalidateAppointmentCollectionQueries` |
-| 댓글 생성/수정/삭제 | `create/update/deleteAppointmentCommentAction.ts` | 상세 댓글/댓글수 + 목록 댓글수 | 로컬: `setQueryData(appointmentKeys.comments)` / 생성·삭제 후 `invalidateAppointmentCollectionQueries` |
+| 약속 상태 변경 | `src/actions/appointment/detail/updateStatus.ts` | 상세 + 목록/검색 | 클라: `invalidateAppointmentDetailQueries` + `invalidateAppointmentCollectionQueries` |
+| 약속 참여/나가기 | `src/actions/appointment/member/join.ts`, `src/actions/appointment/member/leave.ts` | 상세 + 목록/검색 | 클라: `invalidateAppointmentDetailQueries` + `invalidateAppointmentCollectionQueries` |
+| 약속 수정 | `src/actions/appointment/detail/update.ts` | 상세 + 목록/검색 | 클라: `invalidateAppointmentDetailQueries` + `invalidateAppointmentCollectionQueries` |
+| 댓글 생성/수정/삭제 | `src/actions/appointment/comment/create.ts`, `src/actions/appointment/comment/update.ts`, `src/actions/appointment/comment/delete.ts` | 상세 댓글/댓글수 + 목록 댓글수 | 로컬: `setQueryData(appointmentKeys.comments)` / 생성·삭제 후 `invalidateAppointmentCollectionQueries` |
 
 ## 실무 적용 규칙 (이 프로젝트 권장안)
 1. 목록/검색은 Query 소유이므로 mutation 후 `invalidateQueries`를 기본으로 한다.

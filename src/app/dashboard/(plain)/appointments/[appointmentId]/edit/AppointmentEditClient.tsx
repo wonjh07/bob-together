@@ -1,20 +1,28 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { updateAppointmentAction } from '@/actions/appointment';
+import {
+  updateAppointmentAction,
+  updateAppointmentStatusAction,
+} from '@/actions/appointment';
 import CalendarIcon from '@/components/icons/CalendarIcon';
 import ClockIcon from '@/components/icons/ClockIcon';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
+import { createAppointmentDetailQueryOptions } from '@/libs/query/appointmentQueries';
 import {
   invalidateAppointmentDetailQuery,
   invalidateAppointmentListQueries,
   invalidateAppointmentSearchQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
+import {
+  getEffectiveAppointmentStatus,
+  isAppointmentEndedByTime,
+} from '@/utils/appointmentStatus';
 
 import AppointmentEditTopNav from './_components/AppointmentEditTopNav';
 import * as styles from './page.css';
@@ -33,6 +41,8 @@ interface AppointmentEditPlace {
 
 interface AppointmentEditClientProps {
   appointmentId: string;
+  initialStatus: 'pending' | 'canceled';
+  initialEndsAt: string;
   initialTitle: string;
   initialDate: string;
   initialStartTime: string;
@@ -47,6 +57,8 @@ function parseDistrict(address: string): string {
 
 export default function AppointmentEditClient({
   appointmentId,
+  initialStatus,
+  initialEndsAt,
   initialTitle,
   initialDate,
   initialStartTime,
@@ -61,6 +73,13 @@ export default function AppointmentEditClient({
   const [endTime, setEndTime] = useState(initialEndTime);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const detailQuery = useQuery(createAppointmentDetailQueryOptions(appointmentId));
+  const currentStatus = detailQuery.data?.appointment.status ?? initialStatus;
+  const currentEndsAt = detailQuery.data?.appointment.endsAt ?? initialEndsAt;
+  const isEndedByTime = isAppointmentEndedByTime(currentEndsAt);
+  const effectiveStatus = getEffectiveAppointmentStatus(currentStatus, currentEndsAt);
+  const canCancel = effectiveStatus === 'pending' && !isEndedByTime;
+  const canActivate = effectiveStatus === 'canceled' && !isEndedByTime;
 
   const placeMetaDistrict = useMemo(
     () => parseDistrict(initialPlace.address),
@@ -127,6 +146,42 @@ export default function AppointmentEditClient({
     }
 
     toast.success('약속이 수정되었습니다.');
+    await Promise.all([
+      invalidateAppointmentDetailQuery(queryClient, appointmentId),
+      invalidateAppointmentListQueries(queryClient),
+      invalidateAppointmentSearchQueries(queryClient),
+    ]);
+    router.replace(`/dashboard/appointments/${appointmentId}`);
+  };
+
+  const handleUpdateStatus = async (nextStatus: 'pending' | 'canceled') => {
+    if (isSubmitting || isEndedByTime) return;
+
+    setErrorMessage('');
+    setIsSubmitting(true);
+
+    const result = await updateAppointmentStatusAction({
+      appointmentId,
+      status: nextStatus,
+    });
+
+    setIsSubmitting(false);
+
+    if (!result.ok) {
+      setErrorMessage(result.message || '약속 취소에 실패했습니다.');
+      return;
+    }
+
+    if (!result.data) {
+      setErrorMessage('약속 취소에 실패했습니다.');
+      return;
+    }
+
+    if (nextStatus === 'canceled') {
+      toast.success('약속이 취소되었습니다.');
+    } else {
+      toast.success('약속이 다시 활성화되었습니다.');
+    }
     await Promise.all([
       invalidateAppointmentDetailQuery(queryClient, appointmentId),
       invalidateAppointmentListQueries(queryClient),
@@ -208,6 +263,26 @@ export default function AppointmentEditClient({
         <Link href={placeSearchLink} className={styles.placeChangeButton}>
           장소변경
         </Link>
+
+        {canCancel ? (
+          <button
+            type="button"
+            className={styles.cancelAppointmentButton}
+            onClick={() => handleUpdateStatus('canceled')}
+            disabled={isSubmitting}>
+            약속 취소하기
+          </button>
+        ) : null}
+
+        {canActivate ? (
+          <button
+            type="button"
+            className={styles.activateAppointmentButton}
+            onClick={() => handleUpdateStatus('pending')}
+            disabled={isSubmitting}>
+            약속 활성화하기
+          </button>
+        ) : null}
 
         <p className={styles.helperText}>{errorMessage}</p>
       </div>

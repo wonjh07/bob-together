@@ -126,6 +126,42 @@ export const placeChangeButton = style({
   padding: '12px 16px',
 });
 
+export const cancelAppointmentButton = style({
+  width: '100%',
+  border: 'none',
+  borderRadius: vars.radius.lg,
+  backgroundColor: vars.color.alert,
+  color: vars.color.background,
+  fontSize: vars.fontSize.text,
+  fontWeight: vars.fontWeight.bold,
+  padding: '12px 16px',
+  cursor: 'pointer',
+  selectors: {
+    '&:disabled': {
+      cursor: 'not-allowed',
+      opacity: 0.6,
+    },
+  },
+});
+
+export const activateAppointmentButton = style({
+  width: '100%',
+  border: 'none',
+  borderRadius: vars.radius.lg,
+  backgroundColor: vars.color.button,
+  color: vars.color.background,
+  fontSize: vars.fontSize.text,
+  fontWeight: vars.fontWeight.bold,
+  padding: '12px 16px',
+  cursor: 'pointer',
+  selectors: {
+    '&:disabled': {
+      cursor: 'not-allowed',
+      opacity: 0.6,
+    },
+  },
+});
+
 export const helperText = style({
   minHeight: '16px',
   margin: 0,

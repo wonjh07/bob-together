@@ -7,6 +7,13 @@ export const container = style({
   height: 'auto',
 });
 
+export const emptyState = style({
+  padding: '16px',
+  color: vars.color.subText,
+  fontSize: vars.fontSize.subText,
+  fontWeight: vars.fontWeight.medium,
+});
+
 export const scrollRow = style({
   display: 'flex',
   gap: '16px',
@@ -63,6 +70,9 @@ export const infoRow = style({
 });
 
 export const writeButton = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   marginTop: '12px',
   width: '100%',
   height: '40px',
@@ -73,4 +83,5 @@ export const writeButton = style({
   fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.bold,
   cursor: 'pointer',
+  textDecoration: 'none',
 });

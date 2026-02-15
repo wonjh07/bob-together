@@ -32,9 +32,22 @@ export const subRow = style({
   color: vars.color.text,
 });
 
-export const userIcon = style({
+export const ownerAvatar = style({
   display: 'flex',
   alignItems: 'center',
+  borderRadius: '9999px',
+  objectFit: 'cover',
+  border: `1px solid ${vars.color.stroke}`,
+});
+
+export const ownerName = style({
+  color: vars.color.text,
+});
+
+export const memberMeta = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '4px',
   color: vars.color.subText,
 });
 

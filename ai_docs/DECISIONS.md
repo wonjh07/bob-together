@@ -58,4 +58,52 @@
 - Decision: 검색(그룹/약속)에서 실제 인원수를 위해 `security definer` RPC(`search_groups_with_count`, `search_appointments_with_count`)를 사용
 - Alternatives: RLS 완화 후 일반 select/count, 더미 데이터 유지
 - Reason: 실제 인원수 정확성을 유지하면서 멤버 테이블 row 전체 노출 범위를 불필요하게 넓히지 않기 위함
-- Scope: `supabase/migrations/20260210162000_search_count_rpc.sql`, `src/actions/group/searchGroupsWithCountAction.ts`, `src/actions/appointment/searchAppointmentsByTitleAction.ts`, `src/app/dashboard/(nav)/search/**`
+- Scope: `supabase/migrations/20260210162000_search_count_rpc.sql`, `src/actions/group/searchGroupsWithCountAction.ts`, `src/actions/appointment/list/search.ts`, `src/app/dashboard/(nav)/search/**`
+
+## Appointment 액션 공통 가드/응답 패턴 적용 (2026-02-12)
+- Decision: `appointment` 도메인 액션 전반에 `parseOrFail`, `requireUser`, `actionError/actionSuccess` 패턴을 통일 적용
+- Alternatives: 액션별 수동 `safeParse`, `auth.getUser`, `{ ok: false/true }` 반환 유지
+- Reason: 반복 코드 제거, 에러/응답 포맷 일관성 확보, 신규 액션 작성 시 실수 가능성 축소
+- Scope: `src/actions/appointment/**` (comment 포함)
+
+## Appointment 액션 파일명 단축 (2026-02-12)
+- Decision: `appointment` 및 `appointment/comment` 액션 파일명에서 `*Action` 접미사를 제거하고 동작 중심의 짧은 파일명으로 통일
+- Alternatives: 기존 긴 파일명 유지
+- Reason: 도메인 폴더 자체가 컨텍스트를 제공하므로 파일명은 동작만 표현하는 편이 탐색성과 가독성에 유리
+- Scope: `src/actions/appointment/**`, `src/actions/appointment/comment/**`, `src/actions/appointment/index.ts`
+
+## Appointment 액션 계층 재구성 (2026-02-12)
+- Decision: `appointment` 액션을 `create/list/detail/member/comment` 하위 도메인 폴더로 재구성하고, `_shared.ts`를 `types.ts`로 변경
+- Alternatives: `appointment` 루트에 액션 파일을 평면으로 유지
+- Reason: 목록/상세/멤버/댓글 유스케이스가 혼재되어 `index`/공통 타입의 역할이 흐려졌고, 하위 도메인 분리로 책임 경계를 명확히 하기 위함
+- Scope: `src/actions/appointment/**`, `src/actions/appointment/index.ts`, `src/actions/appointment/types.ts`
+
+## 약속 종료 상태 파생 처리 도입 (2026-02-13)
+- Decision: DB `status` 원본값과 별개로 `ends_at` 기반 파생 상태(`ended`)를 UI에서 계산해 노출한다.
+- Alternatives: DB에 `ended`를 즉시 물리 저장(배치/트리거), 기존 `pending/confirmed`만 노출 유지
+- Reason: 운영 부하를 늘리는 스케줄러 없이도 사용자 화면에서 종료 상태를 즉시 일관되게 보장하고, 이후 `confirmed` 축소 마이그레이션을 단계적으로 진행하기 위함
+- Scope: `src/utils/appointmentStatus.ts`, `src/app/dashboard/_components/AppointmentCard.tsx`, `src/app/dashboard/(plain)/appointments/[appointmentId]/_components/AppointmentDetailActions.tsx`
+
+## 약속 상세 소유자 상태 전환 단순화 (2026-02-13)
+- Decision: 약속 상세에서 소유자에게 `확정하기/확정 취소`를 제거하고 `초대하기 + 취소하기(+취소 상태에서 활성화)`만 제공한다.
+- Alternatives: 기존 `확정/확정취소` 유지, 즉시 DB enum에서 `confirmed` 제거
+- Reason: 상태 모델 단순화를 UI부터 선적용해 사용자 플로우를 안정화하고, DB/마이그레이션 변경은 후속 단계로 분리하기 위함
+- Scope: `src/app/dashboard/(plain)/appointments/[appointmentId]/_components/AppointmentDetailActions.tsx`
+
+## 약속 상태 정규화(`confirmed` → `pending`) (2026-02-13)
+- Decision: 앱 계층에서 `confirmed`를 별도 상태로 노출하지 않고 `pending`으로 정규화하며, 종료 여부는 `ends_at` 기반 파생 상태(`ended`)로만 표현한다.
+- Alternatives: `confirmed` 상태를 클라이언트까지 유지, 즉시 DB enum 제거 마이그레이션 동시 진행
+- Reason: 상태 전이 복잡도를 즉시 줄이면서도 기존 데이터와 호환성을 유지하고, DB enum 정리는 운영 타이밍에 맞춰 분리하기 위함
+- Scope: `src/actions/appointment/list.ts`, `src/actions/appointment/[appointmentId]/get.ts`, `src/actions/appointment/[appointmentId]/updateStatus.ts`, `src/utils/appointmentStatus.ts`, `src/app/dashboard/_components/AppointmentCard.tsx`
+
+## appointment_status enum 축소 마이그레이션 (2026-02-13)
+- Decision: DB 레벨에서도 `appointment_status`에서 `confirmed`를 제거하고 `pending/canceled`만 유지한다.
+- Alternatives: enum은 유지하고 앱 레이어 정규화만 지속
+- Reason: 앱/DB 상태 모델의 불일치를 제거하고, 추후 RLS/RPC/분석 쿼리에서 상태 분기를 단순화하기 위함
+- Scope: `supabase/migrations/20260213174000_remove_confirmed_from_appointment_status.sql`
+
+## 약속 상태 변경 진입점 단일화 (2026-02-13)
+- Decision: 약속 `취소/활성화` 버튼을 상세 화면에서 제거하고 수정 화면으로 단일화한다.
+- Alternatives: 상세 화면과 수정 화면에 상태 버튼 병행 노출
+- Reason: 상태 변경 UX를 한 화면에 모아 캐시 동기화/버튼 상태 불일치 이슈를 줄이기 위함
+- Scope: `src/app/dashboard/(plain)/appointments/[appointmentId]/_components/AppointmentDetailActions.tsx`, `src/app/dashboard/(plain)/appointments/[appointmentId]/edit/AppointmentEditClient.tsx`

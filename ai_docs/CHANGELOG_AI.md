@@ -1,5 +1,21 @@
 # AI Changelog (Rolling)
 
+## 2026-02-13
+- Added profile group-management page (`/dashboard/profile/groups`) with shared `PlainTopNav`, card list UI, and infinite scroll.
+- Added group-management card interactions: per-card `⋮` dropdown and real `그룹 탈퇴` action handling.
+- Added `leaveGroupAction` and `listMyGroupsWithStatsAction`, plus group query key/options for management pagination.
+- Added migration `20260213152000_group_manage_list_and_leave_policy.sql` for `list_my_groups_with_stats` RPC and `group_members_delete_self` policy.
+- Added `getEffectiveAppointmentStatus` utility and applied derived `ended` status rendering for dashboard appointment cards.
+- Updated appointment detail action UI to treat `ended`/`canceled` as non-participation states for non-owners (hide join/leave), preparing status simplification.
+- Removed owner-side `확정하기/확정 취소` controls from appointment detail action area; now owner flow is `초대하기/취소하기` or `약속 활성화하기(취소 상태)`.
+- Added server-side guards for appointment mutations: block `join/leave` on canceled or time-ended appointments, and block status changes on time-ended appointments.
+- Replaced profile review waitlist dummy cards with real `listReviewableAppointmentsAction` data (ended + non-canceled appointments only) and linked each card to review entry route.
+- Normalized appointment status exposure by collapsing persisted `confirmed` into `pending` at action/UI layer and removed `confirmed` badge/response typing from client-facing contracts.
+- Added migration `20260213174000_remove_confirmed_from_appointment_status.sql` to normalize existing `confirmed` rows to `pending`, shrink `appointment_status` enum (`pending`,`canceled`), and recreate dependent appointment RPCs.
+- Moved appointment cancel entry point from detail action area to appointment edit page (`약속 취소하기` button), while keeping detail page focused on invitation/activation controls.
+- Moved `약속 활성화하기` entry point from detail page to appointment edit page, so both cancel/activate status transitions are handled in a single edit screen.
+- Switched appointment edit status-button visibility source from local initial props to React Query detail cache (`appointmentKeys.detail`) to prevent stale status after cancel/activate round-trips.
+
 ## 2026-02-12
 - Reworked `CACHE_OWNERSHIP.md` from high-level notes into a file-level ownership/invalidation matrix.
 - Added explicit query-key standard, screen ownership table, mutation invalidation matrix, and operational checklist.
@@ -201,6 +217,18 @@
 - Added active toggle state and transition animation for the search type switch.
 - Split appointment invitation page into a Server page and a client `AppointmentInvitationClient`.
 - Removed unused `comment_count` from `get_appointment_detail_with_count` RPC payload and aligned detail action typing to the new shape.
+- Applied common action pattern (`parseOrFail`, `requireUser`, `actionError/actionSuccess`) across appointment actions for consistent validation/auth/response flow.
+- Renamed `appointment` and `appointment/comment` action files to short verb-based filenames (removed `*Action` suffix) while preserving exported function names.
+- Reorganized appointment actions into domain folders (`create`, `list`, `detail`, `member`, `comment`) and renamed shared contracts file from `_shared.ts` to `types.ts`.
+- Added appointment search card navigation to detail page and updated card meta UI to show host profile image + member icon/count.
+- Added migration to extend `search_appointments_with_count` RPC with `host_profile_image` and mapped it in appointment search action/types.
+- Updated dashboard group search card UI to show owner profile image + member icon/count.
+- Connected group search `가입하기` button to `joinGroupAction` with cache update/invalidation and toast feedback.
+- Added migration to extend `search_groups_with_count` RPC with `owner_profile_image` and mapped it in group search action/types.
+- Added shared `PlainTopNav` component and consolidated duplicated plain-route top nav variants (detail/edit/place/members) into wrappers using the shared component.
+- Removed duplicated top nav style files from appointment plain routes after consolidation.
+- Refactored `DetailPageTopNav` to wrap shared `PlainTopNav` and removed duplicated `DetailPageTopNav.css.ts`.
+- Removed `DetailPageTopNav` wrapper and switched profile edit page to use `PlainTopNav` directly.
 
 ## 2026-02-02 (late)
 - Moved appointment routes from `(app)` to `(app-plain)` for step-based flow layout.

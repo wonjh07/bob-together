@@ -17,11 +17,11 @@ import CameraIcon from '@/components/icons/CameraIcon';
 import TrashIcon from '@/components/icons/TrashIcon';
 import FormError from '@/components/ui/FormError';
 import { Input } from '@/components/ui/FormInput';
+import PlainTopNav from '@/components/ui/PlainTopNav';
 import { nameSchema, nicknameSchema, passwordSchema } from '@/schemas/auth';
 import { convertToJpegUnderLimit } from '@/utils/convertToJpegUnderLimit';
 
 import * as styles from './ProfileEditClient.css';
-import DetailPageTopNav from '../../../../../components/ui/DetailPageTopNav';
 
 const profileEditSchema = z
   .object({
@@ -215,10 +215,12 @@ export default function ProfileEditClient({
 
   return (
     <div className={styles.container}>
-      <DetailPageTopNav
+      <PlainTopNav
         title="프로필 수정"
-        onComplete={onSubmit}
-        isSubmitting={isSubmitting || isUploading}
+        rightLabel="완료"
+        rightAriaLabel="완료"
+        onRightAction={onSubmit}
+        rightDisabled={isSubmitting || isUploading}
       />
       <div className={styles.content}>
         <div
@@ -230,7 +232,7 @@ export default function ProfileEditClient({
             width={160}
             height={160}
             className={styles.profileImage}
-            unoptimized
+            unoptimized={displayProfileImage.startsWith('blob:')}
           />
           <button
             type="button"

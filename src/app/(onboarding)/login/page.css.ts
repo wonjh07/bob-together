@@ -36,7 +36,7 @@ export const linkContainer = style({
   display: 'flex',
   justifyContent: 'center',
   width: '100%',
-  gap: `32px`,
+  gap: `64px`,
   padding: '32px',
   fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,

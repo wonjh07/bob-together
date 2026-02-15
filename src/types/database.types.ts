@@ -561,6 +561,25 @@ export type Database = {
           title: string
         }[]
       }
+      list_my_groups_with_stats: {
+        Args: {
+          p_cursor_group_id?: string
+          p_cursor_joined_at?: string
+          p_limit?: number
+          p_user_id: string
+        }
+        Returns: {
+          created_at: string
+          group_id: string
+          group_name: string
+          is_owner: boolean
+          joined_at: string
+          member_count: number
+          owner_name: string
+          owner_nickname: string
+          owner_profile_image: string
+        }[]
+      }
       search_appointments_with_count: {
         Args: {
           p_cursor_appointment_id?: string
@@ -574,6 +593,7 @@ export type Database = {
           ends_at: string
           host_name: string
           host_nickname: string
+          host_profile_image: string
           member_count: number
           start_at: string
           title: string
@@ -594,12 +614,13 @@ export type Database = {
           member_count: number
           owner_name: string
           owner_nickname: string
+          owner_profile_image: string
         }[]
       }
     }
     Enums: {
       appointment_member_role: "owner" | "member"
-      appointment_status: "pending" | "canceled" | "confirmed"
+      appointment_status: "pending" | "canceled"
       group_member_role: "owner" | "member"
       invitation_status: "pending" | "accepted" | "rejected" | "canceled"
       invitation_type: "group" | "appointment"
@@ -733,7 +754,7 @@ export const Constants = {
   public: {
     Enums: {
       appointment_member_role: ["owner", "member"],
-      appointment_status: ["pending", "canceled", "confirmed"],
+      appointment_status: ["pending", "canceled"],
       group_member_role: ["owner", "member"],
       invitation_status: ["pending", "accepted", "rejected", "canceled"],
       invitation_type: ["group", "appointment"],

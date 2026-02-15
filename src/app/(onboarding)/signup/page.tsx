@@ -9,8 +9,7 @@ export default function SignupPage() {
       <div className={title}>회원가입</div>
       <SignupForm />
       <div className={buttonContainer}>
-        <p>이미 계정이 있으신가요?</p>
-        <Link href="/login">로그인</Link>
+        <Link href="/login">이미 계정이 있으신가요?</Link>
       </div>
     </div>
   );

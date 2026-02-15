@@ -115,7 +115,6 @@ export default function AppointmentDetailClient({
               width={56}
               height={56}
               className={styles.authorAvatar}
-              unoptimized
             />
             <div>
               <div className={styles.authorNameLine}>
@@ -195,6 +194,7 @@ export default function AppointmentDetailClient({
           appointmentId={appointment.appointmentId}
           appointmentTitle={appointment.title}
           initialStatus={appointment.status}
+          endsAt={appointment.endsAt}
           isOwner={appointment.isOwner}
           initialIsMember={appointment.isMember}
         />

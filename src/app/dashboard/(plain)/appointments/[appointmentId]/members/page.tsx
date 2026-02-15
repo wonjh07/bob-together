@@ -58,7 +58,6 @@ export default async function AppointmentMembersPage({
                     width={56}
                     height={56}
                     className={styles.avatar}
-                    unoptimized
                   />
                   <div className={styles.names}>
                     <div className={styles.nicknameRow}>

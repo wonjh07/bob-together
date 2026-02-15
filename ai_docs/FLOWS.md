@@ -44,9 +44,9 @@
 - Kakao Map/Place search: `ai_docs/KAKAO_INTEGRATION.md`
 
 ### Detail Status Flow
-- `pending`: `초대하기` + `확정하기` + `취소하기`
-- `confirmed`: `초대하기` + `확정 취소` + `취소하기`
-- `canceled`: `약속 활성화하기`
+- `pending`: `초대하기`
+- `canceled`: 상태 변경 버튼 없음 (수정 화면에서 활성화)
+- `ended`: 상태 변경 버튼 없음
 
 ### Detail Comment Flow
 - 상세 페이지 하단 댓글 섹션에서 댓글 목록/개수 조회
@@ -57,6 +57,8 @@
 ### Edit Flow
 - `/dashboard/appointments/[appointmentId]/edit`
   - 제목/날짜/시간 편집
+  - `약속 취소하기` 버튼으로 상태를 `canceled`로 변경
+  - `약속 활성화하기` 버튼으로 상태를 `pending`으로 변경(취소 상태일 때만)
   - `완료` 클릭 시 `updateAppointmentAction` 실행
 - `/dashboard/appointments/[appointmentId]/edit/place`
   - 장소 검색/선택
