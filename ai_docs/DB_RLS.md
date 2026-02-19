@@ -32,6 +32,13 @@
 - `supabase/migrations/20260211213000_check_email_exists_rpc.sql`
   - Adds `check_email_exists` RPC (`security definer`).
   - Grants execute to `anon`, `authenticated`.
+- `supabase/migrations/20260215173000_user_places_review_rls_policies.sql`
+  - Enables RLS on: `user_places`.
+  - Grants `select/insert/update/delete` on `user_places` to `authenticated`.
+  - Adds self-row write policies for review create/update/delete.
+- `supabase/migrations/20260215200000_invitations_select_group_member_policy.sql`
+  - Adds `invitations_select_group_member` policy.
+  - Allows group members to read invitation rows in their groups.
 
 ## Policies (summary)
 - `groups_select_authenticated`: authenticated can select all groups.
@@ -45,6 +52,7 @@
 - `profile_images_update_own`: users can update only own objects in `profile-images`.
 - `profile_images_delete_own`: users can delete only own objects in `profile-images`.
 - `invitations_insert_group_member`: group members can create invitations.
+- `invitations_select_group_member`: group members can view invitations in their groups.
 - `places_*_authenticated`: authenticated can select/insert/update/delete places.
 - `appointments_select_group_member`: group members can select appointments.
 - `appointments_insert_group_member`: group members can create appointments as creator.
@@ -59,6 +67,10 @@
 - `appointment_comments_insert_group_member_self`: group members can create comments only as self (`user_id = auth.uid()`).
 - `appointment_comments_update_self`: users can update their own comments.
 - `appointment_comments_delete_self`: users can delete their own comments.
+- `user_places_select_authenticated`: authenticated can read place review rows.
+- `user_places_insert_self`: authenticated can insert only own review row (`user_id = auth.uid()`).
+- `user_places_update_self`: authenticated can update only own review row.
+- `user_places_delete_self`: authenticated can delete only own review row.
 
 ## Notes
 - If 403 errors occur, verify RLS policies and grants for the table.

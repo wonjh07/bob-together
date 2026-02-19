@@ -67,7 +67,7 @@ export async function ReviewsWaitList() {
                 </span>
               </div>
               <Link
-                href={`/dashboard/profile/reviews?appointmentId=${review.appointmentId}`}
+                href={`/dashboard/profile/reviews/${review.appointmentId}`}
                 className={styles.writeButton}>
                 리뷰 남기기
               </Link>

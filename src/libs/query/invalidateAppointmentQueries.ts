@@ -14,6 +14,18 @@ export async function invalidateAppointmentSearchQueries(
   await queryClient.invalidateQueries({ queryKey: appointmentKeys.searchRoot() });
 }
 
+export async function invalidateMyReviewsQueries(
+  queryClient: QueryClient,
+) {
+  await queryClient.invalidateQueries({ queryKey: appointmentKeys.myReviewsRoot() });
+}
+
+export async function invalidateMyCommentsQueries(
+  queryClient: QueryClient,
+) {
+  await queryClient.invalidateQueries({ queryKey: appointmentKeys.myCommentsRoot() });
+}
+
 export async function invalidateAppointmentDetailQuery(
   queryClient: QueryClient,
   appointmentId: string,

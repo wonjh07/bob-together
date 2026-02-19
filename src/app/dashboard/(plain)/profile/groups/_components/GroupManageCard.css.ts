@@ -5,8 +5,8 @@ import { vars } from '@/styles/theme.css';
 export const card = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: '14px',
-  padding: '20px 0',
+  gap: '8px',
+  padding: '16px',
   borderBottom: `1px solid ${vars.color.stroke}`,
 });
 
@@ -19,10 +19,9 @@ export const headRow = style({
 
 export const groupName = style({
   margin: 0,
-  fontSize: vars.fontSize.instruction,
+  fontSize: vars.fontSize.header,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.black,
-  lineHeight: 1.2,
 });
 
 export const menuWrap = style({
@@ -97,17 +96,17 @@ export const avatar = style({
 export const ownerNameRow = style({
   display: 'inline-flex',
   alignItems: 'center',
-  gap: '8px',
+  gap: '6px',
 });
 
 export const ownerName = style({
-  fontSize: vars.fontSize.title,
+  fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.text,
 });
 
 export const meText = style({
-  fontSize: vars.fontSize.title,
+  fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.main,
 });
@@ -115,20 +114,19 @@ export const meText = style({
 export const footerRow = style({
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'space-between',
   gap: '12px',
 });
 
 export const dateText = style({
-  fontSize: vars.fontSize.title,
-  color: vars.color.subText,
+  fontSize: vars.fontSize.text,
+  color: vars.color.text,
 });
 
 export const memberMeta = style({
   display: 'inline-flex',
-  alignItems: 'center',
+  alignItems: 'flex-end',
   gap: '4px',
-  fontSize: vars.fontSize.header,
-  fontWeight: vars.fontWeight.semibold,
+  fontSize: vars.fontSize.text,
+  fontWeight: vars.fontWeight.medium,
   color: vars.color.text,
 });

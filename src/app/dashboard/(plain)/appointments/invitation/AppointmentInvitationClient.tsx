@@ -1,12 +1,17 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { sendAppointmentInvitationAction } from '@/actions/appointment';
 import { searchUsersAction } from '@/actions/group';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { appointmentKeys } from '@/libs/query/appointmentKeys';
+import {
+  createAppointmentInvitationStateQueryOptions,
+  type AppointmentInvitationStateData,
+} from '@/libs/query/appointmentQueries';
 import { groupSearchFormSchema } from '@/schemas/group';
 
 import {
@@ -37,8 +42,8 @@ type AppointmentInvitationClientProps = {
 export default function AppointmentInvitationClient({
   appointmentId,
 }: AppointmentInvitationClientProps) {
+  const queryClient = useQueryClient();
   const [resultUsers, setResultUsers] = useState<UserSummary[]>([]);
-  const [invitedIds, setInvitedIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isInviting, setIsInviting] = useState<Record<string, boolean>>({});
@@ -47,14 +52,18 @@ export default function AppointmentInvitationClient({
     register,
     handleSubmit,
     formState: { errors },
-    watch,
   } = useForm<GroupSearchFormInput>({
     resolver: zodResolver(groupSearchFormSchema),
     mode: 'onChange',
   });
 
-  const queryValue = watch('query');
-  const debouncedQuery = useDebouncedValue(queryValue, 500);
+  const invitationStateQuery = useQuery({
+    ...createAppointmentInvitationStateQueryOptions(appointmentId),
+    enabled: !!appointmentId,
+  });
+
+  const memberIds = invitationStateQuery.data?.memberIds ?? [];
+  const pendingInviteeIds = invitationStateQuery.data?.pendingInviteeIds ?? [];
 
   const performSearch = useCallback(
     async (query: string) => {
@@ -89,17 +98,25 @@ export default function AppointmentInvitationClient({
     [appointmentId],
   );
 
-  useEffect(() => {
-    if (!debouncedQuery) {
-      setResultUsers([]);
-      return;
-    }
-
-    performSearch(debouncedQuery);
-  }, [debouncedQuery, performSearch]);
-
   const onSubmit = async (data: GroupSearchFormInput) => {
     await performSearch(data.query);
+  };
+
+  const updateInvitationStateCache = (
+    updater: (prev: AppointmentInvitationStateData) => AppointmentInvitationStateData,
+  ) => {
+    if (!appointmentId) return;
+
+    queryClient.setQueryData<AppointmentInvitationStateData>(
+      appointmentKeys.invitationState(appointmentId),
+      (prev) =>
+        updater(
+          prev ?? {
+            memberIds: [],
+            pendingInviteeIds: [],
+          },
+        ),
+    );
   };
 
   const handleInvite = async (userId: string) => {
@@ -116,11 +133,36 @@ export default function AppointmentInvitationClient({
     setIsInviting((prev) => ({ ...prev, [userId]: false }));
 
     if (!result.ok) {
+      if (result.error === 'invite-already-sent') {
+        updateInvitationStateCache((prev) => ({
+          ...prev,
+          pendingInviteeIds: prev.pendingInviteeIds.includes(userId)
+            ? prev.pendingInviteeIds
+            : [...prev.pendingInviteeIds, userId],
+        }));
+        return;
+      }
+
+      if (result.error === 'already-member') {
+        updateInvitationStateCache((prev) => ({
+          ...prev,
+          memberIds: prev.memberIds.includes(userId)
+            ? prev.memberIds
+            : [...prev.memberIds, userId],
+        }));
+        return;
+      }
+
       setErrorMessage(result.message || '초대에 실패했습니다.');
       return;
     }
 
-    setInvitedIds((prev) => [...prev, userId]);
+    updateInvitationStateCache((prev) => ({
+      ...prev,
+      pendingInviteeIds: prev.pendingInviteeIds.includes(userId)
+        ? prev.pendingInviteeIds
+        : [...prev.pendingInviteeIds, userId],
+    }));
   };
 
   return (
@@ -150,8 +192,10 @@ export default function AppointmentInvitationClient({
 
       <div className={results}>
         {resultUsers.map((user) => {
-          const isInvited = invitedIds.includes(user.userId);
+          const isMember = memberIds.includes(user.userId);
+          const isInvited = pendingInviteeIds.includes(user.userId);
           const isLoading = !!isInviting[user.userId];
+          const isDisabled = isMember || isInvited || isLoading;
           const secondaryText =
             user.nickname && user.name
               ? user.name
@@ -167,11 +211,17 @@ export default function AppointmentInvitationClient({
               <button
                 type="button"
                 className={`${inviteButton} ${
-                  isInvited ? invitedButton : ''
+                  isMember || isInvited ? invitedButton : ''
                 }`}
                 onClick={() => handleInvite(user.userId)}
-                disabled={isInvited || isLoading}>
-                {isInvited ? '초대됨' : isLoading ? '전송 중' : '초대하기'}
+                disabled={isDisabled}>
+                {isMember
+                  ? '약속 멤버'
+                  : isInvited
+                    ? '초대 완료'
+                    : isLoading
+                      ? '전송 중'
+                      : '초대하기'}
               </button>
             </div>
           );

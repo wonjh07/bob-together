@@ -8,6 +8,18 @@ export interface AppointmentSearchCursor {
   appointmentId: string;
 }
 
+export interface AppointmentHistoryCursor {
+  offset: number;
+}
+
+export interface MyReviewCursor {
+  offset: number;
+}
+
+export interface MyCommentCursor {
+  offset: number;
+}
+
 export interface AppointmentSearchItem {
   appointmentId: string;
   title: string;
@@ -19,6 +31,28 @@ export interface AppointmentSearchItem {
   memberCount: number;
 }
 
+export interface AppointmentHistoryItem {
+  appointmentId: string;
+  title: string;
+  startAt: string;
+  endsAt: string;
+  creatorId: string;
+  creatorName: string | null;
+  creatorNickname: string | null;
+  creatorProfileImage: string | null;
+  place: {
+    placeId: string;
+    name: string;
+    address: string;
+    category: string | null;
+    reviewAverage: number | null;
+    reviewCount: number;
+  };
+  memberCount: number;
+  isOwner: boolean;
+  canWriteReview: boolean;
+}
+
 export interface ReviewableAppointmentItem {
   appointmentId: string;
   title: string;
@@ -28,6 +62,44 @@ export interface ReviewableAppointmentItem {
   placeName: string;
   reviewAverage: number | null;
   reviewCount: number;
+}
+
+export interface AppointmentReviewTargetItem {
+  appointmentId: string;
+  title: string;
+  startAt: string;
+  endsAt: string;
+  place: {
+    placeId: string;
+    name: string;
+    address: string;
+    category: string | null;
+    reviewAverage: number | null;
+    reviewCount: number;
+  };
+  myReview: {
+    score: number | null;
+    content: string | null;
+  } | null;
+  hasReviewed: boolean;
+  canWriteReview: boolean;
+}
+
+export interface MyReviewItem {
+  placeId: string;
+  appointmentId: string | null;
+  placeName: string;
+  score: number;
+  content: string;
+  editedAt: string;
+}
+
+export interface MyCommentItem {
+  commentId: string;
+  appointmentId: string;
+  appointmentTitle: string;
+  content: string;
+  createdAt: string;
 }
 
 export interface AppointmentListItem {
@@ -129,6 +201,14 @@ export type SearchAppointmentsResult = ActionResult<
   AppointmentErrorCode
 >;
 
+export type ListAppointmentHistoryResult = ActionResult<
+  {
+    appointments: AppointmentHistoryItem[];
+    nextCursor: AppointmentHistoryCursor | null;
+  },
+  AppointmentErrorCode
+>;
+
 export type GetAppointmentDetailResult = ActionResult<
   { appointment: AppointmentDetailItem },
   AppointmentErrorCode
@@ -152,6 +232,14 @@ export type GetAppointmentMembersResult = ActionResult<
     memberCount: number;
     members: AppointmentMemberItem[];
     currentUserId: string;
+  },
+  AppointmentErrorCode
+>;
+
+export type GetAppointmentInvitationStateResult = ActionResult<
+  {
+    memberIds: string[];
+    pendingInviteeIds: string[];
   },
   AppointmentErrorCode
 >;
@@ -189,6 +277,46 @@ export type DeleteAppointmentCommentResult = ActionResult<
 export type ListReviewableAppointmentsResult = ActionResult<
   {
     appointments: ReviewableAppointmentItem[];
+  },
+  AppointmentErrorCode
+>;
+
+export type GetAppointmentReviewTargetResult = ActionResult<
+  {
+    target: AppointmentReviewTargetItem;
+  },
+  AppointmentErrorCode
+>;
+
+export type SubmitPlaceReviewResult = ActionResult<
+  {
+    placeId: string;
+    score: number;
+    content: string;
+    mode: 'created' | 'updated';
+  },
+  AppointmentErrorCode
+>;
+
+export type ListMyReviewsResult = ActionResult<
+  {
+    reviews: MyReviewItem[];
+    nextCursor: MyReviewCursor | null;
+  },
+  AppointmentErrorCode
+>;
+
+export type ListMyCommentsResult = ActionResult<
+  {
+    comments: MyCommentItem[];
+    nextCursor: MyCommentCursor | null;
+  },
+  AppointmentErrorCode
+>;
+
+export type DeleteMyReviewResult = ActionResult<
+  {
+    placeId: string;
   },
   AppointmentErrorCode
 >;

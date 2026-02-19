@@ -117,8 +117,8 @@ export default function GroupManageCard({
           {label}: {dateText}
         </span>
         <span className={styles.memberMeta}>
-          <GroupIcon width="22" height="22" />
-          {group.memberCount}
+          <GroupIcon width="20" height="20" />
+          <a>{group.memberCount}</a>
         </span>
       </div>
     </article>

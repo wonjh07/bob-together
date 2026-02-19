@@ -1,3 +1,5 @@
+import ProfileHistoryClient from './ProfileHistoryClient';
+
 export default function HistoryPage() {
-  return <div>Enter</div>;
+  return <ProfileHistoryClient />;
 }

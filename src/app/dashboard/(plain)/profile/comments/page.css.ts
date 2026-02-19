@@ -4,15 +4,13 @@ import { vars } from '@/styles/theme.css';
 
 export const page = style({
   width: '100%',
-  height: '100%',
+  minHeight: '100%',
   backgroundColor: vars.color.background,
 });
 
 export const list = style({
   display: 'flex',
   flexDirection: 'column',
-  width: '100%',
-  height: '100%',
 });
 
 export const statusBox = style({
@@ -33,3 +31,4 @@ export const loadMoreTrigger = style({
   width: '100%',
   height: '1px',
 });
+

@@ -3,7 +3,7 @@ import type { SVGProps } from 'react';
 export default function GroupIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
-      viewBox="0 0 64 64"
+      viewBox="0 8 64 64"
       width="48"
       height="48"
       fill="none"

@@ -9,7 +9,7 @@ export const page = style({
 });
 
 export const content = style({
-  padding: '16px 0',
+  padding: '16px',
   display: 'flex',
   flexDirection: 'column',
   gap: '12px',

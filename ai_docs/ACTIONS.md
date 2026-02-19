@@ -12,7 +12,13 @@
 
 ## Appointment Actions
 - `listAppointmentsAction`
+- `listAppointmentHistoryAction`
 - `listReviewableAppointmentsAction`
+- `listMyReviewsAction`
+- `listMyCommentsAction`
+- `getAppointmentReviewTargetAction`
+- `submitPlaceReviewAction`
+- `deleteMyReviewAction`
 - `createAppointmentAction`
 - `sendAppointmentInvitationAction`
 - `searchAppointmentsByTitleAction`
@@ -24,6 +30,7 @@
 - `updateAppointmentAction`
 - `updateAppointmentStatusAction`
 - `getAppointmentMembersAction`
+- `getAppointmentInvitationStateAction`
 
 ## User Actions
 - `getUserData`
@@ -61,6 +68,53 @@
   - 사용자 참여 약속 중 종료된 약속만 조회
   - 취소된 약속 제외
   - 리뷰 대기 카드용 장소 리뷰 요약(평균/개수) 반환
+
+## listAppointmentHistoryAction
+- 입력: cursor?, limit?
+- 책임:
+  - 로그인 사용자 식별
+  - 내가 참여(생성 포함)한 약속 중 종료된 약속만 조회
+  - 취소된 약속 제외
+  - 최근 종료순 정렬 + 커서 기반 페이지네이션
+  - 히스토리 카드용 작성자/장소/인원/리뷰요약/리뷰작성가능여부 반환
+
+## getAppointmentReviewTargetAction
+- 입력: appointmentId
+- 책임:
+  - 로그인 사용자 식별
+  - 리뷰 대상 약속 접근/권한 확인(생성자 또는 참여자)
+  - 종료된 약속 + 취소 아님 조건 검증
+  - 리뷰 페이지 표시용 약속/장소/평점 요약과 내 리뷰 작성 여부 반환
+
+## listMyReviewsAction
+- 입력: cursor?, limit?
+- 책임:
+  - 로그인 사용자 식별
+  - 내가 작성한 리뷰 목록 조회(`user_places`)
+  - 최근 수정순 커서 기반 페이지네이션
+  - 리뷰 카드 표시용 장소명/점수/내용/수정일과 리뷰 수정 라우팅용 appointmentId 반환
+
+## listMyCommentsAction
+- 입력: cursor?, limit?
+- 책임:
+  - 로그인 사용자 식별
+  - 내가 작성한 댓글 목록 조회(`appointment_comments`, 삭제 제외)
+  - 최신 작성순 커서 기반 페이지네이션
+  - 댓글 카드 표시용 약속 제목/댓글 내용/작성일과 약속 상세 라우팅용 appointmentId 반환
+
+## submitPlaceReviewAction
+- 입력: appointmentId, score(1~5), content(1~300)
+- 책임:
+  - 로그인 사용자 식별
+  - 리뷰 대상 약속 접근/권한 확인(생성자 또는 참여자)
+  - 종료된 약속 + 취소 아님 조건 검증
+  - 기존 리뷰 존재 여부를 판단해 `user_places`에 신규 저장 또는 수정 저장
+
+## deleteMyReviewAction
+- 입력: placeId
+- 책임:
+  - 로그인 사용자 식별
+  - 본인 리뷰(`user_places`)만 삭제(점수/리뷰 null 처리)
 
 ## searchPlacesAction
 - 입력: query, latitude?, longitude?, radius?
@@ -126,6 +180,14 @@
   - 로그인 사용자 식별
   - 약속 접근 가능 여부 확인
   - 약속 멤버 목록(프로필/닉네임/이름/역할) 반환
+
+## getAppointmentInvitationStateAction
+- 입력: appointmentId
+- 책임:
+  - 로그인 사용자 식별
+  - 약속 접근 가능 여부 확인
+  - 약속 멤버 userId 목록 반환
+  - pending 상태의 약속 초대 대상 userId 목록 반환
 
 ## getAppointmentCommentsAction
 - 입력: appointmentId

@@ -40,3 +40,21 @@ export const appointmentCreateSchema = z.object({
 });
 
 export type AppointmentCreateInput = z.infer<typeof appointmentCreateSchema>;
+
+export const appointmentReviewScoreSchema = z
+  .number()
+  .int()
+  .min(1, '별점을 선택해주세요.')
+  .max(5, '별점은 1점부터 5점까지 선택할 수 있습니다.');
+
+export const appointmentReviewContentSchema = z
+  .string()
+  .trim()
+  .min(1, '리뷰 내용을 입력해주세요.')
+  .max(300, '리뷰는 300자 이내로 입력해주세요.');
+
+export const appointmentReviewSubmitSchema = z.object({
+  appointmentId: z.string().uuid('유효한 약속 정보가 필요합니다.'),
+  score: appointmentReviewScoreSchema,
+  content: appointmentReviewContentSchema,
+});

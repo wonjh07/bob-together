@@ -68,7 +68,7 @@ export async function sendAppointmentInvitationAction(
     return actionError('already-member', '이미 약속에 참여한 사용자입니다.');
   }
 
-  const { data: existingInvite } = await supabase
+  const { data: existingInvite, error: existingInviteError } = await supabase
     .from('invitations')
     .select('invitation_id')
     .eq('appointment_id', parsedAppointmentId)
@@ -76,6 +76,20 @@ export async function sendAppointmentInvitationAction(
     .eq('type', 'appointment')
     .eq('status', 'pending')
     .maybeSingle();
+
+  if (existingInviteError) {
+    console.error(
+      '[sendAppointmentInvitationAction] existing invite check failed',
+      {
+        message: existingInviteError.message,
+        code: existingInviteError.code,
+        details: existingInviteError.details,
+        hint: existingInviteError.hint,
+        appointmentId: parsedAppointmentId,
+        inviteeId: parsedInviteeId,
+      },
+    );
+  }
 
   if (existingInvite) {
     return actionError('invite-already-sent', '이미 초대가 발송되었습니다.');
@@ -91,6 +105,24 @@ export async function sendAppointmentInvitationAction(
   });
 
   if (inviteError) {
+    console.error('[sendAppointmentInvitationAction] invite insert failed', {
+      message: inviteError.message,
+      code: inviteError.code,
+      details: inviteError.details,
+      hint: inviteError.hint,
+      appointmentId: parsedAppointmentId,
+      inviteeId: parsedInviteeId,
+      inviterId: user.id,
+    });
+
+    if (inviteError.code === '23505') {
+      return actionError('invite-already-sent', '이미 초대가 발송되었습니다.');
+    }
+
+    if (inviteError.code === '42501') {
+      return actionError('forbidden', '초대 권한이 없습니다.');
+    }
+
     return actionError('server-error', '초대 전송 중 오류가 발생했습니다.');
   }
 

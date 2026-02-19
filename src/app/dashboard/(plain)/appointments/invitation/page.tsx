@@ -1,13 +1,10 @@
-import Link from 'next/link';
-
 import AppointmentInvitationClient from './AppointmentInvitationClient';
+import AppointmentInvitationTopNav from './AppointmentInvitationTopNav';
 import {
   invitationPage,
   invitationPanel,
-  headerRow,
-  headerTitle,
   headerMeta,
-  actionLink,
+  headerDescription,
 } from './page.css';
 
 type AppointmentInvitationPageProps = {
@@ -25,25 +22,17 @@ export default function AppointmentInvitationPage({
     typeof searchParams?.title === 'string' ? searchParams.title : '';
 
   const completeHref = appointmentId
-    ? `/dashboard/appointments/invitation/complete?appointmentId=${appointmentId}&title=${encodeURIComponent(
-        appointmentTitle,
-      )}`
-    : '/dashboard/appointments/invitation/complete';
+    ? `/dashboard/appointments/${appointmentId}`
+    : '/dashboard/appointments';
 
   return (
     <div className={invitationPage}>
+      <AppointmentInvitationTopNav completeHref={completeHref} />
       <div className={invitationPanel}>
         {appointmentTitle && (
           <div className={headerMeta}>{appointmentTitle}</div>
         )}
-        <div className={headerRow}>
-          <div>
-            <div className={headerTitle}>그룹원을 검색하고 초대해주세요</div>
-          </div>
-          <Link href={completeHref} className={actionLink}>
-            완료
-          </Link>
-        </div>
+        <div className={headerDescription}>그룹원을 검색하고 초대해주세요</div>
         <AppointmentInvitationClient appointmentId={appointmentId} />
       </div>
     </div>

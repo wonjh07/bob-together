@@ -3,10 +3,12 @@ import { style } from '@vanilla-extract/css';
 import { vars } from '@/styles/theme.css';
 
 export const invitationPage = style({
-  minHeight: '100%',
+  height: '100%',
   width: '100%',
-  maxWidth: '480px',
+  padding: '16px',
   display: 'flex',
+  flexDirection: 'column',
+  gap: '12px',
 });
 
 export const invitationPanel = style({
@@ -14,16 +16,10 @@ export const invitationPanel = style({
   display: 'flex',
   flexDirection: 'column',
   gap: '20px',
+  paddingTop: '8px',
 });
 
-export const headerRow = style({
-  display: 'flex',
-  width: '100%',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-});
-
-export const headerTitle = style({
+export const headerDescription = style({
   width: '100%',
   fontSize: vars.fontSize.title,
   fontWeight: vars.fontWeight.bold,
@@ -33,13 +29,6 @@ export const headerTitle = style({
 export const headerMeta = style({
   fontSize: vars.fontSize.text,
   color: vars.color.subText,
-});
-
-export const actionLink = style({
-  fontSize: vars.fontSize.subText,
-  fontWeight: vars.fontWeight.semibold,
-  color: vars.color.main,
-  textDecoration: 'none',
 });
 
 export const searchBlock = style({

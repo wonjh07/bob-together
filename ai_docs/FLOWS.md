@@ -30,7 +30,10 @@
 - `/dashboard/appointments/[appointmentId]/edit/place` -> `src/app/dashboard/(plain)/appointments/[appointmentId]/edit/place/page.tsx`
 - `/dashboard/appointments/[appointmentId]/members` -> `src/app/dashboard/(plain)/appointments/[appointmentId]/members/page.tsx`
 - `/dashboard/appointments/invitation` -> `src/app/dashboard/(plain)/appointments/invitation/page.tsx`
-- `/dashboard/appointments/invitation/complete` -> `src/app/dashboard/(plain)/appointments/invitation/complete/page.tsx`
+- `/dashboard/profile/history` -> `src/app/dashboard/(plain)/profile/history/page.tsx`
+- `/dashboard/profile/reviews` -> `src/app/dashboard/(plain)/profile/reviews/page.tsx`
+- `/dashboard/profile/reviews/[appointmentId]` -> `src/app/dashboard/(plain)/profile/reviews/[appointmentId]/page.tsx`
+- `/dashboard/profile/comments` -> `src/app/dashboard/(plain)/profile/comments/page.tsx`
 
 ### Key UI Entry Points
 - Appointment list UI: `src/app/dashboard/_components/AppointmentList.tsx`
@@ -47,6 +50,9 @@
 - `pending`: `초대하기`
 - `canceled`: 상태 변경 버튼 없음 (수정 화면에서 활성화)
 - `ended`: 상태 변경 버튼 없음
+
+### Invitation Flow
+- `/dashboard/appointments/invitation`에서 `완료` 클릭 시 토스트(`약속 초대를 완료했습니다.`) 후 약속 상세로 이동
 
 ### Detail Comment Flow
 - 상세 페이지 하단 댓글 섹션에서 댓글 목록/개수 조회

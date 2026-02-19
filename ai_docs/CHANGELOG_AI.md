@@ -1,5 +1,33 @@
 # AI Changelog (Rolling)
 
+## 2026-02-15
+- Added profile history page (`/dashboard/profile/history`) with `PlainTopNav` and infinite-scroll card list UI.
+- Added `listAppointmentHistoryAction` to fetch ended appointments where current user is owner/member, ordered by latest ended time.
+- Added history query key/options (`appointmentKeys.history`, `createAppointmentHistoryQueryOptions`) and wired TanStack infinite query.
+- Added history card UI with 상세보기/리뷰 남기기 buttons, creator profile, place review summary, and reviewed-state disabled review CTA.
+- Added profile review-write page (`/dashboard/profile/reviews`) with `PlainTopNav`, star rating(1~5), autosizing textarea(300자), and submit button flow.
+- Added review actions `getAppointmentReviewTargetAction` and `submitPlaceReviewAction` with ended-appointment + participant/owner permission checks.
+- Updated review flow to support both create and edit on the same page (`리뷰 남기기` / `리뷰 수정하기`), and switched submit action to upsert-like behavior (create-or-update).
+- Added review-target query key/options (`appointmentKeys.reviewTarget`, `createAppointmentReviewTargetQueryOptions`).
+- Updated history card review CTA: reviewed appointments now show `리뷰 수정하기` and navigate to the same review page for editing.
+- Added migration `20260215173000_user_places_review_rls_policies.sql` to enable `user_places` RLS and allow authenticated self-only review insert/update/delete.
+- Updated AI docs (`ACTIONS.md`, `FLOWS.md`) for the new history action/route.
+- Switched `/dashboard/profile/reviews` to `내 리뷰` 목록 화면 (무한 스크롤 + 카드별 more 드롭다운).
+- Added `/dashboard/profile/reviews/[appointmentId]` route as dedicated 리뷰 작성/수정 화면.
+- Added `listMyReviewsAction` and `deleteMyReviewAction` for my-review list/delete flows.
+- Updated history/review-waitlist review links to the new dynamic review editor route.
+- Updated appointment invitation page top area to use shared `PlainTopNav` with title `그룹원 초대` and right action `완료`.
+- Removed `/dashboard/appointments/invitation/complete` page; invitation `완료` now shows toast and returns directly to appointment detail.
+- Updated appointment invitation search list to mark existing appointment members as disabled `약속 멤버` buttons.
+- Improved appointment invitation error handling to map DB insert errors (`23505`, `42501`) and log details for debugging.
+- Added `getPendingAppointmentInvitesAction` and wired invitation UI to render existing pending invitees as disabled `초대 완료` buttons.
+- Added migration `20260215200000_invitations_select_group_member_policy.sql` to enable invitation select reads for group members.
+- Removed debounce-based auto search on appointment invitation user search; search now runs only on explicit submit.
+- Replaced split invitation status fetches with unified `getAppointmentInvitationStateAction` and moved invitation member/pending state ownership to React Query cache.
+- Added profile comments page (`/dashboard/profile/comments`) with `PlainTopNav`, infinite-scroll card list, and per-card dropdown actions.
+- Added `listMyCommentsAction` for cursor-based my-comment pagination and wired React Query (`appointmentKeys.myComments`).
+- Added my-comment dropdown actions: `약속 상세 보기` deep-link and `댓글 삭제` with cache sync/invalidation.
+
 ## 2026-02-13
 - Added profile group-management page (`/dashboard/profile/groups`) with shared `PlainTopNav`, card list UI, and infinite scroll.
 - Added group-management card interactions: per-card `⋮` dropdown and real `그룹 탈퇴` action handling.

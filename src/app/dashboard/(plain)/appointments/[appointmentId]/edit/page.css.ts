@@ -5,6 +5,7 @@ import { vars } from '@/styles/theme.css';
 export const page = style({
   width: '100%',
   height: '100%',
+  padding: '16px',
   backgroundColor: vars.color.background,
 });
 
@@ -12,7 +13,6 @@ export const content = style({
   display: 'flex',
   flexDirection: 'column',
   gap: '24px',
-  margin: '16px 0',
 });
 
 export const block = style({

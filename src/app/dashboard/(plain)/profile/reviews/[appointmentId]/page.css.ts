@@ -1,0 +1,185 @@
+import { style } from '@vanilla-extract/css';
+
+import { vars } from '@/styles/theme.css';
+
+export const page = style({
+  width: '100%',
+  minHeight: '100%',
+  backgroundColor: vars.color.background,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0',
+});
+
+export const statusBox = style({
+  paddingTop: '28px',
+  fontSize: vars.fontSize.title,
+  color: vars.color.subText,
+  textAlign: 'center',
+});
+
+export const summarySection = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '6px',
+  padding: '16px',
+});
+
+export const date = style({
+  margin: 0,
+  fontSize: '2.2rem',
+  fontWeight: vars.fontWeight.bold,
+  color: vars.color.black,
+});
+
+export const placeName = style({
+  margin: 0,
+  fontSize: '2rem',
+  fontWeight: vars.fontWeight.bold,
+  color: vars.color.black,
+  wordBreak: 'break-word',
+});
+
+export const placeMeta = style({
+  margin: 0,
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '4px',
+  flexWrap: 'wrap',
+  fontSize: vars.fontSize.header,
+  fontWeight: vars.fontWeight.semibold,
+  color: vars.color.subText,
+});
+
+export const star = style({
+  fontSize: '1.35rem',
+  color: vars.color.star,
+});
+
+export const ratingSection = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '12px',
+  padding: '16px',
+});
+
+export const sectionTitle = style({
+  margin: 0,
+  fontSize: '2rem',
+  fontWeight: vars.fontWeight.bold,
+  color: vars.color.black,
+});
+
+export const starRow = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '8px',
+});
+
+const starButtonBase = style({
+  border: 'none',
+  backgroundColor: 'transparent',
+  fontSize: '3rem',
+  lineHeight: 1,
+  padding: 0,
+  cursor: 'pointer',
+});
+
+export const starButton = style([
+  starButtonBase,
+  {
+    color: '#7A7A7A',
+  },
+]);
+
+export const starButtonActive = style([
+  starButtonBase,
+  {
+    color: vars.color.star,
+  },
+]);
+
+export const reviewSection = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
+  padding: '16px',
+});
+
+export const reviewHead = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: '12px',
+});
+
+export const count = style({
+  fontSize: vars.fontSize.header,
+  fontWeight: vars.fontWeight.semibold,
+  color: vars.color.black,
+});
+
+export const textareaWrap = style({
+  border: `1px solid ${vars.color.stroke}`,
+  borderRadius: vars.radius.lg,
+  backgroundColor: vars.color.mainSoft,
+  padding: '14px 16px',
+});
+
+export const textarea = style({
+  width: '100%',
+  border: 'none',
+  backgroundColor: 'transparent',
+  outline: 'none',
+  resize: 'none',
+  overflowY: 'auto',
+  maxHeight: '220px',
+  lineHeight: 1.45,
+  color: vars.color.text,
+  fontSize: vars.fontSize.title,
+  fontWeight: vars.fontWeight.semibold,
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
+  selectors: {
+    '&::placeholder': {
+      color: vars.color.text,
+      opacity: 0.8,
+      fontWeight: vars.fontWeight.semibold,
+    },
+  },
+});
+
+const submitButtonBase = style({
+  marginTop: '18px',
+  marginBottom: '24px',
+  height: '56px',
+  border: 'none',
+  borderRadius: vars.radius.xlg,
+  fontSize: '2rem',
+  fontWeight: vars.fontWeight.semibold,
+});
+
+export const submitButton = style([
+  submitButtonBase,
+  {
+    backgroundColor: vars.color.main,
+    color: vars.color.background,
+    cursor: 'pointer',
+    selectors: {
+      '&:disabled': {
+        backgroundColor: '#DBDEE5',
+        color: vars.color.subText,
+        cursor: 'not-allowed',
+      },
+    },
+  },
+]);
+
+export const submitButtonDisabled = style([
+  submitButtonBase,
+  {
+    backgroundColor: '#DBDEE5',
+    color: vars.color.subText,
+    cursor: 'not-allowed',
+  },
+]);

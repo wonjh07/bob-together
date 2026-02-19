@@ -9,8 +9,7 @@ export const layoutContainer = style({
   alignItems: 'center',
   width: '100%',
   height: '100dvh',
+  overflow: 'scroll',
   paddingTop: '60px', // 상단 패널높이만큼 패딩 추가
-  paddingLeft: '16px',
-  paddingRight: '16px',
   backgroundColor: vars.color.background,
 });

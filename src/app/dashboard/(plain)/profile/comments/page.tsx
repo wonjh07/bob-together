@@ -1,3 +1,5 @@
+import ProfileCommentsClient from './ProfileCommentsClient';
+
 export default function CommentsPage() {
-  return <div>Enter</div>;
+  return <ProfileCommentsClient />;
 }

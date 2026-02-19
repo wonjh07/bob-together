@@ -107,3 +107,15 @@
 - Alternatives: 상세 화면과 수정 화면에 상태 버튼 병행 노출
 - Reason: 상태 변경 UX를 한 화면에 모아 캐시 동기화/버튼 상태 불일치 이슈를 줄이기 위함
 - Scope: `src/app/dashboard/(plain)/appointments/[appointmentId]/_components/AppointmentDetailActions.tsx`, `src/app/dashboard/(plain)/appointments/[appointmentId]/edit/AppointmentEditClient.tsx`
+
+## 프로필 리뷰 라우트 역할 분리 (2026-02-15)
+- Decision: `/dashboard/profile/reviews`는 내 리뷰 목록 전용으로 전환하고, 리뷰 작성/수정은 `/dashboard/profile/reviews/[appointmentId]`로 분리한다.
+- Alternatives: 기존처럼 `/dashboard/profile/reviews?appointmentId=...` 단일 페이지에서 목록/작성 역할을 혼합
+- Reason: 목록과 편집의 책임을 분리해 URL 의미를 명확히 하고, 무한 스크롤/드롭다운 액션(수정/삭제) 유지보수를 단순화하기 위함
+- Scope: `src/app/dashboard/(plain)/profile/reviews/**`, `src/actions/appointment/review/**`, `src/libs/query/appointmentQueries.ts`
+
+## 약속 초대 상태 캐시 소유권 전환 (2026-02-16)
+- Decision: 약속 초대 페이지의 `멤버 목록 + pending 초대 목록` 조회를 `useEffect + 2개 서버액션`에서 `React Query + 단일 서버액션(getAppointmentInvitationStateAction)`으로 전환한다.
+- Alternatives: 기존처럼 `getAppointmentMembersAction`/`getPending...`를 클라이언트에서 병렬 호출
+- Reason: 개발 모드 중복 요청(Strict Mode)과 상태 분산을 줄이고, 초대 성공/충돌 시점의 UI 상태 동기화를 Query Cache 단일 소스로 유지하기 위함
+- Scope: `src/actions/appointment/[appointmentId]/members/getInvitationState.ts`, `src/libs/query/appointmentKeys.ts`, `src/libs/query/appointmentQueries.ts`, `src/app/dashboard/(plain)/appointments/invitation/AppointmentInvitationClient.tsx`

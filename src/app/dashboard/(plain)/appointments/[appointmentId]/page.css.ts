@@ -5,7 +5,7 @@ import { vars } from '@/styles/theme.css';
 export const page = style({
   width: '100%',
   height: '100%',
-  padding: '16px 0',
+  padding: '16px',
   overflowY: 'scroll',
   backgroundColor: vars.color.background,
 });
