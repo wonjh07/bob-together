@@ -41,6 +41,10 @@
 ## Validation Actions
 - `checkEmailExists`
 
+## Invitation Actions
+- `listReceivedInvitationsAction`
+- `respondToInvitationAction`
+
 ## getUserData
 - 입력: 없음
 - 책임:
@@ -238,6 +242,24 @@
 - 책임:
   - 입력값 검증
   - `users` 정보 업데이트
+
+## listReceivedInvitationsAction
+- 입력: cursor?, limit?
+- 책임:
+  - 로그인 사용자 식별
+  - 내가 받은 초대(약속/그룹) 목록 조회(`pending`, `accepted`, `rejected`)
+  - 초대한 사용자/대상 타이틀 포함 데이터 반환
+  - 최신순 커서 기반 페이지네이션
+
+## respondToInvitationAction
+- 입력: invitationId, decision(`accepted` | `rejected`)
+- 책임:
+  - 로그인 사용자 식별
+  - 본인 초대(`invitee_id`)만 처리
+  - 수락 시 타입별 멤버 반영
+    - 그룹 초대: `group_members` 등록
+    - 약속 초대: `appointment_members` 등록
+  - 초대 상태 업데이트(`pending` -> `accepted`/`rejected`)
   - Auth 메타데이터/비밀번호 동기화
 
 ## checkEmailExists

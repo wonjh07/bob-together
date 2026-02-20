@@ -8,7 +8,6 @@ export const page = style({
   backgroundColor: vars.color.background,
   display: 'flex',
   flexDirection: 'column',
-  gap: '0',
 });
 
 export const statusBox = style({
@@ -27,32 +26,31 @@ export const summarySection = style({
 
 export const date = style({
   margin: 0,
-  fontSize: '2.2rem',
+  fontSize: vars.fontSize.header,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.black,
 });
 
 export const placeName = style({
   margin: 0,
-  fontSize: '2rem',
+  fontSize: vars.fontSize.header,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.black,
   wordBreak: 'break-word',
 });
 
 export const placeMeta = style({
-  margin: 0,
   display: 'inline-flex',
   alignItems: 'center',
   gap: '4px',
   flexWrap: 'wrap',
-  fontSize: vars.fontSize.header,
+  fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,
   color: vars.color.subText,
 });
 
 export const star = style({
-  fontSize: '1.35rem',
+  fontSize: vars.fontSize.text,
   color: vars.color.star,
 });
 
@@ -64,8 +62,7 @@ export const ratingSection = style({
 });
 
 export const sectionTitle = style({
-  margin: 0,
-  fontSize: '2rem',
+  fontSize: vars.fontSize.header,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.black,
 });
@@ -79,8 +76,7 @@ export const starRow = style({
 const starButtonBase = style({
   border: 'none',
   backgroundColor: 'transparent',
-  fontSize: '3rem',
-  lineHeight: 1,
+  fontSize: '2rem',
   padding: 0,
   cursor: 'pointer',
 });
@@ -114,7 +110,7 @@ export const reviewHead = style({
 });
 
 export const count = style({
-  fontSize: vars.fontSize.header,
+  fontSize: vars.fontSize.subText,
   fontWeight: vars.fontWeight.semibold,
   color: vars.color.black,
 });
@@ -134,9 +130,8 @@ export const textarea = style({
   resize: 'none',
   overflowY: 'auto',
   maxHeight: '220px',
-  lineHeight: 1.45,
   color: vars.color.text,
-  fontSize: vars.fontSize.title,
+  fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,
   whiteSpace: 'pre-wrap',
   wordBreak: 'break-word',
@@ -152,10 +147,10 @@ export const textarea = style({
 const submitButtonBase = style({
   marginTop: '18px',
   marginBottom: '24px',
-  height: '56px',
+  padding: '12px',
   border: 'none',
-  borderRadius: vars.radius.xlg,
-  fontSize: '2rem',
+  borderRadius: vars.radius.md,
+  fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,
 });
 

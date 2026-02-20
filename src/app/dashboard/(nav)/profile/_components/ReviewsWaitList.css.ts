@@ -37,6 +37,9 @@ export const card = style({
 });
 
 export const title = style({
+  textOverflow: 'ellipsis',
+  overflow: 'hidden',
+  whiteSpace: 'nowrap',
   fontSize: vars.fontSize.header,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.black,

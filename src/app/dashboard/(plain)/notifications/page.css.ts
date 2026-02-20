@@ -12,6 +12,7 @@ export const page = style({
 export const list = style({
   display: 'flex',
   flexDirection: 'column',
+  width: '100%',
 });
 
 export const statusBox = style({

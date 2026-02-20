@@ -34,7 +34,30 @@ export const logoSection = style({
 export const navRight = style({
   display: 'flex',
   alignItems: 'center',
-  gap: '16px',
+  gap: '12px',
+});
+
+export const iconButton = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '36px',
+  height: '36px',
+  borderRadius: '50%',
+  color: vars.color.text,
+  textDecoration: 'none',
+  transition: 'color 0.2s ease, background-color 0.2s ease',
+  selectors: {
+    '&:hover': {
+      color: vars.color.main,
+      backgroundColor: vars.color.mainSoft,
+    },
+  },
+});
+
+export const bellIcon = style({
+  width: '22px',
+  height: '22px',
 });
 
 export const userIcon = style({

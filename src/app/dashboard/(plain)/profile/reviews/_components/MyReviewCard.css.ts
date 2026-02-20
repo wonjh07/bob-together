@@ -6,7 +6,6 @@ export const card = style({
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
-  gap: '8px',
   padding: '16px',
   borderBottom: `1px solid ${vars.color.stroke}`,
 });
@@ -19,8 +18,7 @@ export const headRow = style({
 });
 
 export const placeName = style({
-  margin: 0,
-  fontSize: '2rem',
+  fontSize: vars.fontSize.header,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.black,
   wordBreak: 'break-word',
@@ -33,8 +31,7 @@ export const starRow = style({
 });
 
 const starBase = style({
-  fontSize: '2.6rem',
-  lineHeight: 1,
+  fontSize: '1.5rem',
 });
 
 export const starFilled = style([
@@ -52,33 +49,29 @@ export const starEmpty = style([
 ]);
 
 export const content = style({
-  margin: 0,
-  fontSize: vars.fontSize.header,
+  fontSize: vars.fontSize.text,
   color: vars.color.black,
   fontWeight: vars.fontWeight.semibold,
+  padding: '12px 0',
   whiteSpace: 'pre-wrap',
   wordBreak: 'break-word',
-  lineHeight: 1.35,
 });
 
 export const date = style({
-  margin: 0,
-  fontSize: '2rem',
+  fontSize: vars.fontSize.subText,
   color: vars.color.subText,
   fontWeight: vars.fontWeight.medium,
 });
 
 export const menuWrap = style({
+  height: '100%',
   position: 'relative',
-  flexShrink: 0,
 });
 
 export const moreButton = style({
-  border: 'none',
   backgroundColor: 'transparent',
+  fontSize: vars.fontSize.header,
   color: vars.color.subText,
-  fontSize: '2.2rem',
-  lineHeight: 1,
   cursor: 'pointer',
   selectors: {
     '&:disabled': {
@@ -92,7 +85,7 @@ export const dropdown = style({
   position: 'absolute',
   top: '30px',
   right: 0,
-  width: '110px',
+  width: '100px',
   display: 'flex',
   flexDirection: 'column',
   borderRadius: vars.radius.sm,

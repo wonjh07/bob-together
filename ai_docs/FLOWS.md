@@ -30,6 +30,7 @@
 - `/dashboard/appointments/[appointmentId]/edit/place` -> `src/app/dashboard/(plain)/appointments/[appointmentId]/edit/place/page.tsx`
 - `/dashboard/appointments/[appointmentId]/members` -> `src/app/dashboard/(plain)/appointments/[appointmentId]/members/page.tsx`
 - `/dashboard/appointments/invitation` -> `src/app/dashboard/(plain)/appointments/invitation/page.tsx`
+- `/dashboard/notifications` -> `src/app/dashboard/(plain)/notifications/page.tsx`
 - `/dashboard/profile/history` -> `src/app/dashboard/(plain)/profile/history/page.tsx`
 - `/dashboard/profile/reviews` -> `src/app/dashboard/(plain)/profile/reviews/page.tsx`
 - `/dashboard/profile/reviews/[appointmentId]` -> `src/app/dashboard/(plain)/profile/reviews/[appointmentId]/page.tsx`
@@ -53,6 +54,11 @@
 
 ### Invitation Flow
 - `/dashboard/appointments/invitation`에서 `완료` 클릭 시 토스트(`약속 초대를 완료했습니다.`) 후 약속 상세로 이동
+- `/dashboard/notifications`에서 받은 초대를 확인하고 `수락/거절` 처리
+  - 그룹 초대 수락: 그룹 멤버로 등록
+  - 약속 초대 수락: 약속 멤버로 등록(권한 조건 충족 시)
+  - 응답 완료된 초대(`accepted`, `rejected`)는 리스트에 유지하고 상태 라벨로 표시
+  - 종료된 약속 초대는 버튼을 숨기고 `종료된 약속입니다`로 표시
 
 ### Detail Comment Flow
 - 상세 페이지 하단 댓글 섹션에서 댓글 목록/개수 조회

@@ -24,6 +24,8 @@
 - 내 그룹 목록: `groupKeys.myGroups()`
 - 그룹 검색: `groupKeys.search(query)`
 - 그룹 전체 무효화 범위: `groupKeys.all`
+- 받은 초대 알림 루트: `invitationKeys.receivedRoot()`
+- 받은 초대 알림: `invitationKeys.received()`
 
 ## 화면별 소유 구조 (현재)
 | 화면 | 경로 | 소유 캐시 | 조회 코드 | 기준 키 |
@@ -31,6 +33,7 @@
 | 대시보드 약속 목록 | `/dashboard` | Client | `src/app/dashboard/_components/AppointmentList.tsx` | `appointmentKeys.list(...)` |
 | 대시보드 그룹 목록 | `/dashboard` | Client | `src/libs/query/groupQueries.ts` | `groupKeys.myGroups()` |
 | 검색(그룹/약속) | `/dashboard/search` | Client | `GroupSearchResults.tsx`, `AppointmentSearchResults.tsx` | `groupKeys.search(...)`, `appointmentKeys.search(...)` |
+| 알림(받은 초대) | `/dashboard/notifications` | Client | `src/app/dashboard/(plain)/notifications/NotificationsClient.tsx` | `invitationKeys.received()` |
 | 약속 상세 | `/dashboard/appointments/[appointmentId]` | Client(Query) | `src/app/dashboard/(plain)/appointments/[appointmentId]/AppointmentDetailClient.tsx` | `appointmentKeys.detail(...)` |
 | 약속 수정(상태 버튼) | `/dashboard/appointments/[appointmentId]/edit` | Client(Query) | `src/app/dashboard/(plain)/appointments/[appointmentId]/edit/AppointmentEditClient.tsx` | `appointmentKeys.detail(...)` |
 | 약속 댓글 영역 | `/dashboard/appointments/[appointmentId]` | Client(Query) + Local UI State | `AppointmentDetailClient.tsx`, `AppointmentCommentsSection.tsx` | `appointmentKeys.comments(...)` + 로컬 상태 |
@@ -42,6 +45,7 @@
 | 약속 참여/나가기 | `src/actions/appointment/member/join.ts`, `src/actions/appointment/member/leave.ts` | 상세 + 목록/검색 | 클라: `invalidateAppointmentDetailQueries` + `invalidateAppointmentCollectionQueries` |
 | 약속 수정 | `src/actions/appointment/detail/update.ts` | 상세 + 목록/검색 | 클라: `invalidateAppointmentDetailQueries` + `invalidateAppointmentCollectionQueries` |
 | 댓글 생성/수정/삭제 | `src/actions/appointment/comment/create.ts`, `src/actions/appointment/comment/update.ts`, `src/actions/appointment/comment/delete.ts` | 상세 댓글/댓글수 + 목록 댓글수 | 로컬: `setQueryData(appointmentKeys.comments)` / 생성·삭제 후 `invalidateAppointmentCollectionQueries` |
+| 초대 수락/거절 | `src/actions/invitation/respond.ts` | 알림 목록 + 그룹/약속 참여 상태 | 클라: `setQueryData(invitationKeys.received)`로 즉시 제거 후 `invitationKeys.receivedRoot()` + 타입별 `groupKeys.all` 또는 `appointmentKeys.all` 무효화 |
 
 ## 실무 적용 규칙 (이 프로젝트 권장안)
 1. 목록/검색은 Query 소유이므로 mutation 후 `invalidateQueries`를 기본으로 한다.

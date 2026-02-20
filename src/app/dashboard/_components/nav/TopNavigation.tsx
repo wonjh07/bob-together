@@ -1,9 +1,19 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState } from 'react';
 
-import { topNav, logoSection, navRight, userIcon } from './TopNavigation.css';
+import BellIcon from '@/components/icons/BellIcon';
+
+import {
+  topNav,
+  logoSection,
+  navRight,
+  iconButton,
+  bellIcon,
+  userIcon,
+} from './TopNavigation.css';
 import { ProfileDropdown } from './ui/ProfileDrop';
 
 export function TopNav() {
@@ -23,6 +33,12 @@ export function TopNav() {
       </div>
 
       <div className={navRight}>
+        <Link
+          href="/dashboard/notifications"
+          className={iconButton}
+          aria-label="알림 페이지로 이동">
+          <BellIcon className={bellIcon} />
+        </Link>
         <button
           className={userIcon}
           onClick={() => {

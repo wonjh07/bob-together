@@ -119,3 +119,9 @@
 - Alternatives: 기존처럼 `getAppointmentMembersAction`/`getPending...`를 클라이언트에서 병렬 호출
 - Reason: 개발 모드 중복 요청(Strict Mode)과 상태 분산을 줄이고, 초대 성공/충돌 시점의 UI 상태 동기화를 Query Cache 단일 소스로 유지하기 위함
 - Scope: `src/actions/appointment/[appointmentId]/members/getInvitationState.ts`, `src/libs/query/appointmentKeys.ts`, `src/libs/query/appointmentQueries.ts`, `src/app/dashboard/(plain)/appointments/invitation/AppointmentInvitationClient.tsx`
+
+## 알림함 기반 초대 응답 플로우 도입 (2026-02-20)
+- Decision: 대시보드 TopNav에 알림 진입점을 추가하고, `/dashboard/notifications`에서 받은 초대(그룹/약속)를 무한 스크롤로 조회/수락/거절 처리한다.
+- Alternatives: 기존 개별 화면(그룹/약속 초대 화면)에서만 상태 확인, 알림함 없이 초대 상태를 분산 관리
+- Reason: 초대 응답 동선을 한 화면으로 통합해 사용성/유지보수성을 높이고, 수락 시 타입별 멤버 반영(그룹/약속)을 일관된 액션으로 처리하기 위함
+- Scope: `src/app/dashboard/_components/nav/TopNavigation.tsx`, `src/app/dashboard/(plain)/notifications/**`, `src/actions/invitation/**`, `src/libs/query/invitation*.ts`, `supabase/migrations/20260220120000_invitations_invitee_select_update_policy.sql`

@@ -24,7 +24,6 @@ export const movebackButton = style({
 export const formContainer = style({
   height: `100%`,
   width: '100%',
-  maxWidth: '480px',
   padding: '16px',
   overflowY: 'scroll',
 });

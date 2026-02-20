@@ -1,5 +1,16 @@
 # AI Changelog (Rolling)
 
+## 2026-02-20
+- Added dashboard TopNav notification bell button linking to `/dashboard/notifications`.
+- Added notifications page (`/dashboard/notifications`) with `PlainTopNav` and infinite-scroll invitation list UI.
+- Added invitation card UI for both appointment/group invite types with `수락하기` / `거절하기` actions.
+- Updated notifications appointment-invite card behavior: if invited appointment is already ended, hide action buttons and show `종료된 약속입니다`.
+- Updated notifications list behavior to keep responded invites (`accepted`/`rejected`) in the list and render state labels (`초대 수락`/`초대 거절`) instead of action buttons.
+- Updated notifications appointment invite card to link icon/title message row to appointment detail page.
+- Added invitation action domain: `listReceivedInvitationsAction`, `respondToInvitationAction`.
+- Added invitation React Query modules: `invitationKeys`, `createReceivedInvitationsQueryOptions`, `invalidateReceivedInvitationsQueries`.
+- Added migration `20260220120000_invitations_invitee_select_update_policy.sql` to allow invitee self-select/update on `invitations`.
+
 ## 2026-02-15
 - Added profile history page (`/dashboard/profile/history`) with `PlainTopNav` and infinite-scroll card list UI.
 - Added `listAppointmentHistoryAction` to fetch ended appointments where current user is owner/member, ordered by latest ended time.
