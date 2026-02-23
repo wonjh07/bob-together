@@ -125,3 +125,45 @@
 - Alternatives: 기존 개별 화면(그룹/약속 초대 화면)에서만 상태 확인, 알림함 없이 초대 상태를 분산 관리
 - Reason: 초대 응답 동선을 한 화면으로 통합해 사용성/유지보수성을 높이고, 수락 시 타입별 멤버 반영(그룹/약속)을 일관된 액션으로 처리하기 위함
 - Scope: `src/app/dashboard/_components/nav/TopNavigation.tsx`, `src/app/dashboard/(plain)/notifications/**`, `src/actions/invitation/**`, `src/libs/query/invitation*.ts`, `supabase/migrations/20260220120000_invitations_invitee_select_update_policy.sql`
+
+## 리뷰 소유 단위 전환 (place → appointment) (2026-02-23)
+- Decision: 리뷰 저장/수정/삭제/작성가능 여부 판단의 소유 단위를 `place_id`에서 `appointment_id`로 전환하고, 같은 장소라도 약속별 리뷰를 허용한다.
+- Alternatives: 기존 place 단위 1리뷰 유지, place+user 단위로만 수정
+- Reason: 실제 사용자 플로우(약속 단위 경험 기록)와 데이터 모델을 일치시키고, 히스토리/리뷰대기에서 같은 장소의 다른 약속 리뷰를 막는 문제를 해소하기 위함
+- Scope: `supabase/migrations/20260223220000_review_domain_to_appointment.sql`, `src/actions/appointment/review/**`, `src/actions/appointment/history/list.ts`, `src/libs/query/appointmentKeys.ts`, `src/libs/query/appointmentQueries.ts`, `src/app/dashboard/(nav)/profile/_components/ReviewsWaitList.*`, `src/hooks/useHorizontalDragScroll.ts`
+
+## 프로필 Plain 페이지/메뉴 UI 공통화 (2026-02-23)
+- Decision: 프로필 plain 영역(그룹/히스토리/리뷰/댓글)의 반복 레이아웃 스타일을 공통 primitive로 통합하고, 카드의 more 메뉴를 `OverflowMenu` atom으로 추출한다.
+- Alternatives: 각 페이지/카드별 개별 스타일 및 드롭다운 구현 유지
+- Reason: 페이지 간 시각 일관성 확보, 폰트/간격 drift 방지, 외부 클릭 닫기/메뉴 상호작용 중복 코드 축소
+- Scope: `src/styles/primitives/plainListPage.css.ts`, `src/components/ui/OverflowMenu.*`, `src/app/dashboard/(plain)/profile/**/page.css.ts`, `src/app/dashboard/(plain)/profile/comments/_components/MyCommentCard.*`
+
+## 날짜/시간/상대시간/지역명 표시 유틸 단일화 (2026-02-23)
+- Decision: 화면별로 중복 구현하던 날짜/시간/상대시간/주소 지역명 포맷 로직을 `src/utils/dateFormat.ts`, `src/utils/address.ts`로 통합하고 각 UI에서 공통 유틸을 사용한다.
+- Alternatives: 컴포넌트별 로컬 포맷 함수 유지
+- Reason: 표시 규칙 drift를 방지하고, 포맷 변경 시 수정 지점을 한 곳으로 줄여 유지보수성을 높이기 위함
+- Scope: `src/utils/dateFormat.ts`, `src/utils/address.ts`, `src/app/dashboard/**` 내 appointment/profile/notification 관련 카드·상세 컴포넌트
+
+## 날짜시간/장소메타 UI 컴포넌트 공통화 (2026-02-23)
+- Decision: 반복되던 `아이콘+날짜/시간`과 `장소 평점+태그` UI를 `DateTimeMetaRow`, `PlaceRatingMeta` 공통 컴포넌트로 추출해 재사용한다.
+- Alternatives: 각 화면에서 마크업/아이콘/구분자 직접 구성 유지
+- Reason: 화면 간 UI 일관성을 높이고, 구조/표시 로직 변경 시 다수 파일 동시 수정 비용을 줄이기 위함
+- Scope: `src/components/ui/DateTimeMetaRow*`, `src/components/ui/PlaceRatingMeta*`, `src/app/dashboard/**` 내 검색/리뷰대기/약속상세/약속수정/히스토리/리뷰에디터/대시보드 카드
+
+## 사용자 아바타/이름 라인 공통화 (2026-02-23)
+- Decision: 반복되던 `프로필 이미지 + 이름(+me) (+부가텍스트)` 표시를 `UserIdentityInline` 공통 컴포넌트로 통합한다.
+- Alternatives: 화면별로 아바타/이름 마크업을 개별 유지
+- Reason: 프로필 라인 UI를 통일하고, 아바타 크기/텍스트/`me` 표시 변경 시 수정 지점을 줄이기 위함
+- Scope: `src/components/ui/UserIdentityInline*`, `src/app/dashboard/**` 내 그룹관리/멤버목록/약속상세 작성자/히스토리 작성자/알림 발신자/검색카드 작성자
+
+## 버튼 스타일 소스 단일화 (2026-02-23)
+- Decision: `LoginButton`/`SubmitButton`의 베이스 스타일을 `Buttons.css.ts` 독자 정의에서 `styles/primitives/actionButton.css.ts` 조합 방식으로 전환한다.
+- Alternatives: 기존 `Buttons.css.ts`에서 중복 버튼 규칙 유지
+- Reason: 버튼 컴포넌트마다 패딩/라운드/disabled 상태 규칙이 분산되는 것을 막고, 전역 버튼 톤/사이즈 수정 시 수정 지점을 줄이기 위함
+- Scope: `src/components/ui/Buttons.tsx`, `src/components/ui/Buttons.css.ts`, `src/styles/primitives/actionButton.css.ts`
+
+## user_review PK 구조 정규화 (2026-02-23)
+- Decision: `user_review`의 레거시 복합 PK(`user_id`,`place_id`)를 제거하고, 단일 PK(`review_id`) + 부분 유니크 인덱스(`user_id`,`appointment_id`) 구조로 정규화한다.
+- Alternatives: 기존 복합 PK 유지, 앱 로직에서만 우회 처리
+- Reason: 같은 장소라도 약속별 리뷰를 허용하는 현재 도메인 규칙(appointment 단위)과 DB 제약을 일치시키고, `duplicate key ... user_places_pkey` 저장 실패를 제거하기 위함
+- Scope: `supabase/migrations/20260223234000_user_review_pk_to_review_id.sql`, `public.user_review` 제약/인덱스

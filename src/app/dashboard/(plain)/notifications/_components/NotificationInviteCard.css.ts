@@ -1,5 +1,16 @@
 import { style } from '@vanilla-extract/css';
 
+import {
+  actionButtonBase,
+  actionButtonMedium,
+  actionButtonPrimary,
+  actionButtonSecondary,
+} from '@/styles/primitives/actionButton.css';
+import {
+  badgeToneAccepted,
+  badgeToneMuted,
+} from '@/styles/primitives/badge.css';
+import { feedbackPanelText } from '@/styles/primitives/feedback.css';
 import { vars } from '@/styles/theme.css';
 
 export const card = style({
@@ -91,57 +102,30 @@ export const actionRow = style({
 
 export const actionButton = style({
   flex: 1,
-  padding: '11px 16px',
-  border: 'none',
-  borderRadius: vars.radius.lg,
-  fontSize: vars.fontSize.title,
-  fontWeight: vars.fontWeight.semibold,
-  cursor: 'pointer',
-  transition: 'opacity 0.2s ease',
-  selectors: {
-    '&:disabled': {
-      opacity: 0.6,
-      cursor: 'not-allowed',
-    },
+});
+
+const invitationActionButtonBase = style([
+  actionButtonBase,
+  actionButtonMedium,
+  {
+    width: '100%',
   },
-});
+]);
 
-export const acceptButton = style({
-  color: vars.color.background,
-  backgroundColor: vars.color.main,
-});
+export const acceptButton = style([
+  invitationActionButtonBase,
+  actionButtonPrimary,
+]);
 
-export const rejectButton = style({
-  color: vars.color.background,
-  backgroundColor: vars.color.text,
-});
+export const rejectButton = style([
+  invitationActionButtonBase,
+  actionButtonSecondary,
+]);
 
-export const statusText = style({
-  margin: 0,
-  padding: '10px 12px',
-  borderRadius: vars.radius.md,
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.semibold,
-  textAlign: 'center',
-});
+export const statusText = style([feedbackPanelText]);
 
-export const acceptedStatus = style({
-  backgroundColor: vars.color.mainSoft,
-  color: vars.color.main,
-});
+export const acceptedStatus = style([badgeToneAccepted]);
 
-export const rejectedStatus = style({
-  backgroundColor: vars.color.stroke,
-  color: vars.color.subText,
-});
+export const rejectedStatus = style([badgeToneMuted]);
 
-export const endedText = style({
-  margin: 0,
-  padding: '10px 12px',
-  borderRadius: vars.radius.md,
-  backgroundColor: vars.color.stroke,
-  color: vars.color.subText,
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.semibold,
-  textAlign: 'center',
-});
+export const endedText = style([feedbackPanelText, badgeToneMuted]);

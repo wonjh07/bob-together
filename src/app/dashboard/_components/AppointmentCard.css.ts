@@ -1,5 +1,13 @@
 import { style, styleVariants } from '@vanilla-extract/css';
 
+import {
+  badgeCanceled,
+  badgeCreated,
+  badgeEnded,
+  badgeJoined,
+  badgePending,
+  inlineMeTextCompact,
+} from '@/styles/primitives/badge.css';
 import { vars } from '@/styles/theme.css';
 
 export const card = style({
@@ -19,15 +27,23 @@ export const cardHeader = style({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'flex-start',
+  gap: '10px',
   marginBottom: '12px',
 });
 
-export const titleRow = style({
+export const headerMain = style({
   display: 'flex',
-  alignItems: 'center',
+  flexDirection: 'column',
   gap: '8px',
   flex: 1,
   minWidth: 0,
+});
+
+export const badgeRow = style({
+  display: 'flex',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: '8px',
 });
 
 export const title = style({
@@ -39,57 +55,15 @@ export const title = style({
   whiteSpace: 'nowrap',
 });
 
-export const statusBadgeBase = style({
-  padding: '4px 8px',
-  borderRadius: '4px',
-  fontSize: vars.fontSize.caption,
-  fontWeight: vars.fontWeight.medium,
-  whiteSpace: 'nowrap',
-});
-
 export const statusBadge = styleVariants({
-  pending: [
-    statusBadgeBase,
-    {
-      backgroundColor: '#FFF3E0',
-      color: vars.color.main,
-    },
-  ],
-  canceled: [
-    statusBadgeBase,
-    {
-      backgroundColor: '#FFEBEE',
-      color: vars.color.alert,
-    },
-  ],
-  ended: [
-    statusBadgeBase,
-    {
-      backgroundColor: '#EAEAEA',
-      color: vars.color.subText,
-    },
-  ],
+  pending: [badgePending],
+  canceled: [badgeCanceled],
+  ended: [badgeEnded],
 });
 
-export const joinedBadge = style({
-  padding: '4px 8px',
-  borderRadius: '4px',
-  fontSize: vars.fontSize.caption,
-  fontWeight: vars.fontWeight.medium,
-  whiteSpace: 'nowrap',
-  backgroundColor: '#E8F5E9',
-  color: vars.color.success,
-});
+export const joinedBadge = style([badgeJoined]);
 
-export const createdBadge = style({
-  padding: '4px 8px',
-  borderRadius: '4px',
-  fontSize: vars.fontSize.caption,
-  fontWeight: vars.fontWeight.medium,
-  whiteSpace: 'nowrap',
-  backgroundColor: vars.color.mainSoft,
-  color: vars.color.main,
-});
+export const createdBadge = style([badgeCreated]);
 
 export const editButton = style({
   padding: '6px 12px',
@@ -169,11 +143,7 @@ export const participantInfo = style({
   gap: '4px',
 });
 
-export const meBadge = style({
-  color: vars.color.main,
-  fontSize: vars.fontSize.caption,
-  fontWeight: vars.fontWeight.medium,
-});
+export const meBadge = style([inlineMeTextCompact]);
 
 export const hostName = style({
   fontSize: vars.fontSize.subText,

@@ -1,5 +1,64 @@
 # AI Changelog (Rolling)
 
+## 2026-02-23
+- Converted review ownership model in app code from place-based to appointment-based (`appointment_id` 중심) across review/history/profile flows.
+- Added migration `20260223220000_review_domain_to_appointment.sql`:
+  - table rename `user_places -> user_review`
+  - `appointment_id` column/fk + partial unique index `(user_id, appointment_id)`
+  - legacy backfill (latest ended participated appointment)
+  - appointment-based RLS policies
+  - `get_appointment_detail_with_count` review aggregation source migration
+  - new RPC `list_reviewable_appointments_with_stats`
+- Updated review actions:
+  - `listReviewableAppointmentsAction` now cursor-paginates via RPC and hides already-reviewed appointments by appointment scope
+  - `submitPlaceReviewAction` upserts by `(user_id, appointment_id)`
+  - `deleteMyReviewAction` now deletes by `appointmentId`
+  - `listMyReviewsAction` now returns appointment-scoped review items
+  - `getAppointmentReviewTargetAction` reads my review by appointment and keeps place-wide aggregate
+- Updated history `canWriteReview` semantics from place-based to appointment-based.
+- Added reviewable query key/options (`appointmentKeys.reviewable*`, `createReviewableAppointmentsQueryOptions`) and invalidation helper (`invalidateReviewableAppointmentsQueries`).
+- Rebuilt profile review-wait section as a client component with:
+  - horizontal infinite loading
+  - hidden reviewed cards
+  - pointer-drag horizontal scroll UX with click-guard
+  - new hook `useHorizontalDragScroll`
+- Added review-waitlist full page route `/dashboard/profile/reviews/waitlist`.
+- Wired profile `작성 가능한 리뷰 > 전체보기` to the new waitlist route.
+- Implemented waitlist page with same visual/card system as profile history (`PlainTopNav` + `HistoryAppointmentCard`) and infinite scroll.
+- Added shared plain-list page style primitives (`src/styles/primitives/plainListPage.css.ts`) and applied them to profile plain pages (groups/history/reviews/waitlist/comments).
+- Added shared plain-card typography/layout primitives (`src/styles/primitives/plainCard.css.ts`) and applied them to history/my-review/my-comment cards for consistent sizing/spacing.
+- Added shared action button primitives (`src/styles/primitives/actionButton.css.ts`) and applied them to history/review CTA and notification invite action buttons.
+- Added shared badge/text primitives (`src/styles/primitives/badge.css.ts`) and applied them to appointment status/참여 태그 and `me` label styles across dashboard/profile plain views.
+- Added shared feedback primitives (`src/styles/primitives/feedback.css.ts`) for centered status/inline/error/empty text and applied them to notifications/review-editor/appointment detail(+members/edit)/comments empty states.
+- Extended feedback primitives with `feedbackPanelText` and applied it to notification invite response/ended status labels.
+- Moved notification invite status color tones into shared badge primitives (`badgeToneAccepted`, `badgeToneMuted`) and reused them across response/ended labels.
+- Added common display formatting utilities:
+  - `src/utils/dateFormat.ts` (`formatDateDot`, `formatDateKoreanWithWeekday`, `formatTime24`, `formatTimeRange24`, `formatTimeRangeKoreanMeridiem`, `formatRelativeKorean`)
+  - `src/utils/address.ts` (`extractDistrict`)
+- Replaced duplicated local formatter functions across dashboard/profile/notifications/appointment components with shared utilities.
+- Added reusable UI components:
+  - `src/components/ui/DateTimeMetaRow.tsx` (+ css)
+  - `src/components/ui/PlaceRatingMeta.tsx` (+ css)
+- Replaced duplicated date/time icon rows and place rating/meta rows in search/review-wait/detail/edit/history/review-editor/dashboard card screens with the shared components.
+- Replaced profile review-waitlist score row rendering with shared `PlaceRatingMeta` to unify star/score typography with other appointment cards.
+- Added `src/components/ui/UserIdentityInline.tsx` (+ css) for `avatar + name(+me) (+subtitle)` pattern.
+- Replaced duplicated identity rows in group manage, appointment members, appointment detail author, profile history author, notification inviter, and search cards with `UserIdentityInline`.
+- Added `src/components/ui/IconLabel.tsx` (+ css) for repeated `icon + text` inline meta rows.
+- Replaced duplicated icon-label rows in notification invite message, my-comment title row, group manage member count, and search member-count meta with `IconLabel`.
+- Expanded `IconLabel` usage to dashboard appointment card stats(인원/댓글), appointment detail member summary, and appointment-members caption count.
+- Added `src/components/ui/IconStackLabel.tsx` (+ css) for repeated vertical `icon + label` quick-action items.
+- Migrated profile quick-link grid items(그룹/지난 약속/리뷰/댓글) to `IconStackLabel`.
+- Migrated dashboard bottom navigation item layout to `IconStackLabel` for consistent vertical icon/label structure.
+- Refactored `src/components/ui/Buttons.*` to compose shared `actionButton` primitives and added optional `icon/className` slots to `LoginButton`/`SubmitButton`.
+- Added `vars.color.muted` token and replaced remaining hardcoded muted/disabled gray values in review editor, my-review card, review-waitlist meta text, and `actionButtonMuted`.
+- Expanded `ai_docs/STYLE_GUIDE.md` with shared UI primitive usage rules (`IconLabel`, `IconStackLabel`, `UserIdentityInline`, `DateTimeMetaRow`, `PlaceRatingMeta`, `AppointmentPlaceMeta`, `OverflowMenu`) and button/token reuse policies.
+- Improved `submitPlaceReviewAction` error handling: DB save/load failures now log PostgREST metadata and return code-aware user messages for `42501/23503/23505`.
+- Added migration `20260223234000_user_review_pk_to_review_id.sql` to replace legacy `user_places_pkey(user_id, place_id)` with `user_review_pkey(review_id)` and keep appointment-based unique rule `(user_id, appointment_id)`.
+- Normalized import ordering in appointment detail/edit clients after shared component integration (lint clean).
+- Added reusable `OverflowMenu` atom (`src/components/ui/OverflowMenu.tsx`) and migrated my-comment card menu to it.
+- Migrated profile `내 리뷰`, `그룹 관리`, and appointment detail comment-card menus to shared `OverflowMenu` (outside-click close + unified menu styling/behavior).
+- Normalized my-comment card typography sizing to match profile/review/history card scale.
+
 ## 2026-02-20
 - Added dashboard TopNav notification bell button linking to `/dashboard/notifications`.
 - Added notifications page (`/dashboard/notifications`) with `PlainTopNav` and infinite-scroll invitation list UI.

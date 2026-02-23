@@ -1,5 +1,6 @@
 import { style } from '@vanilla-extract/css';
 
+import { centeredErrorBox } from '@/styles/primitives/feedback.css';
 import { vars } from '@/styles/theme.css';
 
 export const page = style({
@@ -169,9 +170,4 @@ export const helperText = style({
   color: vars.color.alert,
 });
 
-export const errorBox = style({
-  padding: '16px',
-  color: vars.color.alert,
-  fontSize: vars.fontSize.title,
-  textAlign: 'center',
-});
+export const errorBox = style([centeredErrorBox]);

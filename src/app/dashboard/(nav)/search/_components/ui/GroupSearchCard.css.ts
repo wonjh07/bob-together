@@ -32,6 +32,12 @@ export const subRow = style({
   color: vars.color.text,
 });
 
+export const ownerIdentity = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  minWidth: 0,
+});
+
 export const ownerAvatar = style({
   display: 'flex',
   alignItems: 'center',

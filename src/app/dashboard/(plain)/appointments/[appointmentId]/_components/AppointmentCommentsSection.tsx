@@ -19,39 +19,19 @@ import {
 } from '@/actions/appointment';
 import CommentIcon from '@/components/icons/CommentIcon';
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon';
+import OverflowMenu from '@/components/ui/OverflowMenu';
 import { appointmentKeys } from '@/libs/query/appointmentKeys';
 import {
   createAppointmentCommentsQueryOptions,
   type AppointmentCommentsData,
 } from '@/libs/query/appointmentQueries';
 import { invalidateAppointmentListQueries } from '@/libs/query/invalidateAppointmentQueries';
+import { formatRelativeKorean } from '@/utils/dateFormat';
 
 import * as styles from './AppointmentCommentsSection.css';
 
 interface AppointmentCommentsSectionProps {
   appointmentId: string;
-}
-
-function formatRelative(createdAt: string): string {
-  const created = new Date(createdAt);
-  const diff = Date.now() - created.getTime();
-
-  if (Number.isNaN(created.getTime()) || diff < 0) {
-    return '';
-  }
-
-  const minutes = Math.floor(diff / (1000 * 60));
-  if (minutes < 60) {
-    return `${Math.max(1, minutes)}분전`;
-  }
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return `${hours}시간전`;
-  }
-
-  const days = Math.floor(hours / 24);
-  return `${days}일전`;
 }
 
 export default function AppointmentCommentsSection({
@@ -291,7 +271,7 @@ export default function AppointmentCommentsSection({
         <div className={styles.list}>
           {comments.map((comment) => {
             const displayName = comment.nickname || comment.name || '알 수 없음';
-            const meta = [comment.name, formatRelative(comment.createdAt)]
+            const meta = [comment.name, formatRelativeKorean(comment.createdAt)]
               .filter(Boolean)
               .join(' · ');
 
@@ -348,32 +328,26 @@ export default function AppointmentCommentsSection({
                   </div>
                 </div>
                 {comment.userId === currentUserId ? (
-                  <div className={styles.menuWrap}>
-                    <button
-                      type="button"
-                      className={styles.moreButton}
-                      aria-label="댓글 메뉴"
-                      onClick={() => toggleMenu(comment.commentId)}
-                      disabled={isDeleteSubmitting}>
-                      ⋮
-                    </button>
-                    {openedMenuId === comment.commentId ? (
-                      <div className={styles.dropdown}>
-                        <button
-                          type="button"
-                          className={styles.dropdownItem}
-                          onClick={() => startEdit(comment)}>
-                          댓글 수정
-                        </button>
-                        <button
-                          type="button"
-                          className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
-                          onClick={() => handleDelete(comment.commentId)}>
-                          댓글 삭제
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
+                  <OverflowMenu
+                    isOpen={openedMenuId === comment.commentId}
+                    isDisabled={isDeleteSubmitting || isEditSubmitting}
+                    ariaLabel="댓글 메뉴"
+                    onToggle={() => toggleMenu(comment.commentId)}
+                    onClose={() => setOpenedMenuId(null)}
+                    items={[
+                      {
+                        key: 'edit',
+                        label: '댓글 수정',
+                        onClick: () => startEdit(comment),
+                      },
+                      {
+                        key: 'delete',
+                        label: '댓글 삭제',
+                        danger: true,
+                        onClick: () => handleDelete(comment.commentId),
+                      },
+                    ]}
+                  />
                 ) : null}
               </div>
             );

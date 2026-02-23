@@ -1,5 +1,6 @@
 import { style } from '@vanilla-extract/css';
 
+import { centeredEmptyText } from '@/styles/primitives/feedback.css';
 import { vars } from '@/styles/theme.css';
 
 export const section = style({
@@ -155,66 +156,6 @@ export const content = style({
   wordBreak: 'break-word',
 });
 
-export const moreButton = style({
-  border: 'none',
-  background: 'transparent',
-  color: vars.color.subText,
-  fontSize: '1.8rem',
-  lineHeight: 1,
-  cursor: 'pointer',
-  padding: '6px 0',
-  alignSelf: 'flex-start',
-  selectors: {
-    '&:disabled': {
-      opacity: 0.5,
-      cursor: 'not-allowed',
-    },
-  },
-});
-
-export const menuWrap = style({
-  position: 'relative',
-  alignSelf: 'flex-start',
-});
-
-export const dropdown = style({
-  position: 'absolute',
-  top: '34px',
-  right: 0,
-  width: '100px',
-  border: `1px solid ${vars.color.stroke}`,
-  borderRadius: vars.radius.sm,
-  backgroundColor: vars.color.background,
-  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-  overflow: 'hidden',
-  zIndex: 10,
-});
-
-export const dropdownItem = style({
-  width: '100%',
-  border: 'none',
-  borderBottom: `1px solid ${vars.color.stroke}`,
-  backgroundColor: 'transparent',
-  padding: '10px 12px',
-  color: vars.color.text,
-  fontSize: vars.fontSize.subText,
-  fontWeight: vars.fontWeight.semibold,
-  textAlign: 'left',
-  cursor: 'pointer',
-  selectors: {
-    '&:last-child': {
-      borderBottom: 'none',
-    },
-    '&:hover': {
-      backgroundColor: vars.color.mainSoft,
-    },
-  },
-});
-
-export const dropdownItemDanger = style({
-  color: vars.color.alert,
-});
-
 export const editForm = style({
   marginTop: '8px',
   display: 'flex',
@@ -270,10 +211,4 @@ export const editSubmitButton = style([
   },
 ]);
 
-export const empty = style({
-  margin: 0,
-  fontSize: vars.fontSize.text,
-  color: vars.color.subText,
-  textAlign: 'center',
-  padding: '8px 0',
-});
+export const empty = style([centeredEmptyText]);

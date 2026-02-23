@@ -1,5 +1,6 @@
 import { style } from '@vanilla-extract/css';
 
+import { centeredStatusBox } from '@/styles/primitives/feedback.css';
 import { vars } from '@/styles/theme.css';
 
 export const page = style({
@@ -10,12 +11,7 @@ export const page = style({
   flexDirection: 'column',
 });
 
-export const statusBox = style({
-  paddingTop: '28px',
-  fontSize: vars.fontSize.title,
-  color: vars.color.subText,
-  textAlign: 'center',
-});
+export const statusBox = style([centeredStatusBox]);
 
 export const summarySection = style({
   display: 'flex',
@@ -84,7 +80,7 @@ const starButtonBase = style({
 export const starButton = style([
   starButtonBase,
   {
-    color: '#7A7A7A',
+    color: vars.color.subText,
   },
 ]);
 
@@ -162,7 +158,7 @@ export const submitButton = style([
     cursor: 'pointer',
     selectors: {
       '&:disabled': {
-        backgroundColor: '#DBDEE5',
+        backgroundColor: vars.color.muted,
         color: vars.color.subText,
         cursor: 'not-allowed',
       },
@@ -173,7 +169,7 @@ export const submitButton = style([
 export const submitButtonDisabled = style([
   submitButtonBase,
   {
-    backgroundColor: '#DBDEE5',
+    backgroundColor: vars.color.muted,
     color: vars.color.subText,
     cursor: 'not-allowed',
   },

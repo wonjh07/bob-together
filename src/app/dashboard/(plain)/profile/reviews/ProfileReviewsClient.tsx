@@ -20,6 +20,7 @@ import {
   invalidateAppointmentListQueries,
   invalidateAppointmentSearchQueries,
   invalidateMyReviewsQueries,
+  invalidateReviewableAppointmentsQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
 
 import MyReviewCard from './_components/MyReviewCard';
@@ -28,8 +29,12 @@ import * as styles from './page.css';
 export default function ProfileReviewsClient() {
   const queryClient = useQueryClient();
   const queryOptions = createMyReviewsQueryOptions();
-  const [openedMenuPlaceId, setOpenedMenuPlaceId] = useState<string | null>(null);
-  const [deletingPlaceId, setDeletingPlaceId] = useState<string | null>(null);
+  const [openedMenuAppointmentId, setOpenedMenuAppointmentId] = useState<
+    string | null
+  >(null);
+  const [deletingAppointmentId, setDeletingAppointmentId] = useState<
+    string | null
+  >(null);
 
   const {
     data,
@@ -58,23 +63,25 @@ export default function ProfileReviewsClient() {
     isLoading: isLoading || isFetchingNextPage,
   });
 
-  const handleToggleMenu = (placeId: string) => {
-    setOpenedMenuPlaceId((prev) => (prev === placeId ? null : placeId));
+  const handleToggleMenu = (appointmentId: string) => {
+    setOpenedMenuAppointmentId((prev) =>
+      prev === appointmentId ? null : appointmentId,
+    );
   };
 
   const handleCloseMenu = useCallback(() => {
-    setOpenedMenuPlaceId(null);
+    setOpenedMenuAppointmentId(null);
   }, []);
 
   const handleDeleteReview = useCallback(
-    async (placeId: string) => {
-      if (!placeId || deletingPlaceId) return;
+    async (appointmentId: string) => {
+      if (!appointmentId || deletingAppointmentId) return;
 
-      setDeletingPlaceId(placeId);
-      setOpenedMenuPlaceId(null);
+      setDeletingAppointmentId(appointmentId);
+      setOpenedMenuAppointmentId(null);
 
       try {
-        const result = await deleteMyReviewAction({ placeId });
+        const result = await deleteMyReviewAction({ appointmentId });
         if (!result.ok) {
           toast.error(result.message || '리뷰 삭제에 실패했습니다.');
           return;
@@ -88,8 +95,10 @@ export default function ProfileReviewsClient() {
             return {
               ...prev,
               pages: prev.pages.map((page) => ({
-                ...page,
-                reviews: page.reviews.filter((review) => review.placeId !== placeId),
+              ...page,
+                reviews: page.reviews.filter(
+                  (review) => review.appointmentId !== appointmentId,
+                ),
               })),
             };
           },
@@ -98,16 +107,17 @@ export default function ProfileReviewsClient() {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: appointmentKeys.historyRoot() }),
           invalidateMyReviewsQueries(queryClient),
+          invalidateReviewableAppointmentsQueries(queryClient),
           invalidateAppointmentListQueries(queryClient),
           invalidateAppointmentSearchQueries(queryClient),
         ]);
 
         toast.success('리뷰를 삭제했습니다.');
       } finally {
-        setDeletingPlaceId(null);
+        setDeletingAppointmentId(null);
       }
     },
-    [deletingPlaceId, queryClient, queryOptions.queryKey],
+    [deletingAppointmentId, queryClient, queryOptions.queryKey],
   );
 
   return (
@@ -128,10 +138,10 @@ export default function ProfileReviewsClient() {
         <div className={styles.list}>
           {reviews.map((review) => (
             <MyReviewCard
-              key={review.placeId}
+              key={review.appointmentId}
               review={review}
-              isMenuOpen={openedMenuPlaceId === review.placeId}
-              isDeleting={deletingPlaceId === review.placeId}
+              isMenuOpen={openedMenuAppointmentId === review.appointmentId}
+              isDeleting={deletingAppointmentId === review.appointmentId}
               onToggleMenu={handleToggleMenu}
               onCloseMenu={handleCloseMenu}
               onDeleteReview={handleDeleteReview}

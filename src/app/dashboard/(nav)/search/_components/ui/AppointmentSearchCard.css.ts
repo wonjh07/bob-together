@@ -1,5 +1,10 @@
 import { style } from '@vanilla-extract/css';
 
+import {
+  actionButtonBase,
+  actionButtonMedium,
+  actionButtonPrimary,
+} from '@/styles/primitives/actionButton.css';
 import { vars } from '@/styles/theme.css';
 
 export const card = style({
@@ -48,6 +53,12 @@ export const subRow = style({
   color: vars.color.text,
 });
 
+export const hostIdentity = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  minWidth: 0,
+});
+
 export const hostAvatar = style({
   width: '28px',
   height: '28px',
@@ -69,17 +80,11 @@ export const memberMeta = style({
   color: vars.color.subText,
 });
 
-export const detailButton = style({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  textDecoration: 'none',
-  padding: '10px 16px',
-  borderRadius: vars.radius.lg,
-  border: 'none',
-  backgroundColor: vars.color.main,
-  color: vars.color.background,
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.semibold,
-  cursor: 'pointer',
-});
+export const detailButton = style([
+  actionButtonBase,
+  actionButtonMedium,
+  actionButtonPrimary,
+  {
+    fontSize: vars.fontSize.text,
+  },
+]);

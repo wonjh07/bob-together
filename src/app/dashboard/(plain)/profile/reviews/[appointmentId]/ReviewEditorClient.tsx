@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { submitPlaceReviewAction } from '@/actions/appointment';
+import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { appointmentKeys } from '@/libs/query/appointmentKeys';
 import { createAppointmentReviewTargetQueryOptions } from '@/libs/query/appointmentQueries';
@@ -14,25 +15,12 @@ import {
   invalidateAppointmentListQueries,
   invalidateAppointmentSearchQueries,
   invalidateMyReviewsQueries,
+  invalidateReviewableAppointmentsQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
+import { extractDistrict } from '@/utils/address';
+import { formatDateDot } from '@/utils/dateFormat';
 
 import * as styles from './page.css';
-
-function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) return '-';
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}.${month}.${day}`;
-}
-
-function parseDistrict(address: string): string {
-  if (!address) return '';
-  const parts = address.split(' ');
-  return parts.find((part) => part.endsWith('동') || part.endsWith('구')) || '';
-}
 
 interface ReviewEditorClientProps {
   appointmentId: string;
@@ -106,11 +94,7 @@ export default function ReviewEditorClient({
 
   const target = reviewTargetQuery.data.target;
   const isEditMode = target.hasReviewed;
-  const district = parseDistrict(target.place.address);
-  const reviewAverageText =
-    target.place.reviewAverage !== null
-      ? target.place.reviewAverage.toFixed(1)
-      : '-';
+  const district = extractDistrict(target.place.address);
   const trimmedContent = content.trim();
   const canSubmit =
     score >= 1 &&
@@ -148,6 +132,7 @@ export default function ReviewEditorClient({
       invalidateAppointmentListQueries(queryClient),
       invalidateAppointmentSearchQueries(queryClient),
       invalidateMyReviewsQueries(queryClient),
+      invalidateReviewableAppointmentsQueries(queryClient),
     ]);
 
     toast.success(
@@ -163,18 +148,18 @@ export default function ReviewEditorClient({
       <PlainTopNav title="리뷰" rightHidden />
 
       <section className={styles.summarySection}>
-        <p className={styles.date}>{formatDate(target.startAt)}</p>
-        <h2 className={styles.placeName}>{target.place.name}</h2>
-        <p className={styles.placeMeta}>
-          <span className={styles.star}>★</span>
-          <span>
-            {reviewAverageText} ({target.place.reviewCount})
-          </span>
-          {district ? <span>· {district}</span> : null}
-          {target.place.category ? (
-            <span>· {target.place.category}</span>
-          ) : null}
-        </p>
+        <p className={styles.date}>{formatDateDot(target.startAt)}</p>
+        <AppointmentPlaceMeta
+          placeName={target.place.name}
+          placeNameAs="h2"
+          placeNameClassName={styles.placeName}
+          rating={target.place.reviewAverage}
+          reviewCount={target.place.reviewCount}
+          district={district}
+          category={target.place.category}
+          metaClassName={styles.placeMeta}
+          starClassName={styles.star}
+        />
       </section>
 
       <section className={styles.ratingSection}>

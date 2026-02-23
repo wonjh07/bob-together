@@ -12,6 +12,7 @@ import type {
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 30;
+const USER_REVIEW_TABLE = 'user_review' as never;
 
 const listHistorySchema = z.object({
   cursor: z
@@ -51,6 +52,7 @@ interface AppointmentMemberRow {
 }
 
 interface PlaceReviewRow {
+  appointment_id: string | null;
   place_id: string;
   user_id: string;
   score: number | null;
@@ -139,9 +141,10 @@ export async function listAppointmentHistoryAction(
       .select('appointment_id')
       .in('appointment_id', appointmentIds),
     supabase
-      .from('user_places')
-      .select('place_id, user_id, score, review')
+      .from(USER_REVIEW_TABLE)
+      .select('appointment_id, place_id, user_id, score, review')
       .in('place_id', placeIds)
+      .not('appointment_id', 'is', null)
       .or('score.not.is.null,review.not.is.null'),
   ]);
 
@@ -157,10 +160,10 @@ export async function listAppointmentHistoryAction(
   }
 
   const reviewStatsByPlace = new Map<string, { sum: number; count: number }>();
-  const reviewedPlaceIds = new Set<string>();
+  const reviewedAppointmentIds = new Set<string>();
   if (!placeReviewResult.error) {
     const placeReviewRows =
-      (placeReviewResult.data as PlaceReviewRow[] | null) ?? [];
+      (placeReviewResult.data as unknown as PlaceReviewRow[] | null) ?? [];
     for (const row of placeReviewRows) {
       if (typeof row.score === 'number') {
         const previous = reviewStatsByPlace.get(row.place_id) ?? { sum: 0, count: 0 };
@@ -171,12 +174,13 @@ export async function listAppointmentHistoryAction(
       }
 
       const hasMyReview =
+        typeof row.appointment_id === 'string' &&
         row.user_id === user.id &&
         (typeof row.score === 'number' ||
           (typeof row.review === 'string' && row.review.trim().length > 0));
 
-      if (hasMyReview) {
-        reviewedPlaceIds.add(row.place_id);
+      if (hasMyReview && row.appointment_id) {
+        reviewedAppointmentIds.add(row.appointment_id);
       }
     }
   }
@@ -207,7 +211,7 @@ export async function listAppointmentHistoryAction(
       },
       memberCount: memberCountByAppointment.get(row.appointment_id) ?? 0,
       isOwner: row.creator_id === user.id,
-      canWriteReview: !reviewedPlaceIds.has(row.place_id),
+      canWriteReview: !reviewedAppointmentIds.has(row.appointment_id),
     };
   });
 

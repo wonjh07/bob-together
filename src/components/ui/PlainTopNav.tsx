@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import * as styles from './PlainTopNav.css';
 
@@ -26,13 +26,38 @@ export default function PlainTopNav({
   rightHidden = false,
 }: PlainTopNavProps) {
   const router = useRouter();
+  const pathname = usePathname();
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+
+    const normalizedPath = (pathname || '/').replace(/\/+$/, '') || '/';
+    if (normalizedPath === '/') {
+      router.back();
+      return;
+    }
+
+    const lastSlashIndex = normalizedPath.lastIndexOf('/');
+    const parentPath =
+      lastSlashIndex <= 0 ? '/' : normalizedPath.slice(0, lastSlashIndex);
+
+    if (!parentPath || parentPath === normalizedPath) {
+      router.back();
+      return;
+    }
+
+    router.push(parentPath);
+  };
 
   return (
     <div className={styles.topNav}>
       <button
         type="button"
         className={styles.backButton}
-        onClick={onBack ?? (() => router.back())}
+        onClick={handleBack}
         aria-label={backAriaLabel}>
         &lt;
       </button>

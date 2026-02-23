@@ -1,37 +1,104 @@
-import Link from 'next/link';
+'use client';
 
-import { listReviewableAppointmentsAction } from '@/actions/appointment';
-import CalendarIcon from '@/components/icons/CalendarIcon';
-import ClockIcon from '@/components/icons/ClockIcon';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import { useCallback, useEffect, useRef } from 'react';
+
+import DateTimeMetaRow from '@/components/ui/DateTimeMetaRow';
+import PlaceRatingMeta from '@/components/ui/PlaceRatingMeta';
+import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
+import {
+  createReviewableAppointmentsQueryOptions,
+  type ReviewableAppointmentsPage,
+} from '@/libs/query/appointmentQueries';
+import { formatDateDot, formatTimeRange24 } from '@/utils/dateFormat';
 
 import * as styles from './ReviewsWaitList.css';
 
-function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) {
-    return '-';
+import type { MouseEvent } from 'react';
+
+export function ReviewsWaitList() {
+  const queryOptions = createReviewableAppointmentsQueryOptions();
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const {
+    containerRef,
+    isDragging,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave,
+    onDragStart,
+    consumeShouldPreventClick,
+  } = useHorizontalDragScroll();
+
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    ...queryOptions,
+  });
+
+  const items =
+    data?.pages.flatMap((page: ReviewableAppointmentsPage) => page.appointments) ??
+    [];
+
+  useEffect(() => {
+    const root = containerRef.current;
+    const target = sentinelRef.current;
+    if (!root || !target || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry?.isIntersecting) return;
+        void fetchNextPage();
+      },
+      {
+        root,
+        threshold: 0.1,
+        rootMargin: '0px 160px 0px 0px',
+      },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [containerRef, fetchNextPage, hasNextPage, isFetchingNextPage, items.length]);
+
+  const handleClickCapture = useCallback(
+    (event: MouseEvent<HTMLElement>) => {
+      if (!consumeShouldPreventClick()) return;
+      const target = event.target as HTMLElement;
+      if (!target.closest('a,button')) return;
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    [consumeShouldPreventClick],
+  );
+
+  if (isLoading) {
+    return (
+      <section className={styles.container}>
+        <div className={styles.emptyState}>작성 가능한 리뷰를 불러오는 중...</div>
+      </section>
+    );
   }
 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}.${month}.${day}`;
-}
-
-function formatTime(isoString: string): string {
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) {
-    return '--:--';
+  if (isError) {
+    return (
+      <section className={styles.container}>
+        <div className={styles.emptyState}>
+          {error instanceof Error
+            ? error.message
+            : '작성 가능한 리뷰를 불러오지 못했습니다.'}
+        </div>
+      </section>
+    );
   }
-
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
-
-export async function ReviewsWaitList() {
-  const result = await listReviewableAppointmentsAction();
-  const items = result.ok && result.data ? result.data.appointments : [];
 
   if (items.length === 0) {
     return (
@@ -43,29 +110,35 @@ export async function ReviewsWaitList() {
 
   return (
     <section className={styles.container}>
-      <div className={styles.scrollRow}>
+      <div
+        ref={containerRef}
+        className={`${styles.scrollRow} ${isDragging ? styles.scrollRowDragging : ''}`}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerLeave}
+        onDragStart={onDragStart}
+        onClickCapture={handleClickCapture}>
         {items.map((review) => {
-          const scoreLabel =
-            review.reviewAverage !== null ? review.reviewAverage.toFixed(1) : '-';
-
           return (
             <article key={review.appointmentId} className={styles.card}>
               <div className={styles.title}>{review.title}</div>
-              <div className={styles.scoreRow}>
-                <span className={styles.star}>★</span>
-                <span className={styles.score}>{scoreLabel}</span>
-                <span className={styles.score}>({review.reviewCount})</span>
-              </div>
-              <div className={styles.infoRow}>
-                <CalendarIcon width="18" height="18" />
-                <span>{formatDate(review.startAt)}</span>
-              </div>
-              <div className={styles.infoRow}>
-                <ClockIcon width="18" height="18" />
-                <span>
-                  {formatTime(review.startAt)}-{formatTime(review.endsAt)}
-                </span>
-              </div>
+              <PlaceRatingMeta
+                rating={review.reviewAverage}
+                reviewCount={review.reviewCount}
+                showReviewCountWhenZero={false}
+                rowClassName={styles.scoreRow}
+                starClassName={styles.star}
+                textClassName={styles.scoreText}
+              />
+              <DateTimeMetaRow
+                date={formatDateDot(review.startAt)}
+                timeRange={formatTimeRange24(review.startAt, review.endsAt)}
+                direction="column"
+                itemClassName={styles.infoRow}
+                dateIconSize={18}
+                timeIconSize={18}
+              />
               <Link
                 href={`/dashboard/profile/reviews/${review.appointmentId}`}
                 className={styles.writeButton}>
@@ -74,7 +147,11 @@ export async function ReviewsWaitList() {
             </article>
           );
         })}
+        <div ref={sentinelRef} className={styles.loadMoreTrigger} />
       </div>
+      {isFetchingNextPage ? (
+        <div className={styles.inlineLoading}>더 불러오는 중...</div>
+      ) : null}
     </section>
   );
 }

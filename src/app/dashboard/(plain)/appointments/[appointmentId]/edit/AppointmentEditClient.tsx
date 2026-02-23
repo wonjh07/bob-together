@@ -13,12 +13,14 @@ import {
 import CalendarIcon from '@/components/icons/CalendarIcon';
 import ClockIcon from '@/components/icons/ClockIcon';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
+import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
 import { createAppointmentDetailQueryOptions } from '@/libs/query/appointmentQueries';
 import {
   invalidateAppointmentDetailQuery,
   invalidateAppointmentListQueries,
   invalidateAppointmentSearchQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
+import { extractDistrict } from '@/utils/address';
 import {
   getEffectiveAppointmentStatus,
   isAppointmentEndedByTime,
@@ -50,11 +52,6 @@ interface AppointmentEditClientProps {
   initialPlace: AppointmentEditPlace;
 }
 
-function parseDistrict(address: string): string {
-  const parts = address.split(' ');
-  return parts.find((part) => part.endsWith('동') || part.endsWith('구')) || '';
-}
-
 export default function AppointmentEditClient({
   appointmentId,
   initialStatus,
@@ -82,11 +79,9 @@ export default function AppointmentEditClient({
   const canActivate = effectiveStatus === 'canceled' && !isEndedByTime;
 
   const placeMetaDistrict = useMemo(
-    () => parseDistrict(initialPlace.address),
+    () => extractDistrict(initialPlace.address),
     [initialPlace.address],
   );
-  const reviewAverageText =
-    initialPlace.reviewAverage !== null ? initialPlace.reviewAverage.toFixed(1) : '-';
 
   const placeSearchLink = useMemo(() => {
     const params = new URLSearchParams({
@@ -238,16 +233,18 @@ export default function AppointmentEditClient({
 
         <div className={styles.block}>
           <p className={styles.label}>약속 장소</p>
-          <h2 className={styles.placeName}>{initialPlace.name}</h2>
-          <div className={styles.placeMetaRow}>
-            <span className={styles.star}>★</span>
-            <span>
-              {reviewAverageText}
-              {initialPlace.reviewCount ? ` (${initialPlace.reviewCount})` : ''}
-            </span>
-            {placeMetaDistrict ? <span>· {placeMetaDistrict}</span> : null}
-            {initialPlace.category ? <span>· {initialPlace.category}</span> : null}
-          </div>
+          <AppointmentPlaceMeta
+            placeName={initialPlace.name}
+            placeNameAs="h2"
+            placeNameClassName={styles.placeName}
+            rating={initialPlace.reviewAverage}
+            reviewCount={initialPlace.reviewCount}
+            district={placeMetaDistrict}
+            category={initialPlace.category}
+            showReviewCountWhenZero={false}
+            metaClassName={styles.placeMetaRow}
+            starClassName={styles.star}
+          />
         </div>
 
         <div className={styles.mapWrapper}>

@@ -1,7 +1,7 @@
-import Image from 'next/image';
-
 import { getAppointmentMembersAction } from '@/actions/appointment';
 import GroupIcon from '@/components/icons/GroupIcon';
+import IconLabel from '@/components/ui/IconLabel';
+import UserIdentityInline from '@/components/ui/UserIdentityInline';
 
 import AppointmentMembersTopNav from './_components/AppointmentMembersTopNav';
 import * as styles from './page.css';
@@ -39,8 +39,12 @@ export default async function AppointmentMembersPage({
       <div className={styles.content}>
         <div className={styles.caption}>
           <span>멤버</span>
-          <GroupIcon className={styles.captionIcon} />
-          <span>{data.memberCount}</span>
+          <IconLabel
+            as="span"
+            className={styles.captionCount}
+            icon={<GroupIcon className={styles.captionIcon} />}>
+            <span>{data.memberCount}</span>
+          </IconLabel>
         </div>
 
         <div className={styles.list}>
@@ -51,24 +55,21 @@ export default async function AppointmentMembersPage({
 
             return (
               <div key={member.userId} className={styles.card}>
-                <div className={styles.cardInfo}>
-                  <Image
-                    src={member.profileImage || '/profileImage.png'}
-                    alt="멤버 프로필 이미지"
-                    width={56}
-                    height={56}
-                    className={styles.avatar}
-                  />
-                  <div className={styles.names}>
-                    <div className={styles.nicknameRow}>
-                      <p className={styles.nickname}>{displayNickname}</p>
-                      {member.userId === data.currentUserId ? (
-                        <span className={styles.meText}>me</span>
-                      ) : null}
-                    </div>
-                    <p className={styles.name}>{displayName}</p>
-                  </div>
-                </div>
+                <UserIdentityInline
+                  name={displayNickname}
+                  subtitle={displayName}
+                  avatarSrc={member.profileImage}
+                  avatarAlt="멤버 프로필 이미지"
+                  avatarSize="xl"
+                  me={member.userId === data.currentUserId}
+                  rowClassName={styles.cardInfo}
+                  avatarClassName={styles.avatar}
+                  textWrapClassName={styles.names}
+                  nameRowClassName={styles.nicknameRow}
+                  nameClassName={styles.nickname}
+                  meClassName={styles.meText}
+                  subtitleClassName={styles.name}
+                />
                 <button
                   type="button"
                   className={styles.moreButton}

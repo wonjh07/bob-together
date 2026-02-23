@@ -11,12 +11,14 @@ export const container = style({
   borderBottom: `1px solid ${vars.color.stroke}`,
 });
 
+export const itemLink = style({
+  textDecoration: 'none',
+});
+
 export const item = style({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: '10px',
-  textDecoration: 'none',
 });
 
 export const icon = style({

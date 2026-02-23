@@ -4,6 +4,7 @@ import {
   getAppointmentInvitationStateAction,
   getAppointmentReviewTargetAction,
   listAppointmentHistoryAction,
+  listReviewableAppointmentsAction,
   listMyCommentsAction,
   listAppointmentsAction,
   listMyReviewsAction,
@@ -16,6 +17,8 @@ import type {
   AppointmentDetailItem,
   AppointmentHistoryCursor,
   AppointmentHistoryItem,
+  ReviewableAppointmentItem,
+  ReviewableAppointmentsCursor,
   AppointmentReviewTargetItem,
   AppointmentSearchCursor,
   AppointmentSearchItem,
@@ -40,11 +43,13 @@ const APPOINTMENT_SEARCH_LIMIT = 10;
 const APPOINTMENT_HISTORY_LIMIT = 10;
 const MY_COMMENT_LIST_LIMIT = 10;
 const MY_REVIEW_LIST_LIMIT = 10;
+const REVIEWABLE_APPOINTMENT_LIST_LIMIT = 6;
 
 type AppointmentSearchQueryKey = ReturnType<typeof appointmentKeys.search>;
 type AppointmentHistoryQueryKey = ReturnType<typeof appointmentKeys.history>;
 type MyCommentsQueryKey = ReturnType<typeof appointmentKeys.myComments>;
 type MyReviewListQueryKey = ReturnType<typeof appointmentKeys.myReviews>;
+type ReviewableAppointmentsQueryKey = ReturnType<typeof appointmentKeys.reviewable>;
 type AppointmentReviewTargetQueryKey = ReturnType<
   typeof appointmentKeys.reviewTarget
 >;
@@ -67,6 +72,11 @@ export type AppointmentHistoryPage = {
 export type MyReviewPage = {
   reviews: MyReviewItem[];
   nextCursor: MyReviewCursor | null;
+};
+
+export type ReviewableAppointmentsPage = {
+  appointments: ReviewableAppointmentItem[];
+  nextCursor: ReviewableAppointmentsCursor | null;
 };
 
 export type MyCommentsPage = {
@@ -246,6 +256,36 @@ export function createMyCommentsQueryOptions() {
     },
     initialPageParam: null as MyCommentCursor | null,
     getNextPageParam: (lastPage: MyCommentsPage) => lastPage.nextCursor ?? null,
+  };
+}
+
+export function createReviewableAppointmentsQueryOptions() {
+  return {
+    queryKey: appointmentKeys.reviewable() as ReviewableAppointmentsQueryKey,
+    queryFn: async ({
+      pageParam,
+    }: QueryFunctionContext<
+      ReviewableAppointmentsQueryKey,
+      ReviewableAppointmentsCursor | null
+    >) => {
+      const result = await listReviewableAppointmentsAction({
+        cursor: pageParam ?? undefined,
+        limit: REVIEWABLE_APPOINTMENT_LIST_LIMIT,
+      });
+
+      if (!result.ok || !result.data) {
+        throw new Error(
+          result.ok
+            ? '데이터가 없습니다.'
+            : result.message || '작성 가능한 리뷰를 불러오지 못했습니다.',
+        );
+      }
+
+      return result.data;
+    },
+    initialPageParam: null as ReviewableAppointmentsCursor | null,
+    getNextPageParam: (lastPage: ReviewableAppointmentsPage) =>
+      lastPage.nextCursor ?? null,
   };
 }
 

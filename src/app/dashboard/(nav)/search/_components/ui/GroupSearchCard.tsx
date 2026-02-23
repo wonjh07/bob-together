@@ -1,6 +1,6 @@
-import Image from 'next/image';
-
 import GroupIcon from '@/components/icons/GroupIcon';
+import IconLabel from '@/components/ui/IconLabel';
+import UserIdentityInline from '@/components/ui/UserIdentityInline';
 
 import * as styles from './GroupSearchCard.css';
 
@@ -30,18 +30,21 @@ export default function GroupSearchCard({
       <div className={styles.info}>
         <div className={styles.title}>{title}</div>
         <div className={styles.subRow}>
-          <Image
-            src={ownerProfileImage || '/profileImage.png'}
-            alt={`${name} 프로필`}
-            width={28}
-            height={28}
-            className={styles.ownerAvatar}
+          <UserIdentityInline
+            name={name}
+            avatarSrc={ownerProfileImage}
+            avatarAlt={`${name} 프로필`}
+            avatarSize="xs"
+            rowClassName={styles.ownerIdentity}
+            avatarClassName={styles.ownerAvatar}
+            nameClassName={styles.ownerName}
           />
-          <span className={styles.ownerName}>{name}</span>
-          <span className={styles.memberMeta}>
-            <GroupIcon width="16" height="16" />
+          <IconLabel
+            as="span"
+            className={styles.memberMeta}
+            icon={<GroupIcon width="16" height="16" />}>
             {memberCount}명
-          </span>
+          </IconLabel>
         </div>
       </div>
       <button

@@ -7,6 +7,7 @@ export type {
   AppointmentReviewTargetItem,
   AppointmentSearchCursor,
   AppointmentSearchItem,
+  ReviewableAppointmentsCursor,
   MyCommentCursor,
   MyReviewCursor,
   MyCommentItem,

@@ -51,3 +51,42 @@
 
 - Prefer `import * as styles from './Component.css'` and use `styles.xxx`.
 - Avoid destructured style imports for consistency.
+
+## Shared UI Primitive Rules
+
+### Reuse Priority
+
+1. Reuse `src/styles/primitives/*` first.
+2. Reuse `src/components/ui/*` atoms next.
+3. Add local `*.css.ts` styles only for screen-specific layout.
+
+### Required Shared Components by Pattern
+
+- `icon + text (가로)`:
+  - Use `IconLabel`.
+  - Examples: 멤버 수, 댓글 수, 캡션 숫자, 알림 메시지 라인.
+- `icon + label (세로)`:
+  - Use `IconStackLabel`.
+  - Examples: 프로필 퀵링크, 하단 네비게이션 아이템.
+- `avatar + name (+me/+subtitle)`:
+  - Use `UserIdentityInline`.
+- `date/time row`:
+  - Use `DateTimeMetaRow`.
+- `place rating + count + tags`:
+  - Use `PlaceRatingMeta`.
+- `title + place + rating block`:
+  - Use `AppointmentPlaceMeta`.
+- `more(⋮) + dropdown action menu`:
+  - Use `OverflowMenu`.
+
+### Button Rules
+
+- Button base style is owned by `src/styles/primitives/actionButton.css.ts`.
+- Reusable button component styles (`LoginButton`, `SubmitButton`) must compose action button primitives.
+- Do not redefine disabled/primary/secondary/muted button rules per screen if existing primitives already cover them.
+
+### Token Rules
+
+- New colors/sizes should be added to `src/styles/theme.css.ts` first, then referenced via `vars`.
+- Avoid hardcoded hex/rgb values in feature/page CSS unless there is no reusable token yet.
+- If the same literal appears in 2+ places, extract a token or primitive immediately.

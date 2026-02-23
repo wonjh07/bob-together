@@ -1,5 +1,7 @@
 import { style } from '@vanilla-extract/css';
 
+import { inlineMeText } from '@/styles/primitives/badge.css';
+import { centeredErrorBox } from '@/styles/primitives/feedback.css';
 import { vars } from '@/styles/theme.css';
 
 export const page = style({
@@ -47,9 +49,7 @@ export const authorNameLine = style({
   color: vars.color.black,
 });
 
-export const meText = style({
-  color: vars.color.main,
-});
+export const meText = style([inlineMeText, { fontSize: 'inherit' }]);
 
 export const authorMeta = style({
   marginTop: '4px',
@@ -208,9 +208,4 @@ export const activateButton = style([
   },
 ]);
 
-export const errorBox = style({
-  padding: '16px',
-  color: vars.color.alert,
-  fontSize: vars.fontSize.title,
-  textAlign: 'center',
-});
+export const errorBox = style([centeredErrorBox]);

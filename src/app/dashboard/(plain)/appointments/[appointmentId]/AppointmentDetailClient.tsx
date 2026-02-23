@@ -1,63 +1,28 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import Image from 'next/image';
 import Link from 'next/link';
 
-import CalendarIcon from '@/components/icons/CalendarIcon';
-import ClockIcon from '@/components/icons/ClockIcon';
 import GroupIcon from '@/components/icons/GroupIcon';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
+import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
+import DateTimeMetaRow from '@/components/ui/DateTimeMetaRow';
+import IconLabel from '@/components/ui/IconLabel';
+import UserIdentityInline from '@/components/ui/UserIdentityInline';
 import {
   createAppointmentDetailQueryOptions,
 } from '@/libs/query/appointmentQueries';
+import { extractDistrict } from '@/utils/address';
+import {
+  formatDateDot,
+  formatRelativeKorean,
+  formatTimeRange24,
+} from '@/utils/dateFormat';
 
 import AppointmentCommentsSection from './_components/AppointmentCommentsSection';
 import AppointmentDetailActions from './_components/AppointmentDetailActions';
 import AppointmentDetailTopNav from './_components/AppointmentDetailTopNav';
 import * as styles from './page.css';
-
-function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}.${month}.${day}`;
-}
-
-function formatTime(isoString: string): string {
-  const date = new Date(isoString);
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
-
-function formatRelative(createdAt: string): string {
-  const created = new Date(createdAt);
-  const diff = Date.now() - created.getTime();
-
-  if (Number.isNaN(created.getTime()) || diff < 0) {
-    return '';
-  }
-
-  const minutes = Math.floor(diff / (1000 * 60));
-  if (minutes < 60) {
-    return `${Math.max(1, minutes)}분전`;
-  }
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return `${hours}시간전`;
-  }
-
-  const days = Math.floor(hours / 24);
-  return `${days}일전`;
-}
-
-function parseDistrict(address: string): string {
-  const parts = address.split(' ');
-  return parts.find((part) => part.endsWith('동') || part.endsWith('구')) || '';
-}
 
 interface AppointmentDetailClientProps {
   appointmentId: string;
@@ -90,15 +55,13 @@ export default function AppointmentDetailClient({
   }
 
   const appointment = detailQuery.data.appointment;
-  const createdLabel = formatRelative(appointment.createdAt);
+  const createdLabel = formatRelativeKorean(appointment.createdAt);
   const displayName =
     appointment.creatorNickname || appointment.creatorName || '알 수 없음';
-  const district = parseDistrict(appointment.place.address);
-
-  const reviewAverageText =
-    appointment.place.reviewAverage !== null
-      ? appointment.place.reviewAverage.toFixed(1)
-      : '-';
+  const authorSubText = [appointment.creatorName, createdLabel]
+    .filter(Boolean)
+    .join(' · ');
+  const district = extractDistrict(appointment.place.address);
 
   return (
     <div className={styles.page}>
@@ -108,58 +71,44 @@ export default function AppointmentDetailClient({
       />
       <div className={styles.content}>
         <div>
-          <div className={styles.authorRow}>
-            <Image
-              src={appointment.creatorProfileImage || '/profileImage.png'}
-              alt="작성자 프로필 이미지"
-              width={56}
-              height={56}
-              className={styles.authorAvatar}
-            />
-            <div>
-              <div className={styles.authorNameLine}>
-                <span>{displayName}</span>
-                {appointment.isOwner ? (
-                  <span className={styles.meText}>me</span>
-                ) : null}
-              </div>
-              <div className={styles.authorMeta}>
-                {[appointment.creatorName, createdLabel]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </div>
-            </div>
-          </div>
+          <UserIdentityInline
+            name={displayName}
+            subtitle={authorSubText}
+            avatarSrc={appointment.creatorProfileImage}
+            avatarAlt="작성자 프로필 이미지"
+            avatarSize="xl"
+            me={appointment.isOwner}
+            rowClassName={styles.authorRow}
+            avatarClassName={styles.authorAvatar}
+            nameRowClassName={styles.authorNameLine}
+            meClassName={styles.meText}
+            subtitleClassName={styles.authorMeta}
+          />
 
           <h1 className={styles.appointmentTitle}>{appointment.title}</h1>
 
-          <div className={styles.dateTimeRow}>
-            <div className={styles.dateTimeItem}>
-              <CalendarIcon className={styles.dateTimeIcon} />
-              <span>{formatDate(appointment.startAt)}</span>
-            </div>
-            <div className={styles.dateTimeItem}>
-              <ClockIcon className={styles.dateTimeIcon} />
-              <span>
-                {formatTime(appointment.startAt)}-
-                {formatTime(appointment.endsAt)}
-              </span>
-            </div>
-          </div>
+          <DateTimeMetaRow
+            date={formatDateDot(appointment.startAt)}
+            timeRange={formatTimeRange24(appointment.startAt, appointment.endsAt)}
+            rowClassName={styles.dateTimeRow}
+            itemClassName={styles.dateTimeItem}
+            iconClassName={styles.dateTimeIcon}
+            dateIconSize={22}
+            timeIconSize={22}
+          />
 
-          <div className={styles.placeSection}>
-            <h2 className={styles.placeName}>{appointment.place.name}</h2>
-            <div className={styles.placeMetaRow}>
-              <span className={styles.star}>★</span>
-              <span>
-                {reviewAverageText} ({appointment.place.reviewCount})
-              </span>
-              {district ? <span>· {district}</span> : null}
-              {appointment.place.category ? (
-                <span>· {appointment.place.category}</span>
-              ) : null}
-            </div>
-          </div>
+          <AppointmentPlaceMeta
+            placeName={appointment.place.name}
+            placeNameAs="h2"
+            placeNameClassName={styles.placeName}
+            rating={appointment.place.reviewAverage}
+            reviewCount={appointment.place.reviewCount}
+            district={district}
+            category={appointment.place.category}
+            wrapperClassName={styles.placeSection}
+            metaClassName={styles.placeMetaRow}
+            starClassName={styles.star}
+          />
 
           <div className={styles.mapWrapper}>
             <KakaoMapPreview
@@ -174,14 +123,13 @@ export default function AppointmentDetailClient({
 
         <div className={styles.section}>
           <div className={styles.memberRow}>
-            <div className={styles.memberInfo}>
-              <GroupIcon className={styles.memberIcon} />
-              <div>
-                <p className={styles.memberTitle}>
-                  현재 인원 {appointment.memberCount}명
-                </p>
-              </div>
-            </div>
+            <IconLabel
+              className={styles.memberInfo}
+              icon={<GroupIcon className={styles.memberIcon} />}>
+              <p className={styles.memberTitle}>
+                현재 인원 {appointment.memberCount}명
+              </p>
+            </IconLabel>
             <Link
               href={`/dashboard/appointments/${appointment.appointmentId}/members`}
               className={styles.memberButton}>

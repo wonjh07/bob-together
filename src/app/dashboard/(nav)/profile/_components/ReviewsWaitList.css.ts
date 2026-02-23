@@ -19,14 +19,28 @@ export const scrollRow = style({
   gap: '16px',
   overflowX: 'auto',
   padding: '16px',
+  cursor: 'grab',
+  userSelect: 'none',
+  WebkitUserSelect: 'none',
+  touchAction: 'pan-y',
   WebkitOverflowScrolling: 'touch',
   scrollbarWidth: 'none',
   msOverflowStyle: 'none',
+  selectors: {
+    '&::-webkit-scrollbar': {
+      display: 'none',
+    },
+  },
+});
+
+export const scrollRowDragging = style({
+  cursor: 'grabbing',
 });
 
 export const card = style({
   minWidth: '200px',
   minHeight: '200px',
+  flex: '0 0 200px',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
@@ -53,21 +67,21 @@ export const scoreRow = style({
 });
 
 export const star = style({
-  fontSize: '16px',
+  fontSize: vars.fontSize.text,
   color: vars.color.star,
 });
 
-export const score = style({
+export const scoreText = style({
   fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,
-  color: '#8D8F94',
+  color: vars.color.subText,
 });
 
 export const infoRow = style({
   display: 'flex',
   alignItems: 'center',
   gap: '4px',
-  color: '#8D8F94',
+  color: vars.color.subText,
   fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.medium,
 });
@@ -87,4 +101,17 @@ export const writeButton = style({
   fontWeight: vars.fontWeight.bold,
   cursor: 'pointer',
   textDecoration: 'none',
+});
+
+export const loadMoreTrigger = style({
+  flex: '0 0 1px',
+  width: '1px',
+  height: '1px',
+});
+
+export const inlineLoading = style({
+  padding: '0 16px 12px',
+  color: vars.color.subText,
+  fontSize: vars.fontSize.subText,
+  fontWeight: vars.fontWeight.medium,
 });

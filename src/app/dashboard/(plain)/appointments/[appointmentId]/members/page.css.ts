@@ -1,5 +1,7 @@
 import { style } from '@vanilla-extract/css';
 
+import { inlineMeText } from '@/styles/primitives/badge.css';
+import { centeredErrorBox } from '@/styles/primitives/feedback.css';
 import { vars } from '@/styles/theme.css';
 
 export const page = style({
@@ -22,6 +24,12 @@ export const caption = style({
   color: vars.color.subText,
   fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,
+});
+
+export const captionCount = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '4px',
 });
 
 export const captionIcon = style({
@@ -82,12 +90,7 @@ export const nicknameRow = style({
   minWidth: 0,
 });
 
-export const meText = style({
-  color: vars.color.main,
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.bold,
-  flexShrink: 0,
-});
+export const meText = style([inlineMeText]);
 
 export const name = style({
   margin: 0,
@@ -107,9 +110,4 @@ export const moreButton = style({
   cursor: 'pointer',
 });
 
-export const errorBox = style({
-  padding: '16px',
-  color: vars.color.alert,
-  fontSize: vars.fontSize.title,
-  textAlign: 'center',
-});
+export const errorBox = style([centeredErrorBox]);

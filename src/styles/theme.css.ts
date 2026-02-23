@@ -11,6 +11,7 @@ export const [themeClass, vars] = createTheme({
     text: '#675B52',
     main: '#E75D2C',
     button: '#0091FF',
+    muted: '#DBDEE5',
     alert: '#C5371E',
     success: '#339B31',
     star: '#D0BC1A',

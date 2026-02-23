@@ -25,7 +25,6 @@ export const navItem = style({
   justifyContent: 'center',
   flex: 1, // 각 항목이 동일한 너비를 가지도록 설정
   height: '100%',
-  gap: '4px',
   transition: 'all 0.2s ease',
   textDecoration: 'none',
   color: vars.color.subText,
@@ -39,4 +38,19 @@ export const navItem = style({
 export const active = style({
   color: vars.color.main,
   fontWeight: vars.fontWeight.bold,
+});
+
+export const navItemStack = style({
+  width: '100%',
+  gap: '4px',
+});
+
+export const navIcon = style({
+  fontSize: '20px',
+  lineHeight: 1,
+});
+
+export const navLabel = style({
+  fontSize: vars.fontSize.text,
+  fontWeight: vars.fontWeight.medium,
 });

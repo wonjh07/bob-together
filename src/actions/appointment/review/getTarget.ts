@@ -7,6 +7,8 @@ import { actionError, actionSuccess } from '@/actions/_common/result';
 
 import type { GetAppointmentReviewTargetResult } from '../types';
 
+const USER_REVIEW_TABLE = 'user_review' as never;
+
 const getReviewTargetSchema = z.object({
   appointmentId: z.string().uuid('유효한 약속 정보가 필요합니다.'),
 });
@@ -28,10 +30,8 @@ interface ReviewTargetRow {
 }
 
 interface PlaceReviewRow {
-  place_id: string;
   score: number | null;
   review: string | null;
-  user_id: string;
 }
 
 function hasReviewContent(row: { score: number | null; review: string | null } | null) {
@@ -104,20 +104,21 @@ export async function getAppointmentReviewTargetAction(
 
   const [placeReviewsResult, myReviewResult] = await Promise.all([
     supabase
-      .from('user_places')
-      .select('place_id, score, review, user_id')
-      .eq('place_id', appointment.place_id)
-      .or('score.not.is.null,review.not.is.null'),
-    supabase
-      .from('user_places')
+      .from(USER_REVIEW_TABLE)
       .select('score, review')
       .eq('place_id', appointment.place_id)
+      .not('appointment_id', 'is', null)
+      .or('score.not.is.null,review.not.is.null'),
+    supabase
+      .from(USER_REVIEW_TABLE)
+      .select('score, review')
+      .eq('appointment_id', appointment.appointment_id)
       .eq('user_id', user.id)
       .maybeSingle(),
   ]);
 
   const placeReviewRows =
-    (placeReviewsResult.data as PlaceReviewRow[] | null) ?? [];
+    (placeReviewsResult.data as unknown as PlaceReviewRow[] | null) ?? [];
   let reviewSum = 0;
   let reviewCount = 0;
   for (const row of placeReviewRows) {
@@ -129,7 +130,7 @@ export async function getAppointmentReviewTargetAction(
   const reviewAverage =
     reviewCount > 0 ? Number((reviewSum / reviewCount).toFixed(1)) : null;
 
-  const myReviewRow = (myReviewResult.data as {
+  const myReviewRow = (myReviewResult.data as unknown as {
     score: number | null;
     review: string | null;
   } | null) ?? null;

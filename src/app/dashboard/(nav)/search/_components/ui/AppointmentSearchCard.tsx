@@ -1,9 +1,9 @@
-import Image from 'next/image';
 import Link from 'next/link';
 
-import CalendarIcon from '@/components/icons/CalendarIcon';
-import ClockIcon from '@/components/icons/ClockIcon';
 import GroupIcon from '@/components/icons/GroupIcon';
+import DateTimeMetaRow from '@/components/ui/DateTimeMetaRow';
+import IconLabel from '@/components/ui/IconLabel';
+import UserIdentityInline from '@/components/ui/UserIdentityInline';
 
 import * as styles from './AppointmentSearchCard.css';
 
@@ -30,29 +30,30 @@ export default function AppointmentSearchCard({
     <div className={styles.card}>
       <div className={styles.info}>
         <div className={styles.title}>{title}</div>
-        <div className={styles.row}>
-          <div className={styles.item}>
-            <CalendarIcon width="18" height="18" />
-            <span>{date}</span>
-          </div>
-          <div className={styles.item}>
-            <ClockIcon width="18" height="18" />
-            <span>{timeRange}</span>
-          </div>
-        </div>
+        <DateTimeMetaRow
+          date={date}
+          timeRange={timeRange}
+          rowClassName={styles.row}
+          itemClassName={styles.item}
+          dateIconSize={18}
+          timeIconSize={18}
+        />
         <div className={styles.subRow}>
-          <Image
-            src={hostProfileImage || '/profileImage.png'}
-            alt={`${hostName} 프로필`}
-            width={28}
-            height={28}
-            className={styles.hostAvatar}
+          <UserIdentityInline
+            name={hostName}
+            avatarSrc={hostProfileImage}
+            avatarAlt={`${hostName} 프로필`}
+            avatarSize="xs"
+            rowClassName={styles.hostIdentity}
+            avatarClassName={styles.hostAvatar}
+            nameClassName={styles.hostName}
           />
-          <span className={styles.hostName}>{hostName}</span>
-          <span className={styles.memberMeta}>
-            <GroupIcon width="16" height="16" />
+          <IconLabel
+            as="span"
+            className={styles.memberMeta}
+            icon={<GroupIcon width="16" height="16" />}>
             {memberCount}명
-          </span>
+          </IconLabel>
         </div>
       </div>
       <Link

@@ -16,6 +16,10 @@ export interface MyReviewCursor {
   offset: number;
 }
 
+export interface ReviewableAppointmentsCursor {
+  offset: number;
+}
+
 export interface MyCommentCursor {
   offset: number;
 }
@@ -86,8 +90,8 @@ export interface AppointmentReviewTargetItem {
 }
 
 export interface MyReviewItem {
+  appointmentId: string;
   placeId: string;
-  appointmentId: string | null;
   placeName: string;
   score: number;
   content: string;
@@ -277,6 +281,7 @@ export type DeleteAppointmentCommentResult = ActionResult<
 export type ListReviewableAppointmentsResult = ActionResult<
   {
     appointments: ReviewableAppointmentItem[];
+    nextCursor: ReviewableAppointmentsCursor | null;
   },
   AppointmentErrorCode
 >;
@@ -290,6 +295,7 @@ export type GetAppointmentReviewTargetResult = ActionResult<
 
 export type SubmitPlaceReviewResult = ActionResult<
   {
+    appointmentId: string;
     placeId: string;
     score: number;
     content: string;
@@ -316,7 +322,7 @@ export type ListMyCommentsResult = ActionResult<
 
 export type DeleteMyReviewResult = ActionResult<
   {
-    placeId: string;
+    appointmentId: string;
   },
   AppointmentErrorCode
 >;

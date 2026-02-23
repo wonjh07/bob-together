@@ -1,11 +1,13 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 import CalendarIcon from '@/components/icons/CalendarIcon';
 import GroupIcon from '@/components/icons/GroupIcon';
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon';
+import IconLabel from '@/components/ui/IconLabel';
+import UserIdentityInline from '@/components/ui/UserIdentityInline';
+import { formatRelativeKorean } from '@/utils/dateFormat';
 
 import * as styles from './NotificationInviteCard.css';
 
@@ -16,28 +18,6 @@ interface NotificationInviteCardProps {
   isProcessing: boolean;
   onAccept: (invitationId: string) => void;
   onReject: (invitationId: string) => void;
-}
-
-function formatRelative(createdAt: string): string {
-  const created = new Date(createdAt);
-  const diff = Date.now() - created.getTime();
-
-  if (Number.isNaN(created.getTime()) || diff < 0) {
-    return '';
-  }
-
-  const minutes = Math.floor(diff / (1000 * 60));
-  if (minutes < 60) {
-    return `${Math.max(1, minutes)}분전`;
-  }
-
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return `${hours}시간전`;
-  }
-
-  const days = Math.floor(hours / 24);
-  return `${days}일전`;
 }
 
 function isEndedAppointment(endsAt: string | null): boolean {
@@ -55,7 +35,7 @@ export default function NotificationInviteCard({
 }: NotificationInviteCardProps) {
   const inviterDisplayName =
     invitation.inviterNickname || invitation.inviterName || '알 수 없음';
-  const relativeText = formatRelative(invitation.createdTime);
+  const relativeText = formatRelativeKorean(invitation.createdTime);
   const isAppointmentInvite = invitation.type === 'appointment';
   const isEnded = isAppointmentInvite
     ? isEndedAppointment(invitation.appointmentEndsAt)
@@ -84,39 +64,41 @@ export default function NotificationInviteCard({
       </div>
 
       {appointmentHref ? (
-        <Link href={appointmentHref} className={`${styles.messageRow} ${styles.messageLink}`}>
-          <CalendarIcon className={styles.messageIcon} />
-          <p className={styles.message}>
-            <strong>{`“${targetTitle}”`}</strong> 약속에 초대받았어요.
-          </p>
+        <Link href={appointmentHref} className={styles.messageLink}>
+          <IconLabel
+            className={styles.messageRow}
+            icon={<CalendarIcon className={styles.messageIcon} />}>
+            <p className={styles.message}>
+              <strong>{`“${targetTitle}”`}</strong> 약속에 초대받았어요.
+            </p>
+          </IconLabel>
         </Link>
       ) : (
-        <div className={styles.messageRow}>
-          {isAppointmentInvite ? (
-            <CalendarIcon className={styles.messageIcon} />
-          ) : (
-            <GroupIcon className={styles.messageIcon} />
-          )}
+        <IconLabel
+          className={styles.messageRow}
+          icon={
+            isAppointmentInvite ? (
+              <CalendarIcon className={styles.messageIcon} />
+            ) : (
+              <GroupIcon className={styles.messageIcon} />
+            )
+          }>
           <p className={styles.message}>
             <strong>{`“${targetTitle}”`}</strong>{' '}
             {isAppointmentInvite ? '약속에 초대받았어요.' : '그룹에 초대받았어요.'}
           </p>
-        </div>
+        </IconLabel>
       )}
 
-      <div className={styles.metaRow}>
-        <Image
-          src={invitation.inviterProfileImage || '/profileImage.png'}
-          alt={`${inviterDisplayName} 프로필`}
-          width={30}
-          height={30}
-          className={styles.avatar}
-        />
-        <span className={styles.metaText}>
-          {inviterDisplayName}
-          {relativeText ? ` · ${relativeText}` : ''}
-        </span>
-      </div>
+      <UserIdentityInline
+        name={`${inviterDisplayName}${relativeText ? ` · ${relativeText}` : ''}`}
+        avatarSrc={invitation.inviterProfileImage}
+        avatarAlt={`${inviterDisplayName} 프로필`}
+        avatarSize="sm"
+        rowClassName={styles.metaRow}
+        avatarClassName={styles.avatar}
+        nameClassName={styles.metaText}
+      />
 
       {respondedLabel ? (
         <p

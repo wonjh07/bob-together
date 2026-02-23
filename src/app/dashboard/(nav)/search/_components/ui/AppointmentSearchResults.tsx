@@ -8,31 +8,13 @@ import {
   createAppointmentSearchQueryOptions,
   type AppointmentSearchPage,
 } from '@/libs/query/appointmentQueries';
+import { formatDateDot, formatTimeRange24 } from '@/utils/dateFormat';
 
 import AppointmentSearchCard from './AppointmentSearchCard';
 import * as styles from './AppointmentSearchResults.css';
 
 interface AppointmentSearchResultsProps {
   query: string;
-}
-
-function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}.${month}.${day}`;
-}
-
-function formatTime(isoString: string): string {
-  const date = new Date(isoString);
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
-
-function formatTimeRange(startAt: string, endsAt: string): string {
-  return `${formatTime(startAt)}-${formatTime(endsAt)}`;
 }
 
 export default function AppointmentSearchResults({
@@ -97,8 +79,8 @@ export default function AppointmentSearchResults({
           key={appointment.appointmentId}
           appointmentId={appointment.appointmentId}
           title={appointment.title}
-          date={formatDate(appointment.startAt)}
-          timeRange={formatTimeRange(appointment.startAt, appointment.endsAt)}
+          date={formatDateDot(appointment.startAt)}
+          timeRange={formatTimeRange24(appointment.startAt, appointment.endsAt)}
           hostName={
             appointment.hostNickname || appointment.hostName || '알 수 없음'
           }

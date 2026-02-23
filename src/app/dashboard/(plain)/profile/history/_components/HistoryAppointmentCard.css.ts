@@ -1,20 +1,22 @@
 import { style } from '@vanilla-extract/css';
 
+import {
+  actionButtonBase,
+  actionButtonMuted,
+  actionButtonPrimary,
+  actionButtonSecondary,
+  actionButtonSmall,
+} from '@/styles/primitives/actionButton.css';
+import {
+  plainCard,
+  plainCardHeadRow,
+  plainCardTitle,
+} from '@/styles/primitives/plainCard.css';
 import { vars } from '@/styles/theme.css';
 
-export const card = style({
-  display: 'flex',
-  flexDirection: 'column',
-  padding: '16px',
-  borderBottom: `1px solid ${vars.color.stroke}`,
-});
+export const card = style([plainCard]);
 
-export const cardHead = style({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: '12px',
-});
+export const cardHead = style([plainCardHeadRow, { alignItems: 'center' }]);
 
 export const date = style({
   fontSize: vars.fontSize.title,
@@ -46,12 +48,7 @@ export const creatorName = style({
   fontWeight: vars.fontWeight.semibold,
 });
 
-export const title = style({
-  fontSize: vars.fontSize.header,
-  fontWeight: vars.fontWeight.bold,
-  color: vars.color.black,
-  wordBreak: 'break-word',
-});
+export const title = style([plainCardTitle]);
 
 export const placeName = style({
   fontSize: vars.fontSize.title,
@@ -83,38 +80,19 @@ export const buttonRow = style({
   gap: '16px',
 });
 
-const buttonBase = style({
-  flex: 1,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '8px',
-  borderRadius: vars.radius.xlg,
-  textDecoration: 'none',
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.semibold,
-});
+const buttonBase = style([actionButtonBase, actionButtonSmall, { flex: 1 }]);
 
 export const detailButton = style([
   buttonBase,
-  {
-    backgroundColor: vars.color.text,
-    color: vars.color.background,
-  },
+  actionButtonSecondary,
 ]);
 
 export const reviewButton = style([
   buttonBase,
-  {
-    backgroundColor: vars.color.main,
-    color: vars.color.background,
-  },
+  actionButtonPrimary,
 ]);
 
 export const reviewButtonDisabled = style([
   buttonBase,
-  {
-    backgroundColor: '#DBDEE5',
-    color: vars.color.subText,
-  },
+  actionButtonMuted,
 ]);

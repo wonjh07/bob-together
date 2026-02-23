@@ -9,6 +9,8 @@ export const appointmentKeys = {
   myComments: () => [...appointmentKeys.myCommentsRoot()] as const,
   myReviewsRoot: () => [...appointmentKeys.all, 'my-reviews'] as const,
   myReviews: () => [...appointmentKeys.myReviewsRoot()] as const,
+  reviewableRoot: () => [...appointmentKeys.all, 'reviewable'] as const,
+  reviewable: () => [...appointmentKeys.reviewableRoot()] as const,
   reviewTarget: (appointmentId: string) =>
     [...appointmentKeys.all, 'review-target', appointmentId] as const,
   searchRoot: () => [...appointmentKeys.all, 'search'] as const,

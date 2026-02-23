@@ -427,30 +427,36 @@ export type Database = {
           },
         ]
       }
-      user_places: {
+      user_review: {
         Row: {
+          appointment_id: string | null
           created_at: string
           edited_at: string | null
           place_id: string
           review: string | null
+          review_id: string
           score: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          appointment_id?: string | null
           created_at?: string
           edited_at?: string | null
           place_id: string
           review?: string | null
+          review_id?: string
           score?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          appointment_id?: string | null
           created_at?: string
           edited_at?: string | null
           place_id?: string
           review?: string | null
+          review_id?: string
           score?: number | null
           updated_at?: string
           user_id?: string
@@ -469,6 +475,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_review_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["appointment_id"]
           },
         ]
       }
@@ -578,6 +591,19 @@ export type Database = {
           owner_name: string
           owner_nickname: string
           owner_profile_image: string
+        }[]
+      }
+      list_reviewable_appointments_with_stats: {
+        Args: { p_limit?: number; p_offset?: number; p_user_id: string }
+        Returns: {
+          appointment_id: string
+          ends_at: string
+          place_id: string
+          place_name: string
+          review_avg: number
+          review_count: number
+          start_at: string
+          title: string
         }[]
       }
       search_appointments_with_count: {

@@ -13,6 +13,7 @@ export const headerContainer = style({
 });
 
 export const headerTitle = style({
+  margin: 0,
   fontSize: vars.fontSize.header,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.text,
