@@ -2,12 +2,14 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import GroupIcon from '@/components/icons/GroupIcon';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
 import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
 import DateTimeMetaRow from '@/components/ui/DateTimeMetaRow';
 import IconLabel from '@/components/ui/IconLabel';
+import PlainTopNav from '@/components/ui/PlainTopNav';
 import UserIdentityInline from '@/components/ui/UserIdentityInline';
 import {
   createAppointmentDetailQueryOptions,
@@ -21,7 +23,6 @@ import {
 
 import AppointmentCommentsSection from './_components/AppointmentCommentsSection';
 import AppointmentDetailActions from './_components/AppointmentDetailActions';
-import AppointmentDetailTopNav from './_components/AppointmentDetailTopNav';
 import * as styles from './page.css';
 
 interface AppointmentDetailClientProps {
@@ -31,12 +32,13 @@ interface AppointmentDetailClientProps {
 export default function AppointmentDetailClient({
   appointmentId,
 }: AppointmentDetailClientProps) {
+  const router = useRouter();
   const detailQuery = useQuery(createAppointmentDetailQueryOptions(appointmentId));
 
   if (detailQuery.isLoading) {
     return (
       <div className={styles.page}>
-        <AppointmentDetailTopNav appointmentId={appointmentId} canEdit={false} />
+        <PlainTopNav title="약속 상세" rightHidden />
       </div>
     );
   }
@@ -44,7 +46,7 @@ export default function AppointmentDetailClient({
   if (detailQuery.isError || !detailQuery.data) {
     return (
       <div className={styles.page}>
-        <AppointmentDetailTopNav appointmentId={appointmentId} canEdit={false} />
+        <PlainTopNav title="약속 상세" rightHidden />
         <div className={styles.errorBox}>
           {detailQuery.error instanceof Error
             ? detailQuery.error.message
@@ -65,9 +67,14 @@ export default function AppointmentDetailClient({
 
   return (
     <div className={styles.page}>
-      <AppointmentDetailTopNav
-        appointmentId={appointmentId}
-        canEdit={appointment.isOwner}
+      <PlainTopNav
+        title="약속 상세"
+        rightLabel="수정"
+        rightAriaLabel="약속 수정"
+        rightHidden={!appointment.isOwner}
+        onRightAction={() =>
+          router.push(`/dashboard/appointments/${appointmentId}/edit`)
+        }
       />
       <div className={styles.content}>
         <div>
@@ -101,6 +108,7 @@ export default function AppointmentDetailClient({
             placeName={appointment.place.name}
             placeNameAs="h2"
             placeNameClassName={styles.placeName}
+            placeHref={`/dashboard/places/${appointment.place.placeId}`}
             rating={appointment.place.reviewAverage}
             reviewCount={appointment.place.reviewCount}
             district={district}

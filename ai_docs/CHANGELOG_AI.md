@@ -1,5 +1,189 @@
 # AI Changelog (Rolling)
 
+## 2026-02-25
+- Fixed place-detail back navigation fallback:
+  - `PlaceDetailClient` now uses explicit `onBack={() => router.back()}` for `PlainTopNav`
+  - prevents navigation to non-existent `/dashboard/places` parent route.
+- Reverted group-manage filter row wrapping behavior:
+  - `ProfileGroups` filter box now stays single-line (`nowrap`)
+  - action buttons are always right-aligned without responsive line wrap.
+- Updated profile `작성 가능한 리뷰` card row UX:
+  - removed the bottom inline `더 불러오는 중...` loader from `ReviewsWaitList`
+  - infinite loading remains sentinel-based without extra bottom text.
+- Improved appointment-create date/time input UX:
+  - date/time inputs in `DateTimeStep` now open native pickers when clicking anywhere on the input field (not only the browser icon) via safe `showPicker()` invocation.
+- Unified appointment-create step progression into `PlainTopNav` right action:
+  - `MultiStepFormClient` now owns per-step validation + next-transition logic via `handleNavNext`
+  - removed per-step `NextButton` dependency from `GroupStep`/`TitleStep`/`DateTimeStep`/`PlaceStep`
+  - deleted now-unused `src/app/dashboard/(plain)/appointments/create/_components/ui/NextButton.*`
+- Fixed `PlainTopNav` center title visibility regression:
+  - replaced brittle title width clamp (`calc(100% - 160px)`) with safe center constraints (`minWidth: 0`, `maxWidth: 100%`, horizontal padding)
+  - keeps centered title + edge-aligned side actions without hiding title text.
+- Improved `PlainTopNav` layout stability:
+  - switched nav layout to 3-column grid (`1fr auto 1fr`) to keep title visually centered
+  - left/right controls are pinned to edges (`start/end`) while title remains centered
+  - right action button now prevents wrapping (`white-space: nowrap`) so 3+ character labels do not break into multiple lines.
+- Added explicit empty-result feedback for invitation member search:
+  - group member invitation (`/dashboard/profile/groups/[groupId]/members/invitation`)
+  - appointment invitation (`/dashboard/appointments/invitation`)
+  - both now render `검색 결과가 없습니다.` after a completed search with zero results.
+- Unified search input row across service screens with a shared UI component:
+  - added `src/components/ui/SearchInput.tsx` (+ `SearchInput.css.ts`)
+  - migrated search input usage in dashboard search, group find, group member invitation, appointment invitation, appointment create place step, and appointment edit-place page
+  - removed legacy local search component under `src/app/dashboard/(nav)/search/_components/ui/SearchInput.*`
+- Updated group-manage chip-filter actions to icon buttons:
+  - `그룹 찾기` -> search icon (`SearchIcon`)
+  - `새 그룹` -> group-add icon (`AiOutlineUsergroupAdd`)
+  - adjusted `src/app/dashboard/(plain)/profile/groups/page.css.ts` button sizing to icon-only circular actions (`36x36`) to reduce text-wrap/overflow styling breaks.
+- Reduced low-value shared styling abstractions:
+  - removed `src/components/ui/IconStackLabel.tsx` (+ css) and replaced bottom-nav usage with local markup/styles
+  - removed alias-only `src/app/dashboard/_components/TypeFilter.css.ts` and switched `TypeFilter` to direct chip primitive usage
+- Updated style guide to discourage class composition/inheritance for feature/page CSS:
+  - added explicit rules in `ai_docs/STYLE_GUIDE.md` to prefer deterministic local classes
+  - clarified exception scope: composition is allowed only for stable shared primitives
+- Fixed intermittent profile/group UI style drift:
+  - `ProfileQuickLinks` now renders local icon+label markup (no `IconStackLabel` dependency) with explicit icon sizes for deterministic rendering
+  - group-manage filter row now wraps responsively on narrow widths to prevent chip/action overflow clipping
+  - plain dashboard layout overflow changed from full `scroll` to `overflow-y: auto` + `overflow-x: hidden` to block accidental horizontal scroll
+- Added group invitation search scope hardening:
+  - new action `searchGroupInvitableUsersAction` in `src/actions/group/searchGroupInvitableUsersAction.ts`
+  - group member invitation page now uses group-scoped invitee search instead of global `searchUsersAction`
+  - search results now exclude existing group members but include pending invitees (UI marks `초대 완료`)
+  - added tests `src/actions/group/searchGroupInvitableUsersAction.test.ts`
+- Added appointment invitation search scope hardening:
+  - new action `searchAppointmentInvitableUsersAction` in `src/actions/appointment/[appointmentId]/members/searchInvitees.ts`
+  - invitation page now uses appointment-scoped invitee search instead of global `searchUsersAction`
+  - search results now exclude existing appointment members but include pending invitees (UI marks `초대 완료`)
+  - added tests `src/actions/appointment/[appointmentId]/members/searchInvitees.test.ts`
+- Removed legacy onboarding join redirect pages again:
+  - deleted `src/app/(onboarding)/group/join/page.tsx`
+  - deleted `src/app/(onboarding)/group/join/confirm/page.tsx`
+  - deleted `src/app/(onboarding)/group/join/complete/page.tsx`
+- Removed remaining legacy onboarding join route references in `src/components/BackButtonGate.tsx`.
+- Updated `ai_docs/FLOWS.md` route map to remove legacy join route entries.
+- Login flow now respects middleware redirect intent:
+  - added safe redirect resolver `src/app/(onboarding)/login/redirect.ts`
+  - `LoginForm` now uses `useSearchParams` + `router.replace(resolveLoginRedirectPath(...))`
+  - added unit test `src/app/(onboarding)/login/redirect.test.ts`
+- Hardened appointment invitation rule at server-action level:
+  - `sendAppointmentInvitationAction` now blocks invites for `canceled` appointments
+  - `sendAppointmentInvitationAction` now blocks invites for time-ended appointments
+  - added action tests `src/actions/appointment/[appointmentId]/members/invite.test.ts`
+- Added `ai_docs/E2E_SCENARIOS.md` as the current baseline E2E reference:
+  - onboarding/auth -> group -> invitation -> appointment -> notifications -> review user journeys
+  - risk list with prioritized fix plan (P0~P2) for business logic + UX gaps
+  - QA checklist for post-fix verification
+- Registered the new doc in `ai_docs/INDEX.md`.
+- Added group-manage tab filtering UI in `src/app/dashboard/(plain)/profile/groups/ProfileGroupsClient.tsx` to split the list into:
+  - `내가 만든 그룹` (`isOwner === true`)
+  - `가입한 그룹` (`isOwner === false`)
+- Reused shared chip toggle pattern (`ChipToggleGroup` + chip primitives) to match dashboard filter interaction.
+- Updated group-manage page styles (`src/app/dashboard/(plain)/profile/groups/page.css.ts`) to include a tab filter area under `PlainTopNav` while keeping existing plain list page primitives.
+- Improved empty-state handling by tab so each view shows its own message when no groups match the selected tab.
+- Updated group-manage card overflow menu behavior by ownership:
+  - owner cards now show `멤버 관리`
+  - joined-member cards keep `그룹 탈퇴`
+- Added group member list page route `src/app/dashboard/(plain)/profile/groups/[groupId]/members/page.tsx`:
+  - PlainTopNav title `그룹 멤버`
+  - same structure/style as appointment member list (caption + member cards + placeholder more button)
+- Added `getGroupMembersAction` with membership access check and exported related result/item types.
+- Added group member invitation flow:
+  - `그룹 멤버` 상단 우측 `멤버 초대` 버튼으로 이동
+  - new route `src/app/dashboard/(plain)/profile/groups/[groupId]/members/invitation/page.tsx`
+  - search + invite UI/client for group invitations using `searchUsersAction` and `sendGroupInvitationAction`
+  - invite result states reflected as `그룹 멤버` / `초대 완료` / `전송 중`
+- Extended `PlainTopNav` with optional `backHref` and `rightHref` props so server-rendered pages can configure navigation actions without client wrapper callbacks.
+- Added `그룹 관리` 상단 필터 영역 우측 `새 그룹` 버튼 and connected it to new create route:
+  - `src/app/dashboard/(plain)/profile/groups/create/page.tsx`
+  - `src/app/dashboard/(plain)/profile/groups/create/GroupCreateClient.tsx`
+- Group create now supports immediate flow to group members page after success:
+  - create success invalidates group membership queries,
+  - then navigates to `/dashboard/profile/groups/[groupId]/members`.
+- Consolidated onboarding group create/invitation pages into dashboard profile routes:
+  - `/group/create`, `/group/create/complete`, `/group/invitation`, `/group/invitation/complete` now redirect to dashboard group create/manage/invitation flows.
+  - removed old onboarding-only create/invitation client implementations and related css files.
+- Added `그룹 관리` 상단 우측 `그룹 찾기` 버튼 and new group find page:
+  - `src/app/dashboard/(plain)/profile/groups/find/page.tsx`
+  - `src/app/dashboard/(plain)/profile/groups/find/GroupFindClient.tsx`
+  - `src/app/dashboard/(plain)/profile/groups/find/page.css.ts`
+- Group find page supports group search + join flow (`searchGroupsWithCountAction`, `joinGroupAction`) and reflects join state in-place (`가입 완료`).
+- Consolidated onboarding group join flow into dashboard group find/manage:
+  - `/group/join` and `/group/join/confirm` redirect to `/dashboard/profile/groups/find`
+  - `/group/join/complete` redirects to `/dashboard/profile/groups`
+  - removed old onboarding-only join client/confirm/complete UI files and related css files.
+- Updated onboarding group entry page `그룹 가입하기` button to navigate directly to `/dashboard/profile/groups/find`.
+- Removed now-unnecessary onboarding redirect pages for group create/invitation/join flows:
+  - deleted `src/app/(onboarding)/group/{create,invitation,join}/**/page.tsx` redirect stubs
+  - onboarding group entry (`/group`) now serves as the only onboarding entry and links directly to dashboard group pages.
+- Removed dashboard-side dependency on onboarding group style module:
+  - replaced `@/app/(onboarding)/group/shared.css` button-class imports in
+    - `src/app/dashboard/(plain)/appointments/invitation/AppointmentInvitationClient.tsx`
+    - `src/app/dashboard/(plain)/profile/groups/[groupId]/members/invitation/GroupMemberInvitationClient.tsx`
+  - by in-place page styles (`searchButton`) within each page css.
+- Updated `ai_docs/FLOWS.md` Group Flow routes to match current code (onboarding entry + dashboard group domain routes only).
+
+## 2026-02-24
+- Added dropdown style primitives `src/styles/primitives/dropdown.css.ts` and chip style primitives `src/styles/primitives/chip.css.ts` to standardize menu/chip visual tokens (radius, border, hover, item spacing, disabled tones).
+- Refactored dropdown-family styles to compose the new dropdown primitives:
+  - `src/app/dashboard/_components/PeriodFilter.css.ts`
+  - `src/app/dashboard/_components/GroupsDropdown.css.ts`
+  - `src/components/ui/OverflowMenu.css.ts`
+  - `src/app/dashboard/_components/nav/ui/ProfileDrop.css.ts`
+- Updated `GroupsDropdown` trigger UI to use shared chevron pattern (open-state color + rotate transition).
+- Refactored `src/app/dashboard/_components/TypeFilter.css.ts` to compose shared chip primitives.
+- Updated `src/components/ui/ChipToggleGroup.tsx` to apply shared chip base styles by default while preserving per-screen overrides.
+- Fixed dashboard period filter dropdown horizontal overflow by right-aligning the menu to the trigger in `src/app/dashboard/_components/PeriodFilter.css.ts`.
+- Fixed appointment invite accept flow to prevent misleading `약속 정보를 찾을 수 없습니다.` errors:
+  - Added group-membership precheck in `respondToInvitationAction` before appointment lookup.
+  - Added invitee group-membership validation in `sendAppointmentInvitationAction` to block invalid appointment invites at creation time.
+- Removed mouse drag-based horizontal scroll interaction from profile `ReviewsWaitList`; the section now uses native horizontal scrolling only.
+- Improved `ReviewsWaitList` horizontal UX:
+  - mobile touch horizontal scroll is enabled (`touchAction` adjusted),
+  - mouse wheel in card row now scrolls horizontally by mapping `deltaY` to `scrollLeft`.
+- Updated profile home `작성 가능한 리뷰` cards to show place name as the primary title instead of appointment title.
+- Added optional place navigation support to `AppointmentPlaceMeta` (`placeHref`) and wired place-name links from appointment detail/edit, profile history, and review editor cards.
+- Added place detail flow:
+  - new route `/dashboard/places/[placeId]` with `PlainTopNav`
+  - place summary (name/address/rating meta) + read-only Kakao map
+  - infinite-scroll review list UI via `listPlaceReviewsAction`
+  - new place query modules `src/libs/query/placeKeys.ts`, `src/libs/query/placeQueries.ts`
+- Added `react-icons` dependency and replaced local custom SVG icon implementations in `src/components/icons/*.tsx` with wrapper components based on Ant Design outline icons (`react-icons/ai`), preserving existing component names/usages.
+- Added `StarIcon` (`src/components/icons/StarIcon.tsx`) and applied it to all rating star renderers (`PlaceRatingMeta`, `StarRatingDisplay`, `StarRatingInput`) to remove hardcoded `★` glyph usage.
+- Replaced dashboard top-nav profile avatar trigger with a hamburger-menu trigger:
+  - added `src/components/icons/MenuIcon.tsx`
+  - updated `TopNavigation` + `ProfileDrop` to render menu icon button while keeping dropdown/logout behavior unchanged
+- Replaced dashboard bottom-nav emoji icons with `react-icons` (`AiOutlineHome`, `AiOutlineCalendar`, `AiOutlinePlusCircle`, `AiOutlineSearch`, `AiOutlineUser`) in `src/app/dashboard/_components/nav/BottomNavigation.tsx`.
+- Fixed `GroupIcon` size regression after react-icons migration: when `width/height` props are passed, the icon now resolves size from those values instead of always using the onboarding default size.
+- Replaced `OverflowMenu` trigger text glyph (`⋮`) with `react-icons` `BsThreeDotsVertical` in `src/components/ui/OverflowMenu.tsx`.
+- Added reusable loading spinner atom `src/components/ui/LoadingSpinner.tsx` (+ `LoadingSpinner.css.ts`) and applied it to dashboard appointment list initial/infinite loading states.
+- Extended `ListStateView` with `loadingVariant` (`text` | `spinner`) and applied spinner-based loading to notifications, search results, place reviews, and profile plain list pages (groups/history/reviews/comments/review-waitlist).
+- Added reusable inline pagination loader `src/components/ui/InlineLoading.tsx` (+ `InlineLoading.css.ts`) and replaced plain `더 불러오는 중...` text blocks with `spinner + text` across dashboard/profile/search/place infinite lists.
+- Fixed appointment-detail comment mutation invalidation gap by adding `invalidateMyCommentsQueries` in `AppointmentCommentsSection` create/update/delete paths, so `프로필 > 내 댓글` reflects latest data immediately after comment CRUD.
+- Expanded cache invalidation coverage for stale cross-screen data:
+  - added appointment `search` invalidation in detail `join/leave` actions,
+  - added appointment list/search invalidation after appointment create success,
+  - added place detail/reviews invalidation after review submit/delete,
+  - added group manage/search-root cross invalidation after group join/leave.
+- Refined notification invitation response invalidation:
+  - `rejected` responses now invalidate only invitation list cache,
+  - `accepted + group` now invalidates both `groupKeys.all` and `appointmentKeys.all` (membership changes can affect appointment visibility/search scope),
+  - `accepted + appointment` keeps appointment-domain invalidation.
+- Improved query handling/readability in profile review waitlist + hooks:
+  - switched `/dashboard/profile/reviews/waitlist` from history-query + client filtering to `createReviewableAppointmentsQueryOptions`,
+  - removed empty-result auto-fetch loop in waitlist client,
+  - removed unused custom `useInfiniteQuery` implementation from `useInfiniteScroll.ts` to avoid TanStack API naming confusion.
+- Removed duplicate review invalidation in review editor (`myReviewsRoot` direct invalidate), keeping helper-based invalidation only.
+- Added query invalidation plan helpers and applied them across mutation clients:
+  - `invalidateAppointmentCollectionQueries`, `invalidateAppointmentDetailAndCollectionQueries`,
+    `invalidateReviewMutationQueries`, `invalidateMyCommentMutationQueries`
+  - `invalidateGroupMembershipQueries`
+  - `invalidateAfterInvitationResponse`
+  - refactored detail/edit/create/comments/review/groups/notifications clients to use helper plans instead of ad-hoc invalidate lists.
+- Updated `ai_docs/CACHE_OWNERSHIP.md` with helper-first mapping:
+  - documented invalidate helper catalog (code 1:1),
+  - rewrote mutation matrix to `user action -> server action -> UI caller -> helper`,
+  - added explicit exception note for detail comments local patch strategy.
+
 ## 2026-02-23
 - Converted review ownership model in app code from place-based to appointment-based (`appointment_id` 중심) across review/history/profile flows.
 - Added migration `20260223220000_review_domain_to_appointment.sql`:
@@ -58,6 +242,40 @@
 - Added reusable `OverflowMenu` atom (`src/components/ui/OverflowMenu.tsx`) and migrated my-comment card menu to it.
 - Migrated profile `내 리뷰`, `그룹 관리`, and appointment detail comment-card menus to shared `OverflowMenu` (outside-click close + unified menu styling/behavior).
 - Normalized my-comment card typography sizing to match profile/review/history card scale.
+- Added shared star-rating atoms:
+  - `src/components/ui/StarRatingDisplay.tsx` (read-only stars)
+  - `src/components/ui/StarRatingInput.tsx` (interactive stars)
+- Migrated duplicated review star render logic in:
+  - `src/app/dashboard/(plain)/profile/reviews/_components/MyReviewCard.tsx`
+  - `src/app/dashboard/(plain)/profile/reviews/[appointmentId]/ReviewEditorClient.tsx`
+- Added `src/hooks/useInfiniteLoadMore.ts` to standardize `fetchNextPage + hasNextPage + isFetchingNextPage + useInfiniteScroll` wiring.
+- Applied `useInfiniteLoadMore` to repeated infinite-list screens:
+  - dashboard appointment list
+  - notifications
+  - profile groups/history/reviews/comments/review-waitlist
+  - search appointment/group results
+- Added `src/components/ui/ListStateView.tsx` for common loading/error/empty rendering with consistent error fallback handling.
+- Migrated repeated state blocks (`statusBox` / `status`) to `ListStateView` in notifications, profile plain lists, and search result lists.
+- Added `src/hooks/useClickOutside.ts` to centralize outside-click close behavior.
+- Replaced duplicated document-event outside-click logic in:
+  - `src/components/ui/OverflowMenu.tsx`
+  - `src/app/dashboard/_components/GroupsDropdown.tsx`
+  - `src/app/dashboard/_components/PeriodFilter.tsx`
+  - `src/app/dashboard/_components/nav/ui/ProfileDrop.tsx`
+- Removed appointment plain-route `Appointment*TopNav` wrapper components and switched to direct `PlainTopNav` usage in:
+  - appointment detail client
+  - appointment edit page/client
+  - appointment members page
+  - appointment edit-place client
+  - appointment invitation client/page
+- Added `src/components/ui/DropdownMenu.tsx` and migrated:
+  - `src/app/dashboard/_components/GroupsDropdown.tsx`
+  - `src/app/dashboard/_components/PeriodFilter.tsx`
+  to share the same dropdown open/close shell and outside-click behavior.
+- Added `src/components/ui/ChipToggleGroup.tsx` for reusable chip-style toggle groups and migrated `src/app/dashboard/_components/TypeFilter.tsx`.
+- Migrated `src/components/ui/OverflowMenu.tsx` to use `DropdownMenu` as the common dropdown shell.
+- Migrated dashboard profile menu (`src/app/dashboard/_components/nav/ui/ProfileDrop.tsx`) to `DropdownMenu` and moved trigger ownership into `ProfileDrop`.
+- Simplified `src/app/dashboard/_components/nav/TopNavigation.tsx` by removing local profile-dropdown open state and rendering `ProfileDropdown` trigger directly.
 
 ## 2026-02-20
 - Added dashboard TopNav notification bell button linking to `/dashboard/notifications`.

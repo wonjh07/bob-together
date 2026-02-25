@@ -1,6 +1,7 @@
 'use client';
 
 import OverflowMenu from '@/components/ui/OverflowMenu';
+import StarRatingDisplay from '@/components/ui/StarRatingDisplay';
 import { formatDateDot } from '@/utils/dateFormat';
 
 import * as styles from './MyReviewCard.css';
@@ -13,18 +14,7 @@ interface MyReviewCardProps {
   isDeleting: boolean;
   onToggleMenu: (appointmentId: string) => void;
   onCloseMenu: () => void;
-  onDeleteReview: (appointmentId: string) => void;
-}
-
-function renderStars(score: number) {
-  return Array.from({ length: 5 }).map((_, index) => {
-    const filled = index < score;
-    return (
-      <span key={index} className={filled ? styles.starFilled : styles.starEmpty}>
-        ★
-      </span>
-    );
-  });
+  onDeleteReview: (appointmentId: string, placeId: string) => void;
 }
 
 export default function MyReviewCard({
@@ -55,13 +45,19 @@ export default function MyReviewCard({
               key: 'delete',
               label: '리뷰 삭제',
               danger: true,
-              onClick: () => onDeleteReview(review.appointmentId),
+              onClick: () =>
+                onDeleteReview(review.appointmentId, review.placeId),
             },
           ]}
         />
       </div>
 
-      <div className={styles.starRow}>{renderStars(review.score)}</div>
+      <StarRatingDisplay
+        score={review.score}
+        rowClassName={styles.starRow}
+        filledClassName={styles.starFilled}
+        emptyClassName={styles.starEmpty}
+      />
       {review.content ? <p className={styles.content}>{review.content}</p> : null}
       <p className={styles.date}>{formatDateDot(review.editedAt)}</p>
     </article>

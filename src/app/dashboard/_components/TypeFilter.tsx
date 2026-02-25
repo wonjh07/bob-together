@@ -1,8 +1,10 @@
 'use client';
 
-import * as styles from './TypeFilter.css';
+import ChipToggleGroup from '@/components/ui/ChipToggleGroup';
 
 import type { TypeFilter as TypeFilterType } from '@/actions/appointment';
+
+import * as chip from '@/styles/primitives/chip.css';
 
 interface TypeFilterProps {
   value: TypeFilterType;
@@ -17,18 +19,13 @@ const TYPE_OPTIONS: { value: TypeFilterType; label: string }[] = [
 
 export function TypeFilter({ value, onChange }: TypeFilterProps) {
   return (
-    <div className={styles.filterContainer}>
-      {TYPE_OPTIONS.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          className={`${styles.chipButton} ${
-            value === option.value ? styles.chipButtonActive : ''
-          }`}
-          onClick={() => onChange(option.value)}>
-          {option.label}
-        </button>
-      ))}
-    </div>
+    <ChipToggleGroup
+      options={TYPE_OPTIONS}
+      value={value}
+      onChange={onChange}
+      containerClassName={chip.chipContainer}
+      buttonClassName={chip.chipButton}
+      activeButtonClassName={chip.chipButtonActive}
+    />
   );
 }

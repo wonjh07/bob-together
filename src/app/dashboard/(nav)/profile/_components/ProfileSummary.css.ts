@@ -12,7 +12,7 @@ export const container = style({
 export const userInfo = style({
   display: 'flex',
   alignItems: 'center',
-  gap: '6px',
+  gap: '8px',
 });
 
 export const avatar = style({
@@ -29,8 +29,8 @@ export const nickname = style({
 });
 
 export const settingsButton = style({
-  width: '40px',
-  height: '40px',
+  width: '44px',
+  height: '44px',
   borderRadius: '999px',
   display: 'flex',
   alignItems: 'center',
@@ -40,6 +40,6 @@ export const settingsButton = style({
 });
 
 export const settingsIcon = style({
-  width: '22px',
-  height: '22px',
+  width: '28px',
+  height: '28px',
 });

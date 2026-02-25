@@ -1,4 +1,3 @@
-
 import { style } from '@vanilla-extract/css';
 
 import { vars } from '@/styles/theme.css';
@@ -25,7 +24,6 @@ export const logoSection = style({
   display: 'flex',
   alignItems: 'center',
   gap: '12px',
-  cursor: 'pointer',
   fontSize: '20px',
   fontWeight: 'bold',
   color: vars.color.main,
@@ -34,15 +32,15 @@ export const logoSection = style({
 export const navRight = style({
   display: 'flex',
   alignItems: 'center',
-  gap: '12px',
+  gap: '8px',
 });
 
 export const iconButton = style({
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: '36px',
-  height: '36px',
+  width: '40px',
+  height: '40px',
   borderRadius: '50%',
   color: vars.color.text,
   textDecoration: 'none',
@@ -56,26 +54,31 @@ export const iconButton = style({
 });
 
 export const bellIcon = style({
-  width: '22px',
-  height: '22px',
+  width: '28px',
+  height: '28px',
 });
 
-export const userIcon = style({
-  position: 'relative',
-  display: 'flex',
+export const menuButton = style({
+  display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: '44px',
-  height: '44px',
-  overflow: 'hidden',
-  background: 'none',
-  outline: `2px solid ${vars.color.stroke}`,
+  width: '36px',
+  height: '36px',
   borderRadius: '50%',
-  transition: 'outline 0.2s ease',
-  cursor: 'pointer',
+  background: 'none',
   border: 'none',
-
-  ':hover': {
-    outline: `2px solid ${vars.color.main}`,
+  color: vars.color.text,
+  transition: 'color 0.2s ease, background-color 0.2s ease',
+  cursor: 'pointer',
+  selectors: {
+    '&:hover': {
+      color: vars.color.main,
+      backgroundColor: vars.color.mainSoft,
+    },
   },
+});
+
+export const menuIcon = style({
+  width: '22px',
+  height: '22px',
 });

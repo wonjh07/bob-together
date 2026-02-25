@@ -37,6 +37,7 @@ export const underlineInput = style({
   color: vars.color.text,
   background: 'transparent',
   outline: 'none',
+  cursor: 'pointer',
   selectors: {
     '&:focus': {
       borderBottom: `1px solid ${vars.color.main}`,

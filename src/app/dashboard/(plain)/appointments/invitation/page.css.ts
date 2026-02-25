@@ -43,34 +43,6 @@ export const searchLabel = style({
   color: vars.color.subText,
 });
 
-export const searchRow = style({
-  display: 'flex',
-  gap: '12px',
-  alignItems: 'center',
-});
-
-export const searchInput = style({
-  width: '100%',
-  border: 'none',
-  borderBottom: `1px solid ${vars.color.stroke}`,
-  padding: '8px 4px',
-  fontSize: vars.fontSize.text,
-  color: vars.color.text,
-  background: 'transparent',
-  outline: 'none',
-  selectors: {
-    '&:focus': {
-      borderBottom: `1px solid ${vars.color.main}`,
-    },
-  },
-});
-
-export const searchButton = style({
-  padding: '8px 14px',
-  borderRadius: vars.radius.sm,
-  fontSize: vars.fontSize.caption,
-});
-
 export const results = style({
   display: 'flex',
   flexDirection: 'column',
@@ -130,4 +102,11 @@ export const helperText = style({
   fontSize: vars.fontSize.caption,
   color: vars.color.alert,
   minHeight: '18px',
+});
+
+export const emptyResult = style({
+  fontSize: vars.fontSize.caption,
+  color: vars.color.subText,
+  textAlign: 'center',
+  padding: '8px 0',
 });

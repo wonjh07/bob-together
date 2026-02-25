@@ -1,38 +1,24 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 
 import { logoutAction } from '@/actions/auth';
+import MenuIcon from '@/components/icons/MenuIcon';
+import DropdownMenu from '@/components/ui/DropdownMenu';
 
 import { dropdownContent, logoutButton } from './ProfileDrop.css';
 
 interface ProfileDropdownProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  triggerClassName: string;
+  triggerIconClassName: string;
 }
 
 export function ProfileDropdown({
-  isOpen,
-  onOpenChange,
+  triggerClassName,
+  triggerIconClassName,
 }: ProfileDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        onOpenChange(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [isOpen, onOpenChange]);
 
   const handleLogout = async () => {
     setIsLoading(true);
@@ -50,19 +36,28 @@ export function ProfileDropdown({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      ref={dropdownRef}
-      className={dropdownContent}
-      onClick={(e) => e.stopPropagation()}>
+    <DropdownMenu
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      menuClassName={dropdownContent}
+      outsideEventType="click"
+      renderTrigger={({ toggle }) => (
+        <button
+          type="button"
+          className={triggerClassName}
+          onClick={toggle}
+          aria-label="메뉴 열기">
+          <MenuIcon className={triggerIconClassName} />
+        </button>
+      )}>
       <button
+        type="button"
         className={logoutButton}
         onClick={handleLogout}
         disabled={isLoading}>
         {isLoading ? '로그아웃 중...' : '로그아웃'}
       </button>
-    </div>
+    </DropdownMenu>
   );
 }

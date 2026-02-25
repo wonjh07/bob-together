@@ -2,13 +2,14 @@
 
 import { useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 
 import {
   type PeriodFilter as PeriodFilterType,
   type TypeFilter as TypeFilterType,
 } from '@/actions/appointment';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
 import {
   createAppointmentListQueryOptions,
   type AppointmentPage,
@@ -54,18 +55,11 @@ export function AppointmentList() {
   });
 
   const appointments = data?.pages.flatMap((page) => page.appointments) ?? [];
-  const hasMore = Boolean(hasNextPage);
-
-  const loadMore = useCallback(async () => {
-    if (!isFetchingNextPage && hasNextPage) {
-      await fetchNextPage();
-    }
-  }, [fetchNextPage, isFetchingNextPage, hasNextPage]);
-
-  const { loadMoreRef } = useInfiniteScroll({
-    onLoadMore: loadMore,
-    hasMore,
-    isLoading: isLoading || isFetchingNextPage,
+  const { hasMore, loadMoreRef } = useInfiniteLoadMore({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
   });
 
   const handleOpenDetail = (appointmentId: string) => {
@@ -111,7 +105,7 @@ export function AppointmentList() {
 
       {isLoading ? (
         <div className={styles.loadingContainer}>
-          <div className={styles.loadingSpinner} />
+          <LoadingSpinner ariaLabel="약속 목록 로딩 중" />
         </div>
       ) : isError ? (
         <div className={styles.errorContainer}>
@@ -159,7 +153,7 @@ export function AppointmentList() {
 
           {isFetchingNextPage && (
             <div className={styles.loadingContainer}>
-              <div className={styles.loadingSpinner} />
+              <LoadingSpinner ariaLabel="약속 목록 추가 로딩 중" />
             </div>
           )}
 

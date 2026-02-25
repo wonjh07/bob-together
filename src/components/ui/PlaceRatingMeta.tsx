@@ -1,3 +1,5 @@
+import StarIcon from '@/components/icons/StarIcon';
+
 import * as styles from './PlaceRatingMeta.css';
 
 function cx(...classNames: Array<string | undefined | false>) {
@@ -34,7 +36,7 @@ export default function PlaceRatingMeta({
 
   return (
     <Component className={cx(styles.row, rowClassName)}>
-      <span className={cx(styles.star, starClassName)}>★</span>
+      <StarIcon filled className={cx(styles.star, starClassName)} />
       <span className={cx(styles.text, textClassName)}>
         {ratingText}
         {shouldShowCount ? ` (${reviewCount})` : ''}

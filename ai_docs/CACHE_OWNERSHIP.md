@@ -39,13 +39,33 @@
 | 약속 댓글 영역 | `/dashboard/appointments/[appointmentId]` | Client(Query) + Local UI State | `AppointmentDetailClient.tsx`, `AppointmentCommentsSection.tsx` | `appointmentKeys.comments(...)` + 로컬 상태 |
 
 ## Mutation 무효화 매트릭스 (현재 코드 기준)
-| Mutation | 파일 | 영향 데이터 | 필수 후처리 |
+### 무효화 플랜 헬퍼 (코드 1:1)
+| Helper | 위치 | 무효화 범위 |
+| --- | --- | --- |
+| `invalidateAppointmentCollectionQueries` | `src/libs/query/invalidateAppointmentQueries.ts` | `appointmentKeys.listRoot()` + `appointmentKeys.searchRoot()` |
+| `invalidateAppointmentDetailAndCollectionQueries` | `src/libs/query/invalidateAppointmentQueries.ts` | `appointmentKeys.detail(appointmentId)` + `collection(list/search)` |
+| `invalidateReviewMutationQueries` | `src/libs/query/invalidateAppointmentQueries.ts` | `historyRoot` + `reviewTarget` + `detail/list/search` + `myReviewsRoot` + `reviewableRoot` + `placeKeys.detail/reviews` |
+| `invalidateMyCommentMutationQueries` | `src/libs/query/invalidateAppointmentQueries.ts` | `myCommentsRoot` + `detail/comments` + `list/search` + `historyRoot` |
+| `invalidateGroupMembershipQueries` | `src/libs/query/invalidateGroupQueries.ts` | `groupKeys.myGroups()` + `groupKeys.manage()` + `groupKeys.searchRoot()` |
+| `invalidateAfterInvitationResponse` | `src/libs/query/invalidateInvitationQueries.ts` | `invitationKeys.receivedRoot()` + 상태/타입별 `groupKeys.all`/`appointmentKeys.all` |
+
+### Mutation → 플랜 매핑
+| 사용자 동작 | 서버 액션 | 호출 UI | 필수 후처리 |
 | --- | --- | --- | --- |
-| 약속 상태 변경 | `src/actions/appointment/detail/updateStatus.ts` | 상세 + 목록/검색 | 클라: `invalidateAppointmentDetailQueries` + `invalidateAppointmentCollectionQueries` |
-| 약속 참여/나가기 | `src/actions/appointment/member/join.ts`, `src/actions/appointment/member/leave.ts` | 상세 + 목록/검색 | 클라: `invalidateAppointmentDetailQueries` + `invalidateAppointmentCollectionQueries` |
-| 약속 수정 | `src/actions/appointment/detail/update.ts` | 상세 + 목록/검색 | 클라: `invalidateAppointmentDetailQueries` + `invalidateAppointmentCollectionQueries` |
-| 댓글 생성/수정/삭제 | `src/actions/appointment/comment/create.ts`, `src/actions/appointment/comment/update.ts`, `src/actions/appointment/comment/delete.ts` | 상세 댓글/댓글수 + 목록 댓글수 | 로컬: `setQueryData(appointmentKeys.comments)` / 생성·삭제 후 `invalidateAppointmentCollectionQueries` |
-| 초대 수락/거절 | `src/actions/invitation/respond.ts` | 알림 목록 + 그룹/약속 참여 상태 | 클라: `setQueryData(invitationKeys.received)`로 즉시 제거 후 `invitationKeys.receivedRoot()` + 타입별 `groupKeys.all` 또는 `appointmentKeys.all` 무효화 |
+| 약속 생성 | `src/actions/appointment/create.ts` | `src/app/dashboard/(plain)/appointments/create/_components/ConfirmStep.tsx` | `invalidateAppointmentCollectionQueries` |
+| 약속 수정 | `src/actions/appointment/[appointmentId]/update.ts` | `src/app/dashboard/(plain)/appointments/[appointmentId]/edit/AppointmentEditClient.tsx` | `invalidateAppointmentDetailAndCollectionQueries` |
+| 약속 상태 변경 | `src/actions/appointment/[appointmentId]/updateStatus.ts` | `src/app/dashboard/(plain)/appointments/[appointmentId]/edit/AppointmentEditClient.tsx` | `invalidateAppointmentDetailAndCollectionQueries` |
+| 약속 참여/나가기 | `src/actions/appointment/[appointmentId]/members/join.ts`, `src/actions/appointment/[appointmentId]/members/leave.ts` | `src/app/dashboard/(plain)/appointments/[appointmentId]/_components/AppointmentDetailActions.tsx` | `invalidateAppointmentDetailAndCollectionQueries` |
+| 댓글 삭제(내 댓글 페이지) | `src/actions/appointment/[appointmentId]/comments/delete.ts` | `src/app/dashboard/(plain)/profile/comments/ProfileCommentsClient.tsx` | `invalidateMyCommentMutationQueries` |
+| 리뷰 작성/수정 | `src/actions/appointment/review/submit.ts` | `src/app/dashboard/(plain)/profile/reviews/[appointmentId]/ReviewEditorClient.tsx` | `invalidateReviewMutationQueries` |
+| 리뷰 삭제 | `src/actions/appointment/review/delete.ts` | `src/app/dashboard/(plain)/profile/reviews/ProfileReviewsClient.tsx` | `invalidateReviewMutationQueries` |
+| 그룹 가입 | `src/actions/group/joinGroupAction.ts` | `src/app/dashboard/(nav)/search/_components/ui/GroupSearchResults.tsx` | `invalidateGroupMembershipQueries` |
+| 그룹 탈퇴 | `src/actions/group/leaveGroupAction.ts` | `src/app/dashboard/(plain)/profile/groups/ProfileGroupsClient.tsx` | `invalidateGroupMembershipQueries` |
+| 초대 수락/거절 | `src/actions/invitation/respond.ts` | `src/app/dashboard/(plain)/notifications/NotificationsClient.tsx` | `invalidateAfterInvitationResponse` |
+
+### 현재 예외(로컬 패치 우선)
+- 약속 상세 댓글 섹션(`AppointmentCommentsSection`)은 UX 즉시성을 위해 `appointmentKeys.comments`를 `setQueryData`로 먼저 패치하고, 필요한 key만 추가 무효화한다.
+- 이 경로는 `invalidateMyCommentMutationQueries`를 직접 쓰지 않고, 화면 목적(상세 유지 + 일부 리스트 동기화)에 맞춘 최소 invalidate를 유지한다.
 
 ## 실무 적용 규칙 (이 프로젝트 권장안)
 1. 목록/검색은 Query 소유이므로 mutation 후 `invalidateQueries`를 기본으로 한다.

@@ -2,6 +2,7 @@
 
 - PROJECT.md: High-level project context and conventions.
 - FLOWS.md: Route-to-file mapping for group + appointment flows.
+- E2E_SCENARIOS.md: End-to-end user scenarios + business/UX risk and fix plan.
 - KAKAO_INTEGRATION.md: Kakao Map/Place search integration, env vars, troubleshooting.
 - DB_RLS.md: RLS policies and DB access summary.
 - SUPABASE.md: Practical Supabase development guide (Auth/DB/RLS/Storage/RPC).

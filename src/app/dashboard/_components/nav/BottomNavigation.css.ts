@@ -40,17 +40,25 @@ export const active = style({
   fontWeight: vars.fontWeight.bold,
 });
 
-export const navItemStack = style({
+export const navItemContent = style({
   width: '100%',
-  gap: '4px',
+  display: 'inline-flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '6px',
+});
+
+export const navIconWrap = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 });
 
 export const navIcon = style({
-  fontSize: '20px',
-  lineHeight: 1,
+  fontSize: '24px',
 });
 
 export const navLabel = style({
-  fontSize: vars.fontSize.text,
+  fontSize: vars.fontSize.subText,
   fontWeight: vars.fontWeight.medium,
 });

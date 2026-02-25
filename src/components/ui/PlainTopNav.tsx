@@ -7,9 +7,11 @@ import * as styles from './PlainTopNav.css';
 interface PlainTopNavProps {
   title: string;
   onBack?: () => void;
+  backHref?: string;
   backAriaLabel?: string;
   rightLabel?: string;
   onRightAction?: () => void;
+  rightHref?: string;
   rightAriaLabel?: string;
   rightDisabled?: boolean;
   rightHidden?: boolean;
@@ -18,9 +20,11 @@ interface PlainTopNavProps {
 export default function PlainTopNav({
   title,
   onBack,
+  backHref,
   backAriaLabel = '뒤로가기',
   rightLabel,
   onRightAction,
+  rightHref,
   rightAriaLabel,
   rightDisabled = false,
   rightHidden = false,
@@ -31,6 +35,11 @@ export default function PlainTopNav({
   const handleBack = () => {
     if (onBack) {
       onBack();
+      return;
+    }
+
+    if (backHref) {
+      router.push(backHref);
       return;
     }
 
@@ -68,7 +77,15 @@ export default function PlainTopNav({
         <button
           type="button"
           className={styles.rightButton}
-          onClick={onRightAction}
+          onClick={() => {
+            if (onRightAction) {
+              onRightAction();
+              return;
+            }
+            if (rightHref) {
+              router.push(rightHref);
+            }
+          }}
           aria-label={rightAriaLabel}
           disabled={rightDisabled}>
           {rightLabel}

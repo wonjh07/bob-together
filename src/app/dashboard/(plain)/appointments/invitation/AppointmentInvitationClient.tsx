@@ -2,11 +2,17 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
 
-import { sendAppointmentInvitationAction } from '@/actions/appointment';
-import { searchUsersAction } from '@/actions/group';
+import {
+  searchAppointmentInvitableUsersAction,
+  sendAppointmentInvitationAction,
+} from '@/actions/appointment';
+import PlainTopNav from '@/components/ui/PlainTopNav';
+import SearchInput from '@/components/ui/SearchInput';
 import { appointmentKeys } from '@/libs/query/appointmentKeys';
 import {
   createAppointmentInvitationStateQueryOptions,
@@ -15,11 +21,12 @@ import {
 import { groupSearchFormSchema } from '@/schemas/group';
 
 import {
+  invitationPage,
+  invitationPanel,
+  headerMeta,
+  headerDescription,
   searchBlock,
   searchLabel,
-  searchRow,
-  searchInput,
-  searchButton,
   results,
   resultItem,
   resultInfo,
@@ -28,31 +35,39 @@ import {
   inviteButton,
   invitedButton,
   helperText,
+  emptyResult,
 } from './page.css';
 
-import type { UserSummary } from '@/actions/group';
+import type { AppointmentInviteeSummary } from '@/actions/appointment';
 import type { GroupSearchFormInput } from '@/schemas/group';
-
-import { buttonBase, primaryButton } from '@/app/(onboarding)/group/shared.css';
 
 type AppointmentInvitationClientProps = {
   appointmentId: string;
+  appointmentTitle: string;
+  completeHref: string;
 };
 
 export default function AppointmentInvitationClient({
   appointmentId,
+  appointmentTitle,
+  completeHref,
 }: AppointmentInvitationClientProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
-  const [resultUsers, setResultUsers] = useState<UserSummary[]>([]);
+  const [resultUsers, setResultUsers] = useState<AppointmentInviteeSummary[]>([]);
+  const [isSearched, setIsSearched] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isInviting, setIsInviting] = useState<Record<string, boolean>>({});
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<GroupSearchFormInput>({
+    defaultValues: {
+      query: '',
+    },
     resolver: zodResolver(groupSearchFormSchema),
     mode: 'onChange',
   });
@@ -75,12 +90,17 @@ export default function AppointmentInvitationClient({
       const trimmedQuery = query.trim();
       if (trimmedQuery.length < 2) {
         setResultUsers([]);
+        setIsSearched(false);
         return;
       }
 
       setIsSearching(true);
       setErrorMessage('');
-      const result = await searchUsersAction(trimmedQuery);
+      setIsSearched(false);
+      const result = await searchAppointmentInvitableUsersAction({
+        appointmentId,
+        query: trimmedQuery,
+      });
       setIsSearching(false);
 
       if (!result.ok) {
@@ -94,6 +114,7 @@ export default function AppointmentInvitationClient({
       }
 
       setResultUsers(result.data.users);
+      setIsSearched(true);
     },
     [appointmentId],
   );
@@ -165,68 +186,87 @@ export default function AppointmentInvitationClient({
     }));
   };
 
-  return (
-    <>
-      <form className={searchBlock} onSubmit={handleSubmit(onSubmit)}>
-        <label className={searchLabel} htmlFor="query">
-          닉네임 검색
-        </label>
-        <div className={searchRow}>
-          <input
-            id="query"
-            className={searchInput}
-            placeholder="닉네임 또는 이름으로 검색"
-            {...register('query')}
-          />
-          <button
-            type="submit"
-            className={`${buttonBase} ${primaryButton} ${searchButton}`}
-            disabled={isSearching}>
-            {isSearching ? '검색 중' : '검색'}
-          </button>
-        </div>
-        <div className={helperText}>
-          {errors.query?.message || errorMessage}
-        </div>
-      </form>
+  const handleComplete = () => {
+    toast.success('약속 초대를 완료했습니다.');
+    router.push(completeHref);
+  };
 
-      <div className={results}>
-        {resultUsers.map((user) => {
-          const isMember = memberIds.includes(user.userId);
-          const isInvited = pendingInviteeIds.includes(user.userId);
-          const isLoading = !!isInviting[user.userId];
-          const isDisabled = isMember || isInvited || isLoading;
-          const secondaryText =
-            user.nickname && user.name
-              ? user.name
-              : user.name || user.nickname || '정보 없음';
-          return (
-            <div className={resultItem} key={user.userId}>
-              <div className={resultInfo}>
-                <div className={resultName}>
-                  {user.nickname || user.name || '알 수 없음'}
+  return (
+    <div className={invitationPage}>
+      <PlainTopNav
+        title="그룹원 초대"
+        rightLabel="완료"
+        rightAriaLabel="초대 완료"
+        onRightAction={handleComplete}
+      />
+      <div className={invitationPanel}>
+        {appointmentTitle ? (
+          <div className={headerMeta}>{appointmentTitle}</div>
+        ) : null}
+        <div className={headerDescription}>그룹원을 검색하고 초대해주세요</div>
+        <form className={searchBlock} onSubmit={handleSubmit(onSubmit)}>
+          <label className={searchLabel} htmlFor="query">
+            닉네임 검색
+          </label>
+          <Controller
+            control={control}
+            name="query"
+            render={({ field }) => (
+              <SearchInput
+                value={field.value ?? ''}
+                onValueChange={field.onChange}
+                inputId="query"
+                placeholder="닉네임 또는 이름으로 검색"
+                submitDisabled={isSearching}
+              />
+            )}
+          />
+          <div className={helperText}>
+            {errors.query?.message || errorMessage}
+          </div>
+        </form>
+
+        <div className={results}>
+          {resultUsers.map((user) => {
+            const isMember = memberIds.includes(user.userId);
+            const isInvited = pendingInviteeIds.includes(user.userId);
+            const isLoading = !!isInviting[user.userId];
+            const isDisabled = isMember || isInvited || isLoading;
+            const secondaryText =
+              user.nickname && user.name
+                ? user.name
+                : user.name || user.nickname || '정보 없음';
+            return (
+              <div className={resultItem} key={user.userId}>
+                <div className={resultInfo}>
+                  <div className={resultName}>
+                    {user.nickname || user.name || '알 수 없음'}
+                  </div>
+                  <div className={resultSub}>{secondaryText}</div>
                 </div>
-                <div className={resultSub}>{secondaryText}</div>
+                <button
+                  type="button"
+                  className={`${inviteButton} ${
+                    isMember || isInvited ? invitedButton : ''
+                  }`}
+                  onClick={() => handleInvite(user.userId)}
+                  disabled={isDisabled}>
+                  {isMember
+                    ? '약속 멤버'
+                    : isInvited
+                      ? '초대 완료'
+                      : isLoading
+                        ? '전송 중'
+                        : '초대하기'}
+                </button>
               </div>
-              <button
-                type="button"
-                className={`${inviteButton} ${
-                  isMember || isInvited ? invitedButton : ''
-                }`}
-                onClick={() => handleInvite(user.userId)}
-                disabled={isDisabled}>
-                {isMember
-                  ? '약속 멤버'
-                  : isInvited
-                    ? '초대 완료'
-                    : isLoading
-                      ? '전송 중'
-                      : '초대하기'}
-              </button>
-            </div>
-          );
-        })}
+            );
+          })}
+          {isSearched && !isSearching && resultUsers.length === 0 ? (
+            <div className={emptyResult}>검색 결과가 없습니다.</div>
+          ) : null}
+        </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -7,6 +7,7 @@
 - `joinGroupAction`
 - `getGroupByIdAction`
 - `searchUsersAction`
+- `searchGroupInvitableUsersAction`
 - `sendGroupInvitationAction`
 - `getMyGroupsAction`
 
@@ -21,6 +22,7 @@
 - `deleteMyReviewAction`
 - `createAppointmentAction`
 - `sendAppointmentInvitationAction`
+- `searchAppointmentInvitableUsersAction`
 - `searchAppointmentsByTitleAction`
 - `getAppointmentDetailAction`
 - `getAppointmentCommentsAction`
@@ -31,6 +33,11 @@
 - `updateAppointmentStatusAction`
 - `getAppointmentMembersAction`
 - `getAppointmentInvitationStateAction`
+
+## Place Actions
+- `searchPlacesAction`
+- `getPlaceDetailAction`
+- `listPlaceReviewsAction`
 
 ## User Actions
 - `getUserData`
@@ -126,6 +133,21 @@
   - 장소 검색 API 호출
   - 결과 정규화
 
+## getPlaceDetailAction
+- 입력: placeId
+- 책임:
+  - 로그인 사용자 식별
+  - 장소 기본 정보 조회
+  - 장소 리뷰 평균/개수 요약 반환
+
+## listPlaceReviewsAction
+- 입력: placeId, cursor?, limit?
+- 책임:
+  - 로그인 사용자 식별
+  - 장소별 리뷰 목록 조회(`user_review`, appointment 기반 리뷰만)
+  - 작성자 정보 결합
+  - 최신 수정순 커서 기반 페이지네이션
+
 ## createGroupAction
 - 입력: groupName
 - 책임:
@@ -145,6 +167,16 @@
   - 실제 그룹 인원 수 반환
   - 현재 사용자 가입 여부 반환
   - 커서 기반 페이지네이션
+
+## searchGroupInvitableUsersAction
+- 입력: groupId, query
+- 책임:
+  - 로그인 사용자 식별
+  - 초대자 그룹 멤버십 확인
+  - 닉네임/이름 검색 결과에서 본인 제외
+  - 이미 그룹 멤버인 사용자 제외
+  - pending 그룹 초대 대상 포함
+  - 검색 결과 내 pending 사용자 ID(`pendingInviteeIds`) 반환
 
 ## searchAppointmentsByTitleAction
 - 입력: query, cursor?, limit?
@@ -192,6 +224,15 @@
   - 약속 접근 가능 여부 확인
   - 약속 멤버 userId 목록 반환
   - pending 상태의 약속 초대 대상 userId 목록 반환
+
+## searchAppointmentInvitableUsersAction
+- 입력: appointmentId, query
+- 책임:
+  - 로그인 사용자 식별
+  - 약속 접근 가능 여부/초대 권한 확인
+  - 취소/종료된 약속 검색 차단
+  - 그룹 멤버 중 본인/기존 약속 멤버 제외 후 검색 결과 반환
+  - pending 초대 대상은 결과에 포함하고 UI에서 `초대 완료` 상태로 표시하도록 위임
 
 ## getAppointmentCommentsAction
 - 입력: appointmentId

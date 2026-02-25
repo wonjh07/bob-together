@@ -161,6 +161,12 @@ export interface AppointmentMemberItem {
   role: 'owner' | 'member';
 }
 
+export interface AppointmentInviteeSummary {
+  userId: string;
+  name: string | null;
+  nickname: string | null;
+}
+
 export interface AppointmentCommentItem {
   commentId: string;
   content: string;
@@ -194,6 +200,11 @@ export type CreateAppointmentResult = ActionResult<
 
 export type SendAppointmentInvitationResult = ActionResult<
   void,
+  AppointmentErrorCode
+>;
+
+export type SearchAppointmentInvitableUsersResult = ActionResult<
+  { users: AppointmentInviteeSummary[] },
   AppointmentErrorCode
 >;
 

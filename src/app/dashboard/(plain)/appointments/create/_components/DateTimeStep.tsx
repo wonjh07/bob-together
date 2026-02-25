@@ -4,18 +4,24 @@ import { useFormContext } from 'react-hook-form';
 import { getDefaultDateTimeValues } from '@/utils/dateTime';
 
 import * as styles from './DateTimeStep.css';
-import NextButton from './ui/NextButton';
 
 import type { CreateAppointmentForm } from '../types';
 
-interface DateTimeStepProps {
-  onNext: () => void;
+function openNativePicker(input: HTMLInputElement) {
+  const showPicker = (input as HTMLInputElement & { showPicker?: () => void })
+    .showPicker;
+  if (typeof showPicker !== 'function') return;
+
+  try {
+    showPicker.call(input);
+  } catch {
+    // Ignore unsupported/blocked picker invocations.
+  }
 }
 
-export function DateTimeStep({ onNext }: DateTimeStepProps) {
+export function DateTimeStep() {
   const {
     register,
-    trigger,
     getValues,
     setValue,
     formState: { errors },
@@ -38,24 +44,16 @@ export function DateTimeStep({ onNext }: DateTimeStepProps) {
     }
   }, [getValues, setValue]);
 
-  const handleNext = async () => {
-    const isValid = await trigger(['date', 'startTime', 'endTime']);
-    if (!isValid) return;
-    onNext();
-  };
-
   return (
     <div className={styles.container}>
-      <NextButton handleNext={handleNext} />
       <div className={styles.stepTitle}>약속 일자를 입력해주세요</div>
       <div className={styles.section}>
-        <label className={styles.inputLabel} htmlFor="appointment-date">
-          약속 날짜
-        </label>
+        <div className={styles.inputLabel}>약속 날짜</div>
         <input
           id="appointment-date"
           type="date"
           className={styles.underlineInput}
+          onClick={(event) => openNativePicker(event.currentTarget)}
           {...register('date', { required: '약속 날짜를 입력해주세요.' })}
         />
       </div>
@@ -65,6 +63,7 @@ export function DateTimeStep({ onNext }: DateTimeStepProps) {
           <input
             type="time"
             className={`${styles.underlineInput} ${styles.timeInput}`}
+            onClick={(event) => openNativePicker(event.currentTarget)}
             {...register('startTime', {
               required: '약속 시간을 입력해주세요.',
             })}
@@ -72,6 +71,7 @@ export function DateTimeStep({ onNext }: DateTimeStepProps) {
           <input
             type="time"
             className={`${styles.underlineInput} ${styles.timeInput}`}
+            onClick={(event) => openNativePicker(event.currentTarget)}
             {...register('endTime', {
               required: '약속 시간을 입력해주세요.',
               validate: (value) => {

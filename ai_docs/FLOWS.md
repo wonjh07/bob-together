@@ -4,16 +4,15 @@
 
 ### Routes -> Files
 - `/group` -> `src/app/(onboarding)/group/page.tsx`
-- `/group/join` -> `src/app/(onboarding)/group/join/page.tsx`
-- `/group/join/confirm` -> `src/app/(onboarding)/group/join/confirm/page.tsx`
-- `/group/join/complete` -> `src/app/(onboarding)/group/join/complete/page.tsx`
-- `/group/create` -> `src/app/(onboarding)/group/create/page.tsx`
-- `/group/create/complete` -> `src/app/(onboarding)/group/create/complete/page.tsx`
-- `/group/invitation` -> `src/app/(onboarding)/group/invitation/page.tsx`
-- `/group/invitation/complete` -> `src/app/(onboarding)/group/invitation/complete/page.tsx`
+- `/dashboard/profile/groups` -> `src/app/dashboard/(plain)/profile/groups/page.tsx`
+- `/dashboard/profile/groups/create` -> `src/app/dashboard/(plain)/profile/groups/create/page.tsx`
+- `/dashboard/profile/groups/find` -> `src/app/dashboard/(plain)/profile/groups/find/page.tsx`
+- `/dashboard/profile/groups/[groupId]/members` -> `src/app/dashboard/(plain)/profile/groups/[groupId]/members/page.tsx`
+- `/dashboard/profile/groups/[groupId]/members/invitation` -> `src/app/dashboard/(plain)/profile/groups/[groupId]/members/invitation/page.tsx`
 
-### Shared Styles
-- `src/app/(onboarding)/group/shared.css.ts`
+### Entry Rules
+- 온보딩 그룹 진입(`/group`)에서는 버튼 링크로 대시보드 그룹 생성/검색 페이지로 이동
+- 그룹 생성/가입/초대의 기준 UI는 `dashboard/profile/groups/**` 도메인에서 관리
 
 ### Actions/Rules
 - 상세는 `ai_docs/ACTIONS.md`, `ai_docs/ERRORS_AND_LESSONS.md` 참고
@@ -30,6 +29,7 @@
 - `/dashboard/appointments/[appointmentId]/edit/place` -> `src/app/dashboard/(plain)/appointments/[appointmentId]/edit/place/page.tsx`
 - `/dashboard/appointments/[appointmentId]/members` -> `src/app/dashboard/(plain)/appointments/[appointmentId]/members/page.tsx`
 - `/dashboard/appointments/invitation` -> `src/app/dashboard/(plain)/appointments/invitation/page.tsx`
+- `/dashboard/places/[placeId]` -> `src/app/dashboard/(plain)/places/[placeId]/page.tsx`
 - `/dashboard/notifications` -> `src/app/dashboard/(plain)/notifications/page.tsx`
 - `/dashboard/profile/history` -> `src/app/dashboard/(plain)/profile/history/page.tsx`
 - `/dashboard/profile/reviews` -> `src/app/dashboard/(plain)/profile/reviews/page.tsx`

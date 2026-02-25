@@ -14,11 +14,10 @@ import CalendarIcon from '@/components/icons/CalendarIcon';
 import ClockIcon from '@/components/icons/ClockIcon';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
 import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
+import PlainTopNav from '@/components/ui/PlainTopNav';
 import { createAppointmentDetailQueryOptions } from '@/libs/query/appointmentQueries';
 import {
-  invalidateAppointmentDetailQuery,
-  invalidateAppointmentListQueries,
-  invalidateAppointmentSearchQueries,
+  invalidateAppointmentDetailAndCollectionQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
 import { extractDistrict } from '@/utils/address';
 import {
@@ -26,7 +25,6 @@ import {
   isAppointmentEndedByTime,
 } from '@/utils/appointmentStatus';
 
-import AppointmentEditTopNav from './_components/AppointmentEditTopNav';
 import * as styles from './page.css';
 
 interface AppointmentEditPlace {
@@ -141,11 +139,10 @@ export default function AppointmentEditClient({
     }
 
     toast.success('약속이 수정되었습니다.');
-    await Promise.all([
-      invalidateAppointmentDetailQuery(queryClient, appointmentId),
-      invalidateAppointmentListQueries(queryClient),
-      invalidateAppointmentSearchQueries(queryClient),
-    ]);
+    await invalidateAppointmentDetailAndCollectionQueries(
+      queryClient,
+      appointmentId,
+    );
     router.replace(`/dashboard/appointments/${appointmentId}`);
   };
 
@@ -177,17 +174,22 @@ export default function AppointmentEditClient({
     } else {
       toast.success('약속이 다시 활성화되었습니다.');
     }
-    await Promise.all([
-      invalidateAppointmentDetailQuery(queryClient, appointmentId),
-      invalidateAppointmentListQueries(queryClient),
-      invalidateAppointmentSearchQueries(queryClient),
-    ]);
+    await invalidateAppointmentDetailAndCollectionQueries(
+      queryClient,
+      appointmentId,
+    );
     router.replace(`/dashboard/appointments/${appointmentId}`);
   };
 
   return (
     <div className={styles.page}>
-      <AppointmentEditTopNav onComplete={handleComplete} isSubmitting={isSubmitting} />
+      <PlainTopNav
+        title="약속 수정"
+        rightLabel={isSubmitting ? '저장중' : '완료'}
+        rightAriaLabel="수정 완료"
+        onRightAction={handleComplete}
+        rightDisabled={isSubmitting}
+      />
       <div className={styles.content}>
         <div className={styles.block}>
           <p className={styles.label}>약속 제목</p>
@@ -237,6 +239,11 @@ export default function AppointmentEditClient({
             placeName={initialPlace.name}
             placeNameAs="h2"
             placeNameClassName={styles.placeName}
+            placeHref={
+              initialPlace.placeId
+                ? `/dashboard/places/${initialPlace.placeId}`
+                : undefined
+            }
             rating={initialPlace.reviewAverage}
             reviewCount={initialPlace.reviewCount}
             district={placeMetaDistrict}

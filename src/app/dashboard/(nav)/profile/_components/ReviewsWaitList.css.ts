@@ -19,10 +19,8 @@ export const scrollRow = style({
   gap: '16px',
   overflowX: 'auto',
   padding: '16px',
-  cursor: 'grab',
-  userSelect: 'none',
-  WebkitUserSelect: 'none',
-  touchAction: 'pan-y',
+  touchAction: 'auto',
+  overscrollBehaviorX: 'contain',
   WebkitOverflowScrolling: 'touch',
   scrollbarWidth: 'none',
   msOverflowStyle: 'none',
@@ -31,10 +29,6 @@ export const scrollRow = style({
       display: 'none',
     },
   },
-});
-
-export const scrollRowDragging = style({
-  cursor: 'grabbing',
 });
 
 export const card = style({
@@ -54,7 +48,7 @@ export const title = style({
   textOverflow: 'ellipsis',
   overflow: 'hidden',
   whiteSpace: 'nowrap',
-  fontSize: vars.fontSize.header,
+  fontSize: vars.fontSize.title,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.black,
 });
@@ -67,12 +61,12 @@ export const scoreRow = style({
 });
 
 export const star = style({
-  fontSize: vars.fontSize.text,
+  fontSize: vars.fontSize.subText,
   color: vars.color.star,
 });
 
 export const scoreText = style({
-  fontSize: vars.fontSize.text,
+  fontSize: vars.fontSize.subText,
   fontWeight: vars.fontWeight.semibold,
   color: vars.color.subText,
 });
@@ -82,7 +76,7 @@ export const infoRow = style({
   alignItems: 'center',
   gap: '4px',
   color: vars.color.subText,
-  fontSize: vars.fontSize.text,
+  fontSize: vars.fontSize.subText,
   fontWeight: vars.fontWeight.medium,
 });
 
@@ -92,9 +86,9 @@ export const writeButton = style({
   justifyContent: 'center',
   marginTop: '12px',
   width: '100%',
-  height: '40px',
+  padding: '6px',
   border: 'none',
-  borderRadius: vars.radius.xlg,
+  borderRadius: vars.radius.lg,
   backgroundColor: vars.color.main,
   color: vars.color.background,
   fontSize: vars.fontSize.text,
@@ -107,11 +101,4 @@ export const loadMoreTrigger = style({
   flex: '0 0 1px',
   width: '1px',
   height: '1px',
-});
-
-export const inlineLoading = style({
-  padding: '0 16px 12px',
-  color: vars.color.subText,
-  fontSize: vars.fontSize.subText,
-  fontWeight: vars.fontWeight.medium,
 });

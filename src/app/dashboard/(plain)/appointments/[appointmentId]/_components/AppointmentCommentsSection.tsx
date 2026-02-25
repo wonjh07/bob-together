@@ -25,7 +25,10 @@ import {
   createAppointmentCommentsQueryOptions,
   type AppointmentCommentsData,
 } from '@/libs/query/appointmentQueries';
-import { invalidateAppointmentListQueries } from '@/libs/query/invalidateAppointmentQueries';
+import {
+  invalidateAppointmentListQueries,
+  invalidateMyCommentsQueries,
+} from '@/libs/query/invalidateAppointmentQueries';
 import { formatRelativeKorean } from '@/utils/dateFormat';
 
 import * as styles from './AppointmentCommentsSection.css';
@@ -107,7 +110,10 @@ export default function AppointmentCommentsSection({
         currentUserId,
       },
     );
-    await invalidateAppointmentListQueries(queryClient);
+    await Promise.all([
+      invalidateAppointmentListQueries(queryClient),
+      invalidateMyCommentsQueries(queryClient),
+    ]);
     setContent('');
     toast.success('댓글이 등록되었습니다.');
   };
@@ -178,6 +184,7 @@ export default function AppointmentCommentsSection({
         currentUserId,
       },
     );
+    await invalidateMyCommentsQueries(queryClient);
     setEditingCommentId(null);
     setEditingContent('');
     toast.success('댓글이 수정되었습니다.');
@@ -230,7 +237,10 @@ export default function AppointmentCommentsSection({
         currentUserId,
       },
     );
-    await invalidateAppointmentListQueries(queryClient);
+    await Promise.all([
+      invalidateAppointmentListQueries(queryClient),
+      invalidateMyCommentsQueries(queryClient),
+    ]);
     if (editingCommentId === deletedCommentId) {
       cancelEdit();
     }

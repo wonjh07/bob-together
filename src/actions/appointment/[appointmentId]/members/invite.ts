@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { parseOrFail, requireUser } from '@/actions/_common/guards';
 import { actionError, actionSuccess } from '@/actions/_common/result';
+import { isAppointmentEndedByTime } from '@/utils/appointmentStatus';
 
 import type { SendAppointmentInvitationResult } from '@/actions/appointment/types';
 
@@ -11,6 +12,13 @@ const sendAppointmentInvitationSchema = z.object({
   appointmentId: z.string().uuid('유효한 약속 ID가 아닙니다.'),
   inviteeId: z.string().uuid('유효한 사용자 ID가 아닙니다.'),
 });
+
+interface AppointmentInvitationRow {
+  appointment_id: string;
+  group_id: string;
+  status: 'pending' | 'confirmed' | 'canceled';
+  ends_at: string;
+}
 
 export async function sendAppointmentInvitationAction(
   appointmentId: string,
@@ -38,12 +46,20 @@ export async function sendAppointmentInvitationAction(
 
   const { data: appointmentData, error: appointmentError } = await supabase
     .from('appointments')
-    .select('appointment_id, group_id')
+    .select('appointment_id, group_id, status, ends_at')
     .eq('appointment_id', parsedAppointmentId)
-    .maybeSingle();
+    .maybeSingle<AppointmentInvitationRow>();
 
   if (appointmentError || !appointmentData) {
     return actionError('server-error', '약속 정보를 찾을 수 없습니다.');
+  }
+
+  if (appointmentData.status === 'canceled') {
+    return actionError('forbidden', '취소된 약속은 초대할 수 없습니다.');
+  }
+
+  if (isAppointmentEndedByTime(appointmentData.ends_at)) {
+    return actionError('forbidden', '종료된 약속은 초대할 수 없습니다.');
   }
 
   const { data: membership } = await supabase
@@ -66,6 +82,25 @@ export async function sendAppointmentInvitationAction(
 
   if (existingMember) {
     return actionError('already-member', '이미 약속에 참여한 사용자입니다.');
+  }
+
+  const { data: inviteeGroupMembership, error: inviteeGroupMembershipError } =
+    await supabase
+      .from('group_members')
+      .select('user_id')
+      .eq('group_id', appointmentData.group_id)
+      .eq('user_id', parsedInviteeId)
+      .maybeSingle();
+
+  if (inviteeGroupMembershipError) {
+    return actionError('server-error', '초대 대상 검증 중 오류가 발생했습니다.');
+  }
+
+  if (!inviteeGroupMembership) {
+    return actionError(
+      'forbidden',
+      '해당 사용자는 그룹 멤버가 아니어서 약속 초대를 보낼 수 없습니다.',
+    );
   }
 
   const { data: existingInvite, error: existingInviteError } = await supabase

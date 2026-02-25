@@ -38,6 +38,15 @@
 - Multi-line UI: use `line-clamp` (or `-webkit-line-clamp`) + `overflow: hidden;`
 - Decide whether truncation is acceptable and encode it.
 
+### Avoid Class Composition / Inheritance
+
+- Prefer explicit local classes over deep class composition chains.
+- Avoid composing multiple classes that set the same property (`padding`, `font-size`, `color`, `border`, `overflow`, etc.).
+- Do not rely on parent style inheritance for critical UI values (layout, spacing, font-size, line-height, overflow, color).
+- For feature/page styles, set final values in the local class so rendering is deterministic.
+- Allow composition only for stable primitives (`actionButton*`, `chip*`, `dropdown*`) and avoid overriding their core tokens in the same class stack.
+- If a composed style needs many overrides, stop composing and create a dedicated local style class.
+
 ## Spacing
 
 - Only use the approved spacing scale: `4, 6, 8, 12, 16, 20, 24px`.
@@ -66,8 +75,8 @@
   - Use `IconLabel`.
   - Examples: 멤버 수, 댓글 수, 캡션 숫자, 알림 메시지 라인.
 - `icon + label (세로)`:
-  - Use `IconStackLabel`.
-  - Examples: 프로필 퀵링크, 하단 네비게이션 아이템.
+  - Prefer local markup/styles per screen.
+  - Avoid introducing a shared component unless 2+ features need the exact same structure and style constraints.
 - `avatar + name (+me/+subtitle)`:
   - Use `UserIdentityInline`.
 - `date/time row`:
@@ -78,6 +87,14 @@
   - Use `AppointmentPlaceMeta`.
 - `more(⋮) + dropdown action menu`:
   - Use `OverflowMenu`.
+- `dropdown trigger + menu surface + menu items`:
+  - Reuse `src/styles/primitives/dropdown.css.ts` (`trigger*`, `menuSurface`, `menuItem*`).
+  - Avoid redefining border/radius/shadow/hover per feature.
+- `chip toggle buttons`:
+  - Reuse `src/styles/primitives/chip.css.ts` and `ChipToggleGroup`.
+- `search input + submit`:
+  - Use `src/components/ui/SearchInput.tsx`.
+  - Keep labels/helper text/error text in local screen styles; only the input row itself is shared.
 
 ### Button Rules
 

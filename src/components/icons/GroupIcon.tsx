@@ -1,29 +1,40 @@
-import type { SVGProps } from 'react';
+import { AiOutlineTeam } from 'react-icons/ai';
 
-export default function GroupIcon(props: SVGProps<SVGSVGElement>) {
+import type { IconBaseProps } from 'react-icons';
+
+function toNumericSize(value: IconBaseProps['size']) {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+interface GroupIconProps extends IconBaseProps {
+  width?: number | string;
+  height?: number | string;
+}
+
+export default function GroupIcon({
+  size,
+  width,
+  height,
+  ...props
+}: GroupIconProps) {
+  const resolvedSize =
+    toNumericSize(size) ??
+    toNumericSize(width) ??
+    toNumericSize(height) ??
+    48;
+
   return (
-    <svg
-      viewBox="0 8 64 64"
-      width="48"
-      height="48"
-      fill="none"
+    <AiOutlineTeam
       aria-hidden="true"
-      {...props}>
-      <circle cx="24" cy="24" r="10" fill="currentColor" />
-      <circle cx="44" cy="28" r="8" fill="currentColor" opacity="0.85" />
-      <path
-        d="M10 52c0-8 6.5-14 14-14s14 6 14 14"
-        stroke="currentColor"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-      <path
-        d="M34 52c0-6 4.5-10.5 10-10.5S54 46 54 52"
-        stroke="currentColor"
-        strokeWidth="6"
-        strokeLinecap="round"
-        opacity="0.85"
-      />
-    </svg>
+      size={resolvedSize}
+      width={width}
+      height={height}
+      {...props}
+    />
   );
 }

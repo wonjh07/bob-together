@@ -1,9 +1,9 @@
 import { getAppointmentMembersAction } from '@/actions/appointment';
 import GroupIcon from '@/components/icons/GroupIcon';
 import IconLabel from '@/components/ui/IconLabel';
+import PlainTopNav from '@/components/ui/PlainTopNav';
 import UserIdentityInline from '@/components/ui/UserIdentityInline';
 
-import AppointmentMembersTopNav from './_components/AppointmentMembersTopNav';
 import * as styles from './page.css';
 
 type AppointmentMembersPageProps = {
@@ -20,7 +20,7 @@ export default async function AppointmentMembersPage({
   if (!result.ok || !result.data) {
     return (
       <div className={styles.page}>
-        <AppointmentMembersTopNav />
+        <PlainTopNav title="약속 멤버" rightHidden />
         <div className={styles.errorBox}>
           {result.ok
             ? '약속 멤버 정보를 불러올 수 없습니다.'
@@ -34,7 +34,7 @@ export default async function AppointmentMembersPage({
 
   return (
     <div className={styles.page}>
-      <AppointmentMembersTopNav />
+      <PlainTopNav title="약속 멤버" rightHidden />
 
       <div className={styles.content}>
         <div className={styles.caption}>

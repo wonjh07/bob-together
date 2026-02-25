@@ -9,11 +9,11 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { respondToInvitationAction } from '@/actions/invitation';
+import InlineLoading from '@/components/ui/InlineLoading';
+import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import { appointmentKeys } from '@/libs/query/appointmentKeys';
-import { groupKeys } from '@/libs/query/groupKeys';
-import { invalidateReceivedInvitationsQueries } from '@/libs/query/invalidateInvitationQueries';
+import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
+import { invalidateAfterInvitationResponse } from '@/libs/query/invalidateInvitationQueries';
 import {
   createReceivedInvitationsQueryOptions,
   type InvitationPage,
@@ -43,18 +43,11 @@ export default function NotificationsClient() {
 
   const invitations =
     data?.pages.flatMap((page: InvitationPage) => page.invitations) ?? [];
-  const hasMore = Boolean(hasNextPage);
-
-  const handleLoadMore = useCallback(async () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      await fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  const { loadMoreRef } = useInfiniteScroll({
-    onLoadMore: handleLoadMore,
-    hasMore,
-    isLoading: isLoading || isFetchingNextPage,
+  const { hasMore, loadMoreRef } = useInfiniteLoadMore({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
   });
 
   const updateInvitationStatusCache = useCallback(
@@ -104,13 +97,10 @@ export default function NotificationsClient() {
 
         updateInvitationStatusCache(invitationId, result.data.status);
 
-        await Promise.all([
-          invalidateReceivedInvitationsQueries(queryClient),
-          queryClient.invalidateQueries({
-            queryKey:
-              result.data.type === 'group' ? groupKeys.all : appointmentKeys.all,
-          }),
-        ]);
+        await invalidateAfterInvitationResponse(queryClient, {
+          status: result.data.status,
+          type: result.data.type,
+        });
 
         toast.success(
           decision === 'accepted'
@@ -124,20 +114,24 @@ export default function NotificationsClient() {
     [processingInvitationId, queryClient, updateInvitationStatusCache],
   );
 
+  const hasState = isLoading || isError || invitations.length === 0;
+
   return (
     <div className={styles.page}>
       <PlainTopNav title="알림" rightHidden />
 
-      {isLoading ? (
-        <div className={styles.statusBox}>알림을 불러오는 중...</div>
-      ) : isError ? (
-        <div className={styles.statusBox}>
-          {error instanceof Error
-            ? error.message
-            : '알림을 불러오지 못했습니다.'}
-        </div>
-      ) : invitations.length === 0 ? (
-        <div className={styles.statusBox}>받은 초대가 없습니다.</div>
+      {hasState ? (
+        <ListStateView
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={invitations.length === 0}
+          error={error}
+          loadingVariant="spinner"
+          loadingText="알림을 불러오는 중..."
+          emptyText="받은 초대가 없습니다."
+          defaultErrorText="알림을 불러오지 못했습니다."
+          className={styles.statusBox}
+        />
       ) : (
         <div className={styles.list}>
           {invitations.map((invitation) => (
@@ -151,7 +145,7 @@ export default function NotificationsClient() {
           ))}
 
           {isFetchingNextPage ? (
-            <div className={styles.statusInline}>더 불러오는 중...</div>
+            <InlineLoading text="더 불러오는 중..." className={styles.statusInline} />
           ) : null}
           {hasMore && !isFetchingNextPage ? (
             <div ref={loadMoreRef} className={styles.loadMoreTrigger} />

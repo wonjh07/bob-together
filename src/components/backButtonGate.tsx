@@ -5,9 +5,6 @@ import { useSelectedLayoutSegments } from 'next/navigation';
 import Moveback from '@/components/ui/BackButton';
 
 const SHOW_ON = new Set<string>([
-  'group/invitation',
-  'group/join',
-  'group/join/confirm',
   'signup',
 ]);
 

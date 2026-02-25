@@ -9,18 +9,16 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { deleteMyReviewAction } from '@/actions/appointment';
+import InlineLoading from '@/components/ui/InlineLoading';
+import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import { appointmentKeys } from '@/libs/query/appointmentKeys';
+import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
 import {
   createMyReviewsQueryOptions,
   type MyReviewPage,
 } from '@/libs/query/appointmentQueries';
 import {
-  invalidateAppointmentListQueries,
-  invalidateAppointmentSearchQueries,
-  invalidateMyReviewsQueries,
-  invalidateReviewableAppointmentsQueries,
+  invalidateReviewMutationQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
 
 import MyReviewCard from './_components/MyReviewCard';
@@ -49,18 +47,11 @@ export default function ProfileReviewsClient() {
   });
 
   const reviews = data?.pages.flatMap((page: MyReviewPage) => page.reviews) ?? [];
-  const hasMore = Boolean(hasNextPage);
-
-  const handleLoadMore = useCallback(async () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      await fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  const { loadMoreRef } = useInfiniteScroll({
-    onLoadMore: handleLoadMore,
-    hasMore,
-    isLoading: isLoading || isFetchingNextPage,
+  const { hasMore, loadMoreRef } = useInfiniteLoadMore({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
   });
 
   const handleToggleMenu = (appointmentId: string) => {
@@ -74,8 +65,8 @@ export default function ProfileReviewsClient() {
   }, []);
 
   const handleDeleteReview = useCallback(
-    async (appointmentId: string) => {
-      if (!appointmentId || deletingAppointmentId) return;
+    async (appointmentId: string, placeId: string) => {
+      if (!appointmentId || !placeId || deletingAppointmentId) return;
 
       setDeletingAppointmentId(appointmentId);
       setOpenedMenuAppointmentId(null);
@@ -104,13 +95,10 @@ export default function ProfileReviewsClient() {
           },
         );
 
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: appointmentKeys.historyRoot() }),
-          invalidateMyReviewsQueries(queryClient),
-          invalidateReviewableAppointmentsQueries(queryClient),
-          invalidateAppointmentListQueries(queryClient),
-          invalidateAppointmentSearchQueries(queryClient),
-        ]);
+        await invalidateReviewMutationQueries(queryClient, {
+          appointmentId,
+          placeId,
+        });
 
         toast.success('리뷰를 삭제했습니다.');
       } finally {
@@ -119,21 +107,24 @@ export default function ProfileReviewsClient() {
     },
     [deletingAppointmentId, queryClient, queryOptions.queryKey],
   );
+  const hasState = isLoading || isError || reviews.length === 0;
 
   return (
     <div className={styles.page}>
       <PlainTopNav title="내 리뷰" rightHidden />
 
-      {isLoading ? (
-        <div className={styles.statusBox}>리뷰를 불러오는 중...</div>
-      ) : isError ? (
-        <div className={styles.statusBox}>
-          {error instanceof Error
-            ? error.message
-            : '리뷰 목록을 불러오지 못했습니다.'}
-        </div>
-      ) : reviews.length === 0 ? (
-        <div className={styles.statusBox}>작성한 리뷰가 없습니다.</div>
+      {hasState ? (
+        <ListStateView
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={reviews.length === 0}
+          error={error}
+          loadingVariant="spinner"
+          loadingText="리뷰를 불러오는 중..."
+          emptyText="작성한 리뷰가 없습니다."
+          defaultErrorText="리뷰 목록을 불러오지 못했습니다."
+          className={styles.statusBox}
+        />
       ) : (
         <div className={styles.list}>
           {reviews.map((review) => (
@@ -148,7 +139,7 @@ export default function ProfileReviewsClient() {
             />
           ))}
           {isFetchingNextPage ? (
-            <div className={styles.statusInline}>더 불러오는 중...</div>
+            <InlineLoading text="더 불러오는 중..." className={styles.statusInline} />
           ) : null}
           {hasMore && !isFetchingNextPage ? (
             <div ref={loadMoreRef} className={styles.loadMoreTrigger} />

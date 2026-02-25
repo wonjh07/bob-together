@@ -6,6 +6,17 @@
 - Fix:
 - Lesson:
 
+## 프로필 빠른 링크/그룹 관리 상단 UI가 간헐적으로 깨져 보임
+- Context: 프로필 빠른 링크 섹션과 그룹 관리 상단(칩 + `그룹 찾기`/`새 그룹`)에서 간헐적으로 간격/크기/노출이 깨져 보이는 현상
+- Cause:
+  - 그룹 관리 상단이 한 줄 고정 레이아웃이라 좁은 폭에서 요소가 가로로 넘쳤고, plain 레이아웃의 `overflow: scroll`과 결합되어 화면이 가로 스크롤된 상태로 보일 수 있었음
+  - 빠른 링크가 공용 스택 컴포넌트 스타일에 의존해, 공용 스타일 변경 시 의도치 않은 시각 드리프트가 생길 여지가 있었음
+- Fix:
+  - 그룹 관리 상단을 `flex-wrap` 기반 반응형으로 변경해 칩/액션 버튼이 작은 폭에서도 안전하게 줄바꿈되도록 수정
+  - plain 레이아웃을 `overflow-y: auto` + `overflow-x: hidden`으로 변경해 가로 스크롤 진입 차단
+  - 빠른 링크를 로컬 마크업/로컬 스타일로 고정하고 아이콘 `size`를 명시해 렌더 결과를 안정화
+- Lesson: 공용 스타일 primitive를 합성할 때는 화면별 핵심 레이아웃(행/열, 폭, 오버플로우)을 로컬에서 명시하고, 작은 화면 폭에서의 줄바꿈/가로 스크롤 시나리오를 기본 QA에 포함해야 한다.
+
 ## Server Action에서 client 훅 사용
 - Context: Server Action 내부 로직
 - Cause: client 훅/상태 사용
@@ -54,6 +65,12 @@
 - Fix: 댓글 데이터는 `useQuery` + `queryClient.setQueryData`로만 관리하고 props 의존을 제거한다
 - Lesson: 리스트/상세 상태를 이중 보관하면 동기화 비용이 급격히 증가한다
 
+## 댓글 작성/수정/삭제 후 `내 댓글` 페이지가 이전 목록으로 보임
+- Context: 약속 상세에서 댓글 CRUD 직후 빠르게 `프로필 > 내 댓글`로 이동하면 방금 변경이 반영되지 않음
+- Cause: 상세 댓글 mutation 경로에서 `appointmentKeys.myComments()` 무효화가 누락되어, 60초 `staleTime` 동안 기존 캐시가 재사용됨
+- Fix: `AppointmentCommentsSection`의 댓글 생성/수정/삭제 성공 경로에 `invalidateMyCommentsQueries(queryClient)`를 추가해 `내 댓글` 쿼리를 즉시 stale 처리
+- Lesson: 같은 도메인 데이터를 여러 화면에서 조회할 때는 mutation 후 해당 도메인의 보조 리스트 키(`myComments`, `myReviews` 등)까지 invalidate 매트릭스에 포함해야 한다
+
 ## `router.refresh()` 의존으로 UX 지연
 - Context: mutation 직후 화면 반영을 위해 새로고침 방식 사용
 - Cause: 캐시 업데이트 전략 부재
@@ -71,3 +88,9 @@
 - Cause: 테이블명을 `user_review`로 바꿨지만 PK가 레거시 복합키(`user_id`,`place_id`)로 남아 도메인 규칙과 불일치
 - Fix: `review_id` 단일 PK로 전환하고, 유니크 제약은 appointment 단위(`user_id`,`appointment_id`)만 유지하는 마이그레이션 적용
 - Lesson: 도메인 키를 전환할 때는 컬럼/인덱스뿐 아니라 PK/제약까지 함께 정리해야 런타임 충돌을 막을 수 있다
+
+## 약속 초대 수락 시 `약속 정보를 찾을 수 없습니다.` 발생
+- Context: 알림함에서 약속 초대를 수락할 때 간헐적으로 `약속 정보를 찾을 수 없습니다.` 에러가 노출됨
+- Cause: 약속 조회 RLS가 그룹 멤버만 허용인데, 그룹 미가입 사용자에게도 약속 초대가 발송될 수 있어 수락 시 약속 조회가 RLS로 차단됨
+- Fix: 초대 발송 단계에서 초대 대상의 그룹 멤버십을 강제 검증하고, 수락 단계에서도 그룹 멤버십을 먼저 검사해 명확한 권한 에러 메시지를 반환하도록 보강
+- Lesson: 초대/참여 플로우는 생성 시점과 수락 시점 모두에서 권한 전제(그룹 멤버십)를 이중 검증해야 런타임 RLS 오류를 사용자 에러로 노출하지 않는다

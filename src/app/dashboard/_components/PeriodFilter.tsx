@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
+
+import DropdownMenu from '@/components/ui/DropdownMenu';
 
 import * as styles from './PeriodFilter.css';
 
@@ -20,24 +22,9 @@ const PERIOD_OPTIONS: { value: PeriodFilterType; label: string }[] = [
 
 export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedLabel =
     PERIOD_OPTIONS.find((opt) => opt.value === value)?.label || '전체';
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleSelect = (newValue: PeriodFilterType) => {
     onChange(newValue);
@@ -45,40 +32,43 @@ export function PeriodFilter({ value, onChange }: PeriodFilterProps) {
   };
 
   return (
-    <div className={styles.filterContainer} ref={containerRef}>
-      <button
-        type="button"
-        className={`${styles.filterButton} ${
-          isOpen ? styles.filterButtonActive : ''
-        }`}
-        onClick={() => setIsOpen(!isOpen)}>
-        <span>{selectedLabel}</span>
-        <svg
-          className={`${styles.chevronIcon} ${
-            isOpen ? styles.chevronIconOpen : ''
+    <DropdownMenu
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      containerClassName={styles.filterContainer}
+      menuClassName={styles.dropdownMenu}
+      outsideEventType="mousedown"
+      renderTrigger={({ isOpen: triggerOpen, toggle }) => (
+        <button
+          type="button"
+          className={`${styles.filterButton} ${
+            triggerOpen ? styles.filterButtonActive : ''
           }`}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2">
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className={styles.dropdownMenu}>
-          {PERIOD_OPTIONS.map((option) => (
-            <div
-              key={option.value}
-              className={`${styles.dropdownItem} ${
-                value === option.value ? styles.dropdownItemSelected : ''
-              }`}
-              onClick={() => handleSelect(option.value)}>
-              {option.label}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+          onClick={toggle}>
+          <span>{selectedLabel}</span>
+          <svg
+            className={`${styles.chevronIcon} ${
+              triggerOpen ? styles.chevronIconOpen : ''
+            }`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+      )}>
+      {PERIOD_OPTIONS.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          className={`${styles.dropdownItem} ${
+            value === option.value ? styles.dropdownItemSelected : ''
+          }`}
+          onClick={() => handleSelect(option.value)}>
+          {option.label}
+        </button>
+      ))}
+    </DropdownMenu>
   );
 }

@@ -60,38 +60,8 @@ export const locationButton = style({
   },
 });
 
-export const searchRow = style({
-  display: 'flex',
+export const searchForm = style({
   width: '100%',
-  gap: '10px',
-});
-
-export const underlineInput = style({
-  width: '100%',
-  border: 'none',
-  borderBottom: `1px solid ${vars.color.stroke}`,
-  padding: '8px 12px',
-  fontSize: vars.fontSize.text,
-  color: vars.color.text,
-  background: 'transparent',
-  outline: 'none',
-  selectors: {
-    '&:focus': {
-      borderBottom: `1px solid ${vars.color.main}`,
-    },
-  },
-});
-
-export const searchButton = style({
-  border: 'none',
-  borderRadius: vars.radius.sm,
-  fontSize: vars.fontSize.subText,
-  fontWeight: vars.fontWeight.semibold,
-  backgroundColor: vars.color.main,
-  color: vars.color.mainSoft,
-  cursor: 'pointer',
-  padding: '8px 14px',
-  whiteSpace: 'nowrap',
 });
 
 export const results = style({

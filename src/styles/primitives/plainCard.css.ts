@@ -17,18 +17,14 @@ export const plainCardHeadRow = style({
 });
 
 export const plainCardTitle = style({
-  margin: 0,
-  fontSize: vars.fontSize.header,
-  lineHeight: 1.3,
+  fontSize: vars.fontSize.title,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.black,
   wordBreak: 'break-word',
 });
 
 export const plainCardBody = style({
-  margin: 0,
   fontSize: vars.fontSize.text,
-  lineHeight: 1.35,
   color: vars.color.black,
   fontWeight: vars.fontWeight.semibold,
   whiteSpace: 'pre-wrap',
@@ -36,7 +32,6 @@ export const plainCardBody = style({
 });
 
 export const plainCardMeta = style({
-  margin: 0,
   fontSize: vars.fontSize.subText,
   color: vars.color.subText,
   fontWeight: vars.fontWeight.medium,

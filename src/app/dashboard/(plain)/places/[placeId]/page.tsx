@@ -1,0 +1,34 @@
+import {
+  HydrationBoundary,
+  QueryClient,
+  dehydrate,
+} from '@tanstack/react-query';
+
+import {
+  createPlaceDetailQueryOptions,
+  createPlaceReviewsQueryOptions,
+} from '@/libs/query/placeQueries';
+
+import PlaceDetailClient from './PlaceDetailClient';
+
+type PlaceDetailPageProps = {
+  params: {
+    placeId: string;
+  };
+};
+
+export default async function PlaceDetailPage({ params }: PlaceDetailPageProps) {
+  const placeId = params.placeId;
+  const queryClient = new QueryClient();
+
+  await Promise.allSettled([
+    queryClient.prefetchQuery(createPlaceDetailQueryOptions(placeId)),
+    queryClient.prefetchInfiniteQuery(createPlaceReviewsQueryOptions(placeId)),
+  ]);
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <PlaceDetailClient placeId={placeId} />
+    </HydrationBoundary>
+  );
+}

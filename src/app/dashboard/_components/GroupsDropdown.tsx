@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import DropdownMenu from '@/components/ui/DropdownMenu';
 
 import * as styles from './GroupsDropdown.css';
 
@@ -25,65 +25,57 @@ export function GroupDropdown({
   currentGroupName = '그룹 선택',
   isLoading = false,
 }: GroupDropdownProps) {
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const groupButtonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        groupButtonRef.current &&
-        !groupButtonRef.current.contains(e.target as Node)
-      ) {
-        onOpenChange(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [isOpen, onOpenChange]);
-
   const handleGroupClick = (groupId: string) => {
     onGroupSelect?.(groupId);
     onOpenChange(false);
   };
 
   return (
-    <div className={styles.groupDropdown}>
-      <button
-        ref={groupButtonRef}
-        className={styles.groupButton}
-        onClick={() => onOpenChange(!isOpen)}>
-        {currentGroupName} <span>▼</span>
-      </button>
-      {isOpen && (
-        <div ref={dropdownRef} className={styles.dropdownMenu}>
-          {isLoading && (
-            <div className={styles.dropdownEmpty}>불러오는 중...</div>
-          )}
-          {!isLoading && groups.length === 0 && (
-            <div className={styles.dropdownEmpty}>가입한 그룹이 없습니다.</div>
-          )}
-          {!isLoading &&
-            groups.map((group) => {
-              const isActive = group.groupId === currentGroupId;
-              return (
-                <button
-                  key={group.groupId}
-                  type="button"
-                  className={`${styles.dropdownItem} ${
-                    isActive ? styles.dropdownItemActive : ''
-                  }`}
-                  onClick={() => handleGroupClick(group.groupId)}>
-                  <span>{group.name}</span>
-                </button>
-              );
-            })}
-        </div>
+    <DropdownMenu
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      containerClassName={styles.groupDropdown}
+      menuClassName={styles.dropdownMenu}
+      outsideEventType="click"
+      renderTrigger={({ isOpen: triggerOpen, toggle }) => (
+        <button
+          type="button"
+          className={`${styles.groupButton} ${
+            triggerOpen ? styles.groupButtonActive : ''
+          }`}
+          onClick={toggle}>
+          <span>{currentGroupName}</span>
+          <svg
+            className={`${styles.chevronIcon} ${
+              triggerOpen ? styles.chevronIconOpen : ''
+            }`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+      )}>
+      {isLoading && <div className={styles.dropdownEmpty}>불러오는 중...</div>}
+      {!isLoading && groups.length === 0 && (
+        <div className={styles.dropdownEmpty}>가입한 그룹이 없습니다.</div>
       )}
-    </div>
+      {!isLoading &&
+        groups.map((group) => {
+          const isActive = group.groupId === currentGroupId;
+          return (
+            <button
+              key={group.groupId}
+              type="button"
+              className={`${styles.dropdownItem} ${
+                isActive ? styles.dropdownItemActive : ''
+              }`}
+              onClick={() => handleGroupClick(group.groupId)}>
+              <span>{group.name}</span>
+            </button>
+          );
+        })}
+    </DropdownMenu>
   );
 }

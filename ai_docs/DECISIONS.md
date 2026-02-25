@@ -167,3 +167,69 @@
 - Alternatives: 기존 복합 PK 유지, 앱 로직에서만 우회 처리
 - Reason: 같은 장소라도 약속별 리뷰를 허용하는 현재 도메인 규칙(appointment 단위)과 DB 제약을 일치시키고, `duplicate key ... user_places_pkey` 저장 실패를 제거하기 위함
 - Scope: `supabase/migrations/20260223234000_user_review_pk_to_review_id.sql`, `public.user_review` 제약/인덱스
+
+## PlainTopNav 래퍼 제거 및 직접 사용 (2026-02-24)
+- Decision: `Appointment*TopNav` 래퍼 컴포넌트를 제거하고, 각 화면에서 `PlainTopNav`를 직접 사용한다.
+- Alternatives: 화면별 래퍼를 유지한 채 `PlainTopNav` props만 위임
+- Reason: 단순 위임 래퍼가 파일 탐색 비용만 늘리고 변경 지점을 분산시켜 유지보수성이 떨어졌기 때문
+- Scope: `src/app/dashboard/(plain)/appointments/**` 내 상세/수정/멤버/초대 페이지, `src/components/ui/PlainTopNav.tsx`
+
+## 드롭다운 베이스 컴포넌트 단일화 (2026-02-24)
+- Decision: 드롭다운 류 UI의 open/close/outside-click 베이스를 `DropdownMenu`로 단일화한다.
+- Alternatives: `OverflowMenu`/`ProfileDrop`/선택 드롭다운별 개별 구현 유지
+- Reason: 외부 클릭 닫기/토글 로직 중복을 줄이고, 드롭다운 동작 일관성을 확보하기 위함
+- Scope: `src/components/ui/DropdownMenu.tsx`, `src/components/ui/OverflowMenu.tsx`, `src/app/dashboard/_components/nav/ui/ProfileDrop.tsx`, `src/app/dashboard/_components/nav/TopNavigation.tsx`, `src/app/dashboard/_components/GroupsDropdown.tsx`, `src/app/dashboard/_components/PeriodFilter.tsx`
+
+## 드롭다운/칩 시각 스타일 토큰 단일화 (2026-02-24)
+- Decision: 드롭다운/칩 UI의 시각 규칙(보더, 라운드, 그림자, hover, disabled)을 `styles/primitives/dropdown.css.ts`, `styles/primitives/chip.css.ts`로 단일화한다.
+- Alternatives: 컴포넌트별 `*.css.ts`에 개별 스타일 유지
+- Reason: 메뉴/필터/프로필 드롭다운 간 시각적 드리프트를 줄이고, 향후 톤 변경 시 수정 지점을 primitive 레벨로 축소하기 위함
+- Scope: `src/styles/primitives/dropdown.css.ts`, `src/styles/primitives/chip.css.ts`, `src/app/dashboard/_components/{PeriodFilter,GroupsDropdown,TypeFilter}.css.ts`, `src/components/ui/OverflowMenu.css.ts`, `src/app/dashboard/_components/nav/ui/ProfileDrop.css.ts`, `src/components/ui/ChipToggleGroup.tsx`
+
+## 리뷰 대기 목록 쿼리 소유 정리 (2026-02-24)
+- Decision: `/dashboard/profile/reviews/waitlist`는 히스토리 쿼리를 재사용하지 않고, 리뷰 대기 전용 쿼리(`reviewable`)를 직접 사용한다.
+- Alternatives: `history` 쿼리 + 클라이언트 필터(`canWriteReview`) 유지
+- Reason: 클라이언트 필터/빈 결과 재요청 루프를 제거해 네트워크 낭비를 줄이고, 화면 목적과 쿼리 소유를 일치시키기 위함
+- Scope: `src/app/dashboard/(plain)/profile/reviews/waitlist/ProfileReviewWaitListClient.tsx`, `src/libs/query/appointmentQueries.ts`
+
+## Mutation Invalidate 플랜 중앙화 (2026-02-24)
+- Decision: 컴포넌트마다 분산된 `invalidateQueries` 나열을 도메인 helper 플랜으로 중앙화한다.
+- Alternatives: 각 클라이언트 컴포넌트에서 invalidate 리스트를 직접 유지
+- Reason: 누락/중복 invalidate를 줄이고, mutation 후 캐시 동기화 규칙을 단일 파일에서 관리하기 위함
+- Scope: `src/libs/query/invalidateAppointmentQueries.ts`, `src/libs/query/invalidateGroupQueries.ts`, `src/libs/query/invalidateInvitationQueries.ts`, `src/app/dashboard/(plain)/**` mutation caller 컴포넌트
+
+## 그룹 생성/멤버 초대 플로우 대시보드 단일화 (2026-02-25)
+- Decision: 그룹 생성/멤버 초대의 기준 경로를 `dashboard/profile/groups/**`로 통합하고, 온보딩 `create/invitation` 개별 페이지는 제거한다.
+- Alternatives: 온보딩(`/group/create`, `/group/invitation`)과 대시보드 멤버 관리 경로를 별도 구현으로 병행 유지
+- Reason: 동일 기능의 중복 구현을 제거해 유지보수 복잡도를 낮추고, 그룹 관리-생성-초대를 하나의 정보 구조에서 일관되게 제공하기 위함
+- Scope: `src/app/dashboard/(plain)/profile/groups/**`, `src/app/(onboarding)/group/create/**`, `src/app/(onboarding)/group/invitation/**`, `src/components/ui/PlainTopNav.tsx`
+
+## 그룹 가입(검색/가입) 플로우 대시보드 단일화 (2026-02-25)
+- Decision: 그룹 가입 플로우의 기준 경로를 `/dashboard/profile/groups/find`로 통합하고, 온보딩 `join` 계열 개별 페이지는 제거한다.
+- Alternatives: 온보딩(`/group/join`, `/group/join/confirm`, `/group/join/complete`) 화면을 별도 유지
+- Reason: 그룹 생성/초대와 마찬가지로 가입 플로우도 중복 구현을 제거해 그룹 도메인 진입점을 `profile/groups`로 단일화하기 위함
+- Scope: `src/app/dashboard/(plain)/profile/groups/find/**`, `src/app/dashboard/(plain)/profile/groups/ProfileGroupsClient.tsx`, `src/app/(onboarding)/group/join/**`, `src/app/(onboarding)/group/page.tsx`
+
+## Profile/Group 상단 레이아웃 반응형 안정화 (2026-02-25)
+- Decision: 그룹 관리 상단 필터 영역을 줄바꿈 가능한 반응형 레이아웃으로 변경하고, plain 레이아웃의 오버플로우를 `Y축 자동 스크롤 + X축 숨김`으로 고정한다. 또한 프로필 빠른 링크는 공용 스택 컴포넌트 의존을 줄이고 로컬 마크업으로 고정한다.
+- Alternatives: 기존 한 줄 고정 필터 레이아웃 + `overflow: scroll` 유지, 빠른 링크의 공용 컴포넌트 의존 유지
+- Reason: 좁은 화면에서 칩/액션 버튼이 가로로 넘치며 가로 스크롤 상태로 보이는 문제를 제거하고, 공용 스타일 변경에 따른 화면별 시각 드리프트를 줄이기 위함
+- Scope: `src/app/dashboard/(plain)/layout.css.ts`, `src/app/dashboard/(plain)/profile/groups/page.css.ts`, `src/app/dashboard/(nav)/profile/_components/ProfileQuickLinks.tsx`, `src/app/dashboard/(nav)/profile/_components/ProfileQuickLinks.css.ts`
+
+## 저가치 공통 스타일 추상화 정리 (2026-02-25)
+- Decision: 재사용 이점이 낮은 공통 UI/스타일 추상화는 제거하고, 단일 사용처는 로컬 마크업/로컬 스타일로 전환한다.
+- Alternatives: 기존 공통 컴포넌트(`IconStackLabel`)와 alias-only 스타일 파일(`TypeFilter.css.ts`) 유지
+- Reason: 공통 추상화가 많아질수록 호출부의 의도 파악이 어려워지고, 단일 사용처에서는 오히려 탐색 비용과 클래스 합성 복잡도만 증가하기 때문
+- Scope: `src/app/dashboard/_components/nav/BottomNavigation.tsx`, `src/app/dashboard/_components/nav/BottomNavigation.css.ts`, `src/app/dashboard/_components/TypeFilter.tsx`, `src/app/dashboard/_components/TypeFilter.css.ts`, `src/components/ui/IconStackLabel.tsx`, `src/components/ui/IconStackLabel.css.ts`, `ai_docs/STYLE_GUIDE.md`
+
+## 검색 인풋 컴포넌트 단일화 (2026-02-25)
+- Decision: 검색 입력 행(`input + submit`)은 `src/components/ui/SearchInput.tsx` 공통 컴포넌트로 단일화하고, 화면별 라벨/헬퍼/검증 메시지는 로컬에서 유지한다.
+- Alternatives: 검색 화면/그룹 찾기/초대/장소 검색별 로컬 검색 인풋 마크업 유지
+- Reason: 동일한 검색 입력 UI가 여러 화면에 분산되어 스타일/상호작용 drift가 발생하므로, 입력 행만 공통화해 일관성을 확보하고 중복 유지보수 비용을 줄이기 위함
+- Scope: `src/components/ui/SearchInput*`, `src/app/dashboard/(nav)/search/_components/SearchResultsClient.tsx`, `src/app/dashboard/(plain)/profile/groups/find/GroupFindClient.tsx`, `src/app/dashboard/(plain)/profile/groups/[groupId]/members/invitation/GroupMemberInvitationClient.tsx`, `src/app/dashboard/(plain)/appointments/invitation/AppointmentInvitationClient.tsx`, `src/app/dashboard/(plain)/appointments/create/_components/PlaceStep.tsx`, `src/app/dashboard/(plain)/appointments/[appointmentId]/edit/place/AppointmentEditPlaceClient.tsx`, `ai_docs/STYLE_GUIDE.md`
+
+## 새약속 만들기 다음 액션 단일화 (2026-02-25)
+- Decision: 새약속 멀티스텝의 다음 이동/검증은 각 step 내부 버튼이 아니라 `PlainTopNav` 우측 액션에서 중앙 처리한다.
+- Alternatives: `GroupStep`/`TitleStep`/`DateTimeStep`/`PlaceStep`에서 `NextButton`을 유지하며 step별로 다음 이동 로직을 분산 유지
+- Reason: 네비게이션 패턴을 상단바 기준으로 통일하고, step 이동 검증 로직을 한 곳에서 관리해 중복/드리프트를 줄이기 위함
+- Scope: `src/app/dashboard/(plain)/appointments/create/MultiStepFormClient.tsx`, `src/app/dashboard/(plain)/appointments/create/_components/{GroupStep,TitleStep,DateTimeStep,PlaceStep}.tsx`, `src/app/dashboard/(plain)/appointments/create/_components/ui/NextButton.*`

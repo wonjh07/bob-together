@@ -9,19 +9,16 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { deleteAppointmentCommentAction } from '@/actions/appointment';
+import InlineLoading from '@/components/ui/InlineLoading';
+import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import { appointmentKeys } from '@/libs/query/appointmentKeys';
+import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
 import {
   createMyCommentsQueryOptions,
   type MyCommentsPage,
 } from '@/libs/query/appointmentQueries';
 import {
-  invalidateAppointmentCommentsQuery,
-  invalidateAppointmentDetailQuery,
-  invalidateAppointmentListQueries,
-  invalidateAppointmentSearchQueries,
-  invalidateMyCommentsQueries,
+  invalidateMyCommentMutationQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
 
 import MyCommentCard from './_components/MyCommentCard';
@@ -48,18 +45,11 @@ export default function ProfileCommentsClient() {
   });
 
   const comments = data?.pages.flatMap((page: MyCommentsPage) => page.comments) ?? [];
-  const hasMore = Boolean(hasNextPage);
-
-  const handleLoadMore = useCallback(async () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      await fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  const { loadMoreRef } = useInfiniteScroll({
-    onLoadMore: handleLoadMore,
-    hasMore,
-    isLoading: isLoading || isFetchingNextPage,
+  const { hasMore, loadMoreRef } = useInfiniteLoadMore({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
   });
 
   const handleToggleMenu = (commentId: string) => {
@@ -104,16 +94,7 @@ export default function ProfileCommentsClient() {
           },
         );
 
-        await Promise.all([
-          invalidateMyCommentsQueries(queryClient),
-          invalidateAppointmentDetailQuery(queryClient, appointmentId),
-          invalidateAppointmentCommentsQuery(queryClient, appointmentId),
-          invalidateAppointmentListQueries(queryClient),
-          invalidateAppointmentSearchQueries(queryClient),
-          queryClient.invalidateQueries({
-            queryKey: appointmentKeys.historyRoot(),
-          }),
-        ]);
+        await invalidateMyCommentMutationQueries(queryClient, appointmentId);
 
         toast.success('댓글을 삭제했습니다.');
       } finally {
@@ -122,21 +103,24 @@ export default function ProfileCommentsClient() {
     },
     [deletingCommentId, queryClient, queryOptions.queryKey],
   );
+  const hasState = isLoading || isError || comments.length === 0;
 
   return (
     <div className={styles.page}>
       <PlainTopNav title="내 댓글" rightHidden />
 
-      {isLoading ? (
-        <div className={styles.statusBox}>댓글을 불러오는 중...</div>
-      ) : isError ? (
-        <div className={styles.statusBox}>
-          {error instanceof Error
-            ? error.message
-            : '댓글 목록을 불러오지 못했습니다.'}
-        </div>
-      ) : comments.length === 0 ? (
-        <div className={styles.statusBox}>작성한 댓글이 없습니다.</div>
+      {hasState ? (
+        <ListStateView
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={comments.length === 0}
+          error={error}
+          loadingVariant="spinner"
+          loadingText="댓글을 불러오는 중..."
+          emptyText="작성한 댓글이 없습니다."
+          defaultErrorText="댓글 목록을 불러오지 못했습니다."
+          className={styles.statusBox}
+        />
       ) : (
         <div className={styles.list}>
           {comments.map((comment) => (
@@ -152,7 +136,7 @@ export default function ProfileCommentsClient() {
           ))}
 
           {isFetchingNextPage ? (
-            <div className={styles.statusInline}>더 불러오는 중...</div>
+            <InlineLoading text="더 불러오는 중..." className={styles.statusInline} />
           ) : null}
           {hasMore && !isFetchingNextPage ? (
             <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
@@ -162,4 +146,3 @@ export default function ProfileCommentsClient() {
     </div>
   );
 }
-

@@ -8,14 +8,10 @@ import toast from 'react-hot-toast';
 import { submitPlaceReviewAction } from '@/actions/appointment';
 import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
 import PlainTopNav from '@/components/ui/PlainTopNav';
-import { appointmentKeys } from '@/libs/query/appointmentKeys';
+import StarRatingInput from '@/components/ui/StarRatingInput';
 import { createAppointmentReviewTargetQueryOptions } from '@/libs/query/appointmentQueries';
 import {
-  invalidateAppointmentDetailQuery,
-  invalidateAppointmentListQueries,
-  invalidateAppointmentSearchQueries,
-  invalidateMyReviewsQueries,
-  invalidateReviewableAppointmentsQueries,
+  invalidateReviewMutationQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
 import { extractDistrict } from '@/utils/address';
 import { formatDateDot } from '@/utils/dateFormat';
@@ -118,22 +114,10 @@ export default function ReviewEditorClient({
       return;
     }
 
-    await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: appointmentKeys.historyRoot(),
-      }),
-      queryClient.invalidateQueries({
-        queryKey: appointmentKeys.myReviewsRoot(),
-      }),
-      queryClient.invalidateQueries({
-        queryKey: appointmentKeys.reviewTarget(target.appointmentId),
-      }),
-      invalidateAppointmentDetailQuery(queryClient, target.appointmentId),
-      invalidateAppointmentListQueries(queryClient),
-      invalidateAppointmentSearchQueries(queryClient),
-      invalidateMyReviewsQueries(queryClient),
-      invalidateReviewableAppointmentsQueries(queryClient),
-    ]);
+    await invalidateReviewMutationQueries(queryClient, {
+      appointmentId: target.appointmentId,
+      placeId: target.place.placeId,
+    });
 
     toast.success(
       result.data?.mode === 'updated'
@@ -153,6 +137,7 @@ export default function ReviewEditorClient({
           placeName={target.place.name}
           placeNameAs="h2"
           placeNameClassName={styles.placeName}
+          placeHref={`/dashboard/places/${target.place.placeId}`}
           rating={target.place.reviewAverage}
           reviewCount={target.place.reviewCount}
           district={district}
@@ -164,23 +149,13 @@ export default function ReviewEditorClient({
 
       <section className={styles.ratingSection}>
         <h3 className={styles.sectionTitle}>식당이 만족스러우셨나요?</h3>
-        <div className={styles.starRow}>
-          {Array.from({ length: 5 }).map((_, index) => {
-            const value = index + 1;
-            const active = value <= score;
-
-            return (
-              <button
-                key={value}
-                type="button"
-                className={active ? styles.starButtonActive : styles.starButton}
-                onClick={() => setScore(value)}
-                aria-label={`${value}점`}>
-                ★
-              </button>
-            );
-          })}
-        </div>
+        <StarRatingInput
+          value={score}
+          onChange={setScore}
+          rowClassName={styles.starRow}
+          buttonClassName={styles.starButton}
+          activeButtonClassName={styles.starButtonActive}
+        />
       </section>
 
       <section className={styles.reviewSection}>

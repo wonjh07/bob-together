@@ -1,23 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import SearchInput from '@/components/ui/SearchInput';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
 import { usePlaceSearch } from '@/hooks/usePlaceSearch';
 
 import * as styles from './PlaceStep.css';
-import NextButton from './ui/NextButton';
 
 import type { CreateAppointmentForm } from '../types';
 
-interface PlaceStepProps {
-  onNext: () => void;
-}
-
-export function PlaceStep({ onNext }: PlaceStepProps) {
+export function PlaceStep() {
   const [errorMessage, setErrorMessage] = useState('');
   const {
     setValue,
-    setError,
     clearErrors,
     formState: { errors },
   } = useFormContext<CreateAppointmentForm>();
@@ -38,22 +33,12 @@ export function PlaceStep({ onNext }: PlaceStepProps) {
     setErrorMessage,
   });
 
-
   const hasLocation = Boolean(currentLocation);
   const locationButtonLabel = isLocating
     ? '위치 확인 중...'
     : hasLocation
       ? '위치 갱신'
       : '허용하기';
-
-  const handleNext = () => {
-    if (!selectedPlace) {
-      setError('place', { message: '장소를 선택해주세요.' });
-      return;
-    }
-    clearErrors('place');
-    onNext();
-  };
 
   useEffect(() => {
     if (!selectedPlace) return;
@@ -63,7 +48,6 @@ export function PlaceStep({ onNext }: PlaceStepProps) {
 
   return (
     <div className={styles.container}>
-      <NextButton handleNext={handleNext} />
       <div className={styles.stepTitle}>약속 장소를 검색해주세요</div>
       <div className={styles.locationRow}>
         <div className={styles.locationInfo}>
@@ -84,20 +68,16 @@ export function PlaceStep({ onNext }: PlaceStepProps) {
         <label className={styles.inputLabel} htmlFor="appointment-place">
           장소 검색
         </label>
-        <form className={styles.searchRow} onSubmit={handlePlaceSearchSubmit}>
-          <input
-            id="appointment-place"
-            className={styles.underlineInput}
+        <form className={styles.searchForm} onSubmit={handlePlaceSearchSubmit}>
+          <SearchInput
             value={placeQuery}
-            onChange={(event) => {
-              setPlaceQuery(event.target.value);
+            onValueChange={(value) => {
+              setPlaceQuery(value);
               setIsPlaceSearched(false);
             }}
+            inputId="appointment-place"
             placeholder="장소를 검색하세요"
           />
-          <button type="submit" className={styles.searchButton}>
-            검색
-          </button>
         </form>
       </div>
       <div className={styles.helperText}>

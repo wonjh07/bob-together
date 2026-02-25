@@ -1,9 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { createAppointmentAction } from '@/actions/appointment';
 import { useCreateAppointmentContext } from '@/app/dashboard/(plain)/appointments/create/providers';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
+import {
+  invalidateAppointmentCollectionQueries,
+} from '@/libs/query/invalidateAppointmentQueries';
 
 import * as styles from './ConfirmStep.css';
 
@@ -14,6 +18,7 @@ interface ConfirmStepProps {
 }
 
 export function ConfirmStep({ onCreated }: ConfirmStepProps) {
+  const queryClient = useQueryClient();
   const { groups } = useCreateAppointmentContext();
   const {
     handleSubmit,
@@ -69,6 +74,7 @@ export function ConfirmStep({ onCreated }: ConfirmStepProps) {
       return;
     }
 
+    await invalidateAppointmentCollectionQueries(queryClient);
     onCreated(result.data.appointmentId);
   });
 

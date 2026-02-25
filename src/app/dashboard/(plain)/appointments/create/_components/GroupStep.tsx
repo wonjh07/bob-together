@@ -6,21 +6,15 @@ import { useFormContext } from 'react-hook-form';
 import { useCreateAppointmentContext } from '@/app/dashboard/(plain)/appointments/create/providers';
 
 import * as styles from './GroupStep.css';
-import NextButton from './ui/NextButton';
 
 import type { CreateAppointmentForm } from '../types';
 
-type GroupStepProps = {
-  onNext: () => void;
-};
-
-export function GroupStep({ onNext }: GroupStepProps) {
+export function GroupStep() {
   const [isOpen, setIsOpen] = useState(false);
   const { groups, initialGroupId, isLoading } = useCreateAppointmentContext();
   const {
     setValue,
     watch,
-    setError,
     clearErrors,
     formState: { errors },
   } = useFormContext<CreateAppointmentForm>();
@@ -52,18 +46,8 @@ export function GroupStep({ onNext }: GroupStepProps) {
     }
   }, [groupId, groups, initialGroupId, setValue]);
 
-  const handleNext = () => {
-    if (!groupId) {
-      setError('groupId', { message: '그룹을 선택해주세요.' });
-      return;
-    }
-    clearErrors('groupId');
-    onNext();
-  };
-
   return (
     <div className={styles.container}>
-      <NextButton handleNext={handleNext} />
       <div className={styles.title}>어떤 그룹에 약속을 만들까요?</div>
       <div className={styles.dropdown}>
         <button

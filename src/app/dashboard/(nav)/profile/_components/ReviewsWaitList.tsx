@@ -2,11 +2,10 @@
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import DateTimeMetaRow from '@/components/ui/DateTimeMetaRow';
 import PlaceRatingMeta from '@/components/ui/PlaceRatingMeta';
-import { useHorizontalDragScroll } from '@/hooks/useHorizontalDragScroll';
 import {
   createReviewableAppointmentsQueryOptions,
   type ReviewableAppointmentsPage,
@@ -15,21 +14,12 @@ import { formatDateDot, formatTimeRange24 } from '@/utils/dateFormat';
 
 import * as styles from './ReviewsWaitList.css';
 
-import type { MouseEvent } from 'react';
+import type { WheelEvent } from 'react';
 
 export function ReviewsWaitList() {
   const queryOptions = createReviewableAppointmentsQueryOptions();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const {
-    containerRef,
-    isDragging,
-    onPointerDown,
-    onPointerMove,
-    onPointerUp,
-    onPointerLeave,
-    onDragStart,
-    consumeShouldPreventClick,
-  } = useHorizontalDragScroll();
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const {
     data,
@@ -48,7 +38,7 @@ export function ReviewsWaitList() {
     [];
 
   useEffect(() => {
-    const root = containerRef.current;
+    const root = scrollContainerRef.current;
     const target = sentinelRef.current;
     if (!root || !target || !hasNextPage || isFetchingNextPage) return;
 
@@ -67,18 +57,25 @@ export function ReviewsWaitList() {
 
     observer.observe(target);
     return () => observer.disconnect();
-  }, [containerRef, fetchNextPage, hasNextPage, isFetchingNextPage, items.length]);
+  }, [
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    items.length,
+    scrollContainerRef,
+  ]);
 
-  const handleClickCapture = useCallback(
-    (event: MouseEvent<HTMLElement>) => {
-      if (!consumeShouldPreventClick()) return;
-      const target = event.target as HTMLElement;
-      if (!target.closest('a,button')) return;
-      event.preventDefault();
-      event.stopPropagation();
-    },
-    [consumeShouldPreventClick],
-  );
+  const handleHorizontalWheel = (event: WheelEvent<HTMLDivElement>) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    if (container.scrollWidth <= container.clientWidth) return;
+
+    // Trackpad horizontal gesture should keep native behavior.
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+
+    event.preventDefault();
+    container.scrollLeft += event.deltaY;
+  };
 
   if (isLoading) {
     return (
@@ -111,18 +108,13 @@ export function ReviewsWaitList() {
   return (
     <section className={styles.container}>
       <div
-        ref={containerRef}
-        className={`${styles.scrollRow} ${isDragging ? styles.scrollRowDragging : ''}`}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerLeave}
-        onDragStart={onDragStart}
-        onClickCapture={handleClickCapture}>
+        ref={scrollContainerRef}
+        className={styles.scrollRow}
+        onWheel={handleHorizontalWheel}>
         {items.map((review) => {
           return (
             <article key={review.appointmentId} className={styles.card}>
-              <div className={styles.title}>{review.title}</div>
+              <div className={styles.title}>{review.placeName}</div>
               <PlaceRatingMeta
                 rating={review.reviewAverage}
                 reviewCount={review.reviewCount}
@@ -149,9 +141,6 @@ export function ReviewsWaitList() {
         })}
         <div ref={sentinelRef} className={styles.loadMoreTrigger} />
       </div>
-      {isFetchingNextPage ? (
-        <div className={styles.inlineLoading}>더 불러오는 중...</div>
-      ) : null}
     </section>
   );
 }

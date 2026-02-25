@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/FormInput';
 import { loginSchema } from '@/schemas/auth';
 
 import { loginForm, linkContainer, submitButton } from './page.css';
+import { resolveLoginRedirectPath } from './redirect';
 
 import type { z } from 'zod';
 
@@ -18,6 +19,7 @@ type LoginInput = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     register,
     handleSubmit,
@@ -37,7 +39,7 @@ export default function LoginForm() {
       }
 
       toast.success('로그인 성공!');
-      router.push('/dashboard');
+      router.replace(resolveLoginRedirectPath(searchParams.get('redirect')));
     } catch (err) {
       toast.error('로그인 중 오류가 발생했습니다.');
       console.error('Login error:', err);

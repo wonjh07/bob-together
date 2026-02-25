@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 
+import SearchInput from '@/components/ui/SearchInput';
+
+import * as styles from './SearchResultsClient.css';
 import AppointmentSearchResults from './ui/AppointmentSearchResults';
 import GroupSearchResults from './ui/GroupSearchResults';
-import SearchInput from './ui/SearchInput';
 import { SearchTypeToggle } from './ui/SearchTypeToggle';
 
 export default function SearchResultsClient() {
@@ -12,18 +14,21 @@ export default function SearchResultsClient() {
   const [inputValue, setInputValue] = useState('');
   const [submittedQuery, setSubmittedQuery] = useState('');
 
-  const handleSearchSubmit = () => {
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setSubmittedQuery(inputValue.trim());
   };
 
   return (
     <>
       <SearchTypeToggle value={active} onChange={setActive} />
-      <SearchInput
-        value={inputValue}
-        onChange={setInputValue}
-        onSubmit={handleSearchSubmit}
-      />
+      <form className={styles.searchForm} onSubmit={handleSearchSubmit}>
+        <SearchInput
+          value={inputValue}
+          onValueChange={setInputValue}
+          placeholder="제목"
+        />
+      </form>
       {active === 'appointment' ? (
         <AppointmentSearchResults query={submittedQuery} />
       ) : (

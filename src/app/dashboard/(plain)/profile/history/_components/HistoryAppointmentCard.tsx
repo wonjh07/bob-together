@@ -44,6 +44,7 @@ export default function HistoryAppointmentCard({
         placeName={appointment.place.name}
         placeNameAs="p"
         placeNameClassName={styles.placeName}
+        placeHref={`/dashboard/places/${appointment.place.placeId}`}
         rating={appointment.place.reviewAverage}
         reviewCount={appointment.place.reviewCount}
         district={district}

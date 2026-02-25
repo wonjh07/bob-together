@@ -1,22 +1,7 @@
-import type { SVGProps } from 'react';
+import { AiOutlineCheckCircle } from 'react-icons/ai';
 
-export default function CheckIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 64 64"
-      width="48"
-      height="48"
-      fill="none"
-      aria-hidden="true"
-      {...props}>
-      <circle cx="32" cy="32" r="24" fill="currentColor" opacity="0.15" />
-      <path
-        d="M20 33l8 8 16-18"
-        stroke="currentColor"
-        strokeWidth="6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+import type { IconBaseProps } from 'react-icons';
+
+export default function CheckIcon({ size = 48, ...props }: IconBaseProps) {
+  return <AiOutlineCheckCircle aria-hidden="true" size={size} {...props} />;
 }

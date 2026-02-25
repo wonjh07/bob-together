@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
 
 import BellIcon from '@/components/icons/BellIcon';
 
@@ -12,13 +11,12 @@ import {
   navRight,
   iconButton,
   bellIcon,
-  userIcon,
+  menuButton,
+  menuIcon,
 } from './TopNavigation.css';
 import { ProfileDropdown } from './ui/ProfileDrop';
 
 export function TopNav() {
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-
   return (
     <header className={topNav}>
       <div className={logoSection}>
@@ -39,25 +37,11 @@ export function TopNav() {
           aria-label="알림 페이지로 이동">
           <BellIcon className={bellIcon} />
         </Link>
-        <button
-          className={userIcon}
-          onClick={() => {
-            setIsProfileDropdownOpen(!isProfileDropdownOpen);
-          }}>
-          <Image
-            src="/profileImage.png"
-            alt="사용자"
-            width={44}
-            height={44}
-            priority
-          />
-        </button>
+        <ProfileDropdown
+          triggerClassName={menuButton}
+          triggerIconClassName={menuIcon}
+        />
       </div>
-
-      <ProfileDropdown
-        isOpen={isProfileDropdownOpen}
-        onOpenChange={setIsProfileDropdownOpen}
-      />
     </header>
   );
 }

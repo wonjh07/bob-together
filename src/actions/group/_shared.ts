@@ -36,6 +36,14 @@ export interface GroupManageItem {
   isOwner: boolean;
 }
 
+export interface GroupMemberItem {
+  userId: string;
+  role: 'owner' | 'member';
+  name: string | null;
+  nickname: string | null;
+  profileImage: string | null;
+}
+
 export interface UserSummary {
   userId: string;
   name?: string | null;
@@ -63,7 +71,15 @@ export type ListMyGroupsWithStatsResult = ActionResult<
   { groups: GroupManageItem[]; nextCursor: GroupManageCursor | null },
   GroupErrorCode
 >;
+export type GetGroupMembersResult = ActionResult<
+  { memberCount: number; members: GroupMemberItem[]; currentUserId: string },
+  GroupErrorCode
+>;
 export type SearchUsersResult = ActionResult<{ users: UserSummary[] }, GroupErrorCode>;
+export type SearchGroupInvitableUsersResult = ActionResult<
+  { users: UserSummary[]; pendingInviteeIds: string[] },
+  GroupErrorCode
+>;
 export type SendInvitationResult = ActionResult<void, GroupErrorCode>;
 
 export const mapGroup = (group: { group_id: string; name: string }): GroupSummary => ({

@@ -1,3 +1,6 @@
+import Link from 'next/link';
+
+import * as styles from './AppointmentPlaceMeta.css';
 import PlaceRatingMeta from './PlaceRatingMeta';
 
 interface AppointmentPlaceMetaProps {
@@ -7,6 +10,8 @@ interface AppointmentPlaceMetaProps {
   placeName: string;
   placeNameAs?: 'h2' | 'p';
   placeNameClassName?: string;
+  placeHref?: string;
+  placeLinkClassName?: string;
   rating: number | null;
   reviewCount: number;
   district?: string | null;
@@ -24,6 +29,8 @@ export default function AppointmentPlaceMeta({
   placeName,
   placeNameAs = 'h2',
   placeNameClassName,
+  placeHref,
+  placeLinkClassName,
   rating,
   reviewCount,
   district,
@@ -39,7 +46,17 @@ export default function AppointmentPlaceMeta({
   const content = (
     <>
       {title ? <TitleTag className={titleClassName}>{title}</TitleTag> : null}
-      <PlaceTag className={placeNameClassName}>{placeName}</PlaceTag>
+      <PlaceTag className={placeNameClassName}>
+        {placeHref ? (
+          <Link
+            href={placeHref}
+            className={`${styles.placeLink} ${placeLinkClassName ?? ''}`.trim()}>
+            {placeName}
+          </Link>
+        ) : (
+          placeName
+        )}
+      </PlaceTag>
       <PlaceRatingMeta
         rating={rating}
         reviewCount={reviewCount}

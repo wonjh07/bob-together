@@ -1,30 +1,17 @@
 import { useFormContext } from 'react-hook-form';
 
 import * as styles from './TitleStep.css';
-import NextButton from './ui/NextButton';
 
 import type { CreateAppointmentForm } from '../types';
 
-interface TitleStepProps {
-  onNext: () => void;
-}
-
-export function TitleStep({ onNext }: TitleStepProps) {
+export function TitleStep() {
   const {
     register,
-    trigger,
     formState: { errors },
   } = useFormContext<CreateAppointmentForm>();
 
-  const handleNext = async () => {
-    const isValid = await trigger('title');
-    if (!isValid) return;
-    onNext();
-  };
-
   return (
     <div className={styles.container}>
-      <NextButton handleNext={handleNext} />
       <div className={styles.stepTitle}>약속 제목을 입력해주세요</div>
       <div className={styles.section}>
         <label className={styles.inputLabel} htmlFor="appointment-title">

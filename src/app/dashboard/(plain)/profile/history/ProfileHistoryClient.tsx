@@ -1,10 +1,11 @@
 'use client';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useCallback } from 'react';
 
+import InlineLoading from '@/components/ui/InlineLoading';
+import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
 import {
   createAppointmentHistoryQueryOptions,
   type AppointmentHistoryPage,
@@ -30,34 +31,30 @@ export default function ProfileHistoryClient() {
 
   const appointments =
     data?.pages.flatMap((page: AppointmentHistoryPage) => page.appointments) ?? [];
-  const hasMore = Boolean(hasNextPage);
-
-  const handleLoadMore = useCallback(async () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      await fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  const { loadMoreRef } = useInfiniteScroll({
-    onLoadMore: handleLoadMore,
-    hasMore,
-    isLoading: isLoading || isFetchingNextPage,
+  const { hasMore, loadMoreRef } = useInfiniteLoadMore({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
   });
+  const hasState = isLoading || isError || appointments.length === 0;
 
   return (
     <div className={styles.page}>
       <PlainTopNav title="히스토리" rightHidden />
 
-      {isLoading ? (
-        <div className={styles.statusBox}>히스토리를 불러오는 중...</div>
-      ) : isError ? (
-        <div className={styles.statusBox}>
-          {error instanceof Error
-            ? error.message
-            : '히스토리를 불러오지 못했습니다.'}
-        </div>
-      ) : appointments.length === 0 ? (
-        <div className={styles.statusBox}>종료된 약속이 없습니다.</div>
+      {hasState ? (
+        <ListStateView
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={appointments.length === 0}
+          error={error}
+          loadingVariant="spinner"
+          loadingText="히스토리를 불러오는 중..."
+          emptyText="종료된 약속이 없습니다."
+          defaultErrorText="히스토리를 불러오지 못했습니다."
+          className={styles.statusBox}
+        />
       ) : (
         <div className={styles.list}>
           {appointments.map((appointment) => (
@@ -67,7 +64,7 @@ export default function ProfileHistoryClient() {
             />
           ))}
           {isFetchingNextPage ? (
-            <div className={styles.statusInline}>더 불러오는 중...</div>
+            <InlineLoading text="더 불러오는 중..." className={styles.statusInline} />
           ) : null}
           {hasMore && !isFetchingNextPage ? (
             <div ref={loadMoreRef} className={styles.loadMoreTrigger} />

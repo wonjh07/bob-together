@@ -1,31 +1,7 @@
-import type { SVGProps } from 'react';
+import { AiOutlineSend } from 'react-icons/ai';
 
-export default function PaperPlaneIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 64 64"
-      width="48"
-      height="48"
-      fill="none"
-      aria-hidden="true"
-      {...props}>
-      <path
-        d="M10 30L54 14l-18 40-6-16-20-8z"
-        fill="currentColor"
-        opacity="0.2"
-      />
-      <path
-        d="M10 30L54 14l-18 40-6-16-20-8z"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M30 38l12-10"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
+import type { IconBaseProps } from 'react-icons';
+
+export default function PaperPlaneIcon({ size = 48, ...props }: IconBaseProps) {
+  return <AiOutlineSend aria-hidden="true" size={size} {...props} />;
 }

@@ -1,20 +1,24 @@
 'use client';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useCallback, useEffect } from 'react';
+import Link from 'next/link';
 
+import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
+import InlineLoading from '@/components/ui/InlineLoading';
+import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
 import {
-  createAppointmentHistoryQueryOptions,
-  type AppointmentHistoryPage,
+  createReviewableAppointmentsQueryOptions,
+  type ReviewableAppointmentsPage,
 } from '@/libs/query/appointmentQueries';
+import { formatDateDot } from '@/utils/dateFormat';
 
 import * as styles from './page.css';
-import HistoryAppointmentCard from '../../history/_components/HistoryAppointmentCard';
+import * as cardStyles from '../../history/_components/HistoryAppointmentCard.css';
 
 export default function ProfileReviewWaitListClient() {
-  const queryOptions = createAppointmentHistoryQueryOptions();
+  const queryOptions = createReviewableAppointmentsQueryOptions();
 
   const {
     data,
@@ -29,57 +33,78 @@ export default function ProfileReviewWaitListClient() {
   });
 
   const appointments =
-    data?.pages
-      .flatMap((page: AppointmentHistoryPage) => page.appointments)
-      .filter((appointment) => appointment.canWriteReview) ?? [];
-
-  const hasMore = Boolean(hasNextPage);
-
-  const handleLoadMore = useCallback(async () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      await fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  const { loadMoreRef } = useInfiniteScroll({
-    onLoadMore: handleLoadMore,
-    hasMore,
-    isLoading: isLoading || isFetchingNextPage,
+    data?.pages.flatMap(
+      (page: ReviewableAppointmentsPage) => page.appointments,
+    ) ?? [];
+  const { hasMore, loadMoreRef } = useInfiniteLoadMore({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
   });
 
-  useEffect(() => {
-    if (isLoading || isFetchingNextPage) return;
-    if (appointments.length > 0) return;
-    if (!hasNextPage) return;
-    void fetchNextPage();
-  }, [appointments.length, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading]);
-
-  const isEmpty = !isLoading && !isFetchingNextPage && appointments.length === 0 && !hasNextPage;
+  const isEmpty = !isLoading && appointments.length === 0;
+  const hasState = isLoading || isError || isEmpty;
 
   return (
     <div className={styles.page}>
       <PlainTopNav title="작성 가능한 리뷰" rightHidden />
 
-      {isLoading ? (
-        <div className={styles.statusBox}>작성 가능한 리뷰를 불러오는 중...</div>
-      ) : isError ? (
-        <div className={styles.statusBox}>
-          {error instanceof Error
-            ? error.message
-            : '작성 가능한 리뷰를 불러오지 못했습니다.'}
-        </div>
-      ) : isEmpty ? (
-        <div className={styles.statusBox}>작성 가능한 리뷰가 없습니다.</div>
+      {hasState ? (
+        <ListStateView
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={isEmpty}
+          error={error}
+          loadingVariant="spinner"
+          loadingText="작성 가능한 리뷰를 불러오는 중..."
+          emptyText="작성 가능한 리뷰가 없습니다."
+          defaultErrorText="작성 가능한 리뷰를 불러오지 못했습니다."
+          className={styles.statusBox}
+        />
       ) : (
         <div className={styles.list}>
           {appointments.map((appointment) => (
-            <HistoryAppointmentCard
+            <article
               key={appointment.appointmentId}
-              appointment={appointment}
-            />
+              className={cardStyles.card}>
+              <div className={cardStyles.cardHead}>
+                <p className={cardStyles.date}>
+                  {formatDateDot(appointment.startAt)}
+                </p>
+              </div>
+
+              <AppointmentPlaceMeta
+                title={appointment.title}
+                titleAs="h2"
+                titleClassName={cardStyles.title}
+                placeName={appointment.placeName}
+                placeNameAs="p"
+                placeNameClassName={cardStyles.placeName}
+                placeHref={`/dashboard/places/${appointment.placeId}`}
+                rating={appointment.reviewAverage}
+                reviewCount={appointment.reviewCount}
+                metaClassName={cardStyles.placeMeta}
+                starClassName={cardStyles.star}
+                showReviewCountWhenZero={false}
+              />
+
+              <div className={cardStyles.buttonRow}>
+                <Link
+                  href={`/dashboard/appointments/${appointment.appointmentId}`}
+                  className={cardStyles.detailButton}>
+                  상세보기
+                </Link>
+                <Link
+                  href={`/dashboard/profile/reviews/${appointment.appointmentId}`}
+                  className={cardStyles.reviewButton}>
+                  리뷰 남기기
+                </Link>
+              </div>
+            </article>
           ))}
           {isFetchingNextPage ? (
-            <div className={styles.statusInline}>더 불러오는 중...</div>
+            <InlineLoading text="더 불러오는 중..." className={styles.statusInline} />
           ) : null}
           {hasMore && !isFetchingNextPage ? (
             <div ref={loadMoreRef} className={styles.loadMoreTrigger} />

@@ -4,6 +4,7 @@ export type {
   AppointmentHistoryCursor,
   AppointmentHistoryItem,
   AppointmentMemberItem,
+  AppointmentInviteeSummary,
   AppointmentReviewTargetItem,
   AppointmentSearchCursor,
   AppointmentSearchItem,
@@ -33,6 +34,7 @@ export type {
   PeriodFilter,
   ReviewableAppointmentItem,
   SearchAppointmentsResult,
+  SearchAppointmentInvitableUsersResult,
   SendAppointmentInvitationResult,
   SubmitPlaceReviewResult,
   UpdateAppointmentCommentResult,
@@ -65,4 +67,5 @@ export { getAppointmentMembersAction } from './[appointmentId]/members/get';
 export { getAppointmentInvitationStateAction } from './[appointmentId]/members/getInvitationState';
 export { joinAppointmentAction } from './[appointmentId]/members/join';
 export { leaveAppointmentAction } from './[appointmentId]/members/leave';
+export { searchAppointmentInvitableUsersAction } from './[appointmentId]/members/searchInvitees';
 export { sendAppointmentInvitationAction } from './[appointmentId]/members/invite';

@@ -10,8 +10,7 @@ import {
   leaveAppointmentAction,
 } from '@/actions/appointment';
 import {
-  invalidateAppointmentDetailQuery,
-  invalidateAppointmentListQueries,
+  invalidateAppointmentDetailAndCollectionQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
 import { getEffectiveAppointmentStatus } from '@/utils/appointmentStatus';
 
@@ -67,10 +66,10 @@ export default function AppointmentDetailActions({
       }
 
       setIsMember(true);
-      await Promise.all([
-        invalidateAppointmentDetailQuery(queryClient, appointmentId),
-        invalidateAppointmentListQueries(queryClient),
-      ]);
+      await invalidateAppointmentDetailAndCollectionQueries(
+        queryClient,
+        appointmentId,
+      );
       toast.success('약속에 참여했습니다.');
     } finally {
       setIsSubmitting(false);
@@ -89,10 +88,10 @@ export default function AppointmentDetailActions({
       }
 
       setIsMember(false);
-      await Promise.all([
-        invalidateAppointmentDetailQuery(queryClient, appointmentId),
-        invalidateAppointmentListQueries(queryClient),
-      ]);
+      await invalidateAppointmentDetailAndCollectionQueries(
+        queryClient,
+        appointmentId,
+      );
       toast.success('약속에서 나갔습니다.');
     } finally {
       setIsSubmitting(false);

@@ -9,12 +9,14 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { joinGroupAction } from '@/actions/group';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import { groupKeys } from '@/libs/query/groupKeys';
+import InlineLoading from '@/components/ui/InlineLoading';
+import ListStateView from '@/components/ui/ListStateView';
+import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
 import {
   createGroupSearchQueryOptions,
   type GroupSearchPage,
 } from '@/libs/query/groupQueries';
+import { invalidateGroupMembershipQueries } from '@/libs/query/invalidateGroupQueries';
 
 import GroupSearchCard from './GroupSearchCard';
 import * as styles from './GroupSearchResults.css';
@@ -43,7 +45,6 @@ export default function GroupSearchResults({ query }: GroupSearchResultsProps) {
   });
 
   const groups = data?.pages.flatMap((page: GroupSearchPage) => page.groups) ?? [];
-  const hasMore = Boolean(hasNextPage);
 
   const handleJoinGroup = useCallback(
     async (groupId: string) => {
@@ -78,48 +79,41 @@ export default function GroupSearchResults({ query }: GroupSearchResultsProps) {
           },
         );
 
-        await queryClient.invalidateQueries({ queryKey: groupKeys.myGroups() });
-        await queryClient.invalidateQueries({
-          queryKey: groupKeys.search(normalizedQuery),
-        });
+        await invalidateGroupMembershipQueries(queryClient);
         toast.success('그룹에 가입했습니다.');
       } finally {
         setJoiningGroupId(null);
       }
     },
-    [joiningGroupId, normalizedQuery, queryClient, queryOptions.queryKey],
+    [joiningGroupId, queryClient, queryOptions.queryKey],
   );
 
-  const handleLoadMore = useCallback(async () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      await fetchNextPage();
-    }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  const { loadMoreRef } = useInfiniteScroll({
-    onLoadMore: handleLoadMore,
-    hasMore,
-    isLoading: isLoading || isFetchingNextPage,
+  const { hasMore, loadMoreRef } = useInfiniteLoadMore({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
   });
 
   if (normalizedQuery.length < 2) {
     return <div className={styles.status}>검색어를 2자 이상 입력해주세요.</div>;
   }
 
-  if (isLoading) {
-    return <div className={styles.status}>검색 중...</div>;
-  }
-
-  if (isError) {
+  const hasState = isLoading || isError || groups.length === 0;
+  if (hasState) {
     return (
-      <div className={styles.status}>
-        {error instanceof Error ? error.message : '그룹 검색에 실패했습니다.'}
-      </div>
+      <ListStateView
+        isLoading={isLoading}
+        isError={isError}
+        isEmpty={groups.length === 0}
+        error={error}
+        loadingVariant="spinner"
+        loadingText="검색 중..."
+        emptyText="검색 결과가 없습니다."
+        defaultErrorText="그룹 검색에 실패했습니다."
+        className={styles.status}
+      />
     );
-  }
-
-  if (groups.length === 0) {
-    return <div className={styles.status}>검색 결과가 없습니다.</div>;
   }
 
   return (
@@ -132,7 +126,9 @@ export default function GroupSearchResults({ query }: GroupSearchResultsProps) {
           onJoin={handleJoinGroup}
         />
       ))}
-      {isFetchingNextPage && <div className={styles.status}>더 불러오는 중...</div>}
+      {isFetchingNextPage ? (
+        <InlineLoading text="더 불러오는 중..." className={styles.status} />
+      ) : null}
       {hasMore && !isFetchingNextPage && (
         <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
       )}

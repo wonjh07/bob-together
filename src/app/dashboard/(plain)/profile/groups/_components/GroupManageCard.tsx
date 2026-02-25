@@ -43,6 +43,22 @@ export default function GroupManageCard({
   const dateText = group.isOwner
     ? formatDateDot(group.createdAt)
     : formatDateDot(group.joinedAt);
+  const menuItems = group.isOwner
+    ? [
+        {
+          key: 'manage-members',
+          label: '멤버 관리',
+          href: `/dashboard/profile/groups/${group.groupId}/members`,
+        },
+      ]
+    : [
+        {
+          key: 'leave',
+          label: isLeaving ? '탈퇴 중...' : '그룹 탈퇴',
+          danger: true,
+          onClick: () => onLeaveGroup(group.groupId),
+        },
+      ];
 
   return (
     <article className={styles.card}>
@@ -54,14 +70,7 @@ export default function GroupManageCard({
           ariaLabel="그룹 메뉴"
           onToggle={() => onToggleMenu(group.groupId)}
           onClose={onCloseMenu}
-          items={[
-            {
-              key: 'leave',
-              label: isLeaving ? '탈퇴 중...' : '그룹 탈퇴',
-              danger: true,
-              onClick: () => onLeaveGroup(group.groupId),
-            },
-          ]}
+          items={menuItems}
         />
       </div>
 

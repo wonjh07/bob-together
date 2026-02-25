@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { CreateAppointmentProvider } from '@/app/dashboard/(plain)/appointments/create/providers';
+import PlainTopNav from '@/components/ui/PlainTopNav';
 import { createMyGroupsQueryOptions } from '@/libs/query/groupQueries';
 import { getDefaultDateTimeValues } from '@/utils/dateTime';
 
@@ -16,12 +17,10 @@ import { DateTimeStep } from './_components/DateTimeStep';
 import { GroupStep } from './_components/GroupStep';
 import { PlaceStep } from './_components/PlaceStep';
 import { TitleStep } from './_components/TitleStep';
-import { formContainer, movebackContainer } from './MultiStepFormClient.css';
+import { formContainer } from './MultiStepFormClient.css';
 import { appointmentCreateFormSchema } from './types';
 
 import type { CreateAppointmentForm } from './types';
-
-import { movebackButton } from '@/components/ui/BackButton.css';
 
 type Step = 'group' | 'title' | 'datetime' | 'place' | 'confirm' | 'complete';
 
@@ -59,25 +58,64 @@ function MultiStepFormClientContent() {
     if (step === 'confirm') setStep('place');
   };
 
+  const handleNavNext = async () => {
+    if (step === 'group') {
+      const groupId = methods.getValues('groupId');
+      if (!groupId) {
+        methods.setError('groupId', { message: '그룹을 선택해주세요.' });
+        return;
+      }
+      methods.clearErrors('groupId');
+      setStep('title');
+      return;
+    }
+
+    if (step === 'title') {
+      const isValid = await methods.trigger('title');
+      if (!isValid) return;
+      setStep('datetime');
+      return;
+    }
+
+    if (step === 'datetime') {
+      const isValid = await methods.trigger(['date', 'startTime', 'endTime']);
+      if (!isValid) return;
+      setStep('place');
+      return;
+    }
+
+    if (step === 'place') {
+      const place = methods.getValues('place');
+      if (!place) {
+        methods.setError('place', { message: '장소를 선택해주세요.' });
+        return;
+      }
+      methods.clearErrors('place');
+      setStep('confirm');
+    }
+  };
+
   return (
     <FormProvider {...methods}>
-      {step !== 'complete' && (
-        <div className={movebackContainer}>
-          <button className={movebackButton} onClick={goBack} type="button">
-            &lt;
-          </button>
-        </div>
-      )}
+      {step !== 'complete' ? (
+        <PlainTopNav
+          title="새 약속 만들기"
+          onBack={goBack}
+          rightLabel="다음"
+          onRightAction={() => {
+            void handleNavNext();
+          }}
+          rightHidden={step === 'confirm'}
+        />
+      ) : null}
       <div className={formContainer}>
-        {step === 'group' && <GroupStep onNext={() => setStep('title')} />}
+        {step === 'group' && <GroupStep />}
 
-        {step === 'title' && <TitleStep onNext={() => setStep('datetime')} />}
+        {step === 'title' && <TitleStep />}
 
-        {step === 'datetime' && (
-          <DateTimeStep onNext={() => setStep('place')} />
-        )}
+        {step === 'datetime' && <DateTimeStep />}
 
-        {step === 'place' && <PlaceStep onNext={() => setStep('confirm')} />}
+        {step === 'place' && <PlaceStep />}
 
         {step === 'confirm' && (
           <ConfirmStep

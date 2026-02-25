@@ -34,12 +34,12 @@ export default function GroupEntryPage() {
         </div>
         <div className={buttonStack}>
           <Link
-            href="/group/join"
+            href="/dashboard/profile/groups/find"
             className={`${buttonBase} ${primaryButton} ${linkButton}`}>
             그룹 가입하기
           </Link>
           <Link
-            href="/group/create"
+            href="/dashboard/profile/groups/create"
             className={`${buttonBase} ${secondaryButton} ${linkButton}`}>
             그룹 생성하기
           </Link>

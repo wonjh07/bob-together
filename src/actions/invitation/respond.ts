@@ -90,6 +90,25 @@ export async function respondToInvitationAction(input: {
         return actionError('invalid-invitation', '유효하지 않은 약속 초대입니다.');
       }
 
+      const { data: groupMembership, error: groupMembershipError } =
+        await supabase
+          .from('group_members')
+          .select('user_id')
+          .eq('group_id', invitation.group_id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (groupMembershipError) {
+        return actionError('server-error', '초대 수락 권한 확인 중 오류가 발생했습니다.');
+      }
+
+      if (!groupMembership) {
+        return actionError(
+          'forbidden',
+          '그룹 멤버가 아니라 약속 초대를 수락할 수 없습니다. 그룹 초대를 먼저 수락해주세요.',
+        );
+      }
+
       const { data: appointment, error: appointmentError } = await supabase
         .from('appointments')
         .select('status, ends_at')

@@ -1,4 +1,4 @@
-import { style, keyframes } from '@vanilla-extract/css';
+import { style } from '@vanilla-extract/css';
 
 import { vars } from '@/styles/theme.css';
 
@@ -58,25 +58,11 @@ export const emptyDescription = style({
   color: vars.color.subText,
 });
 
-const spin = keyframes({
-  '0%': { transform: 'rotate(0deg)' },
-  '100%': { transform: 'rotate(360deg)' },
-});
-
 export const loadingContainer = style({
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
   padding: '24px',
-});
-
-export const loadingSpinner = style({
-  width: '32px',
-  height: '32px',
-  border: `3px solid ${vars.color.stroke}`,
-  borderTopColor: vars.color.main,
-  borderRadius: '50%',
-  animation: `${spin} 0.8s linear infinite`,
 });
 
 export const loadMoreTrigger = style({

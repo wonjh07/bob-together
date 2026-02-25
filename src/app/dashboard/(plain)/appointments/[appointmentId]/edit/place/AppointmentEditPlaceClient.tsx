@@ -3,10 +3,11 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import PlainTopNav from '@/components/ui/PlainTopNav';
+import SearchInput from '@/components/ui/SearchInput';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
 import { usePlaceSearch } from '@/hooks/usePlaceSearch';
 
-import AppointmentEditPlaceTopNav from './_components/AppointmentEditPlaceTopNav';
 import * as styles from './page.css';
 
 import type { PlaceSummary } from '@/actions/place';
@@ -74,7 +75,7 @@ export default function AppointmentEditPlaceClient({
 
   return (
     <div className={styles.page}>
-      <AppointmentEditPlaceTopNav />
+      <PlainTopNav title="장소 검색" rightHidden />
       <div className={styles.content}>
         <div className={styles.locationRow}>
           <div className={styles.locationTitle}>현재 위치 사용</div>
@@ -90,19 +91,15 @@ export default function AppointmentEditPlaceClient({
           {locationError || errorMessage || ''}
         </div>
 
-        <form className={styles.searchRow} onSubmit={handlePlaceSearchSubmit}>
-          <input
-            className={styles.underlineInput}
+        <form className={styles.searchForm} onSubmit={handlePlaceSearchSubmit}>
+          <SearchInput
             value={placeQuery}
-            onChange={(event) => {
-              setPlaceQuery(event.target.value);
+            onValueChange={(value) => {
+              setPlaceQuery(value);
               setIsPlaceSearched(false);
             }}
             placeholder="장소를 검색하세요"
           />
-          <button type="submit" className={styles.searchButton}>
-            검색
-          </button>
         </form>
 
         <div className={styles.results}>
