@@ -7,6 +7,11 @@ import { appointmentCreateSchema } from '@/schemas/appointment';
 import type { CreateAppointmentResult } from './types';
 import type { AppointmentCreateInput } from '@/schemas/appointment';
 
+interface CreateAppointmentRpcRow {
+  appointment_id: string;
+  place_id: string;
+}
+
 export async function createAppointmentAction(
   params: AppointmentCreateInput,
 ): Promise<CreateAppointmentResult> {
@@ -57,84 +62,43 @@ export async function createAppointmentAction(
     resolvedGroupId = groupData.group_id;
   }
 
-  const { data: placeData, error: placeError } = await supabase
-    .from('places')
-    .upsert(
-      {
-        kakao_id: place.kakaoId,
-        name: place.name,
-        address: place.address,
-        category: place.category || '',
-        latitude: place.latitude,
-        longitude: place.longitude,
-      },
-      { onConflict: 'kakao_id' },
-    )
-    .select('place_id')
-    .single();
+  const createAppointmentRpc = 'create_appointment_with_owner_member' as never;
+  const createAppointmentParams = {
+    p_user_id: user.id,
+    p_group_id: resolvedGroupId,
+    p_title: title,
+    p_start_at: startAt.toISOString(),
+    p_ends_at: endsAt.toISOString(),
+    p_place_kakao_id: place.kakaoId,
+    p_place_name: place.name,
+    p_place_address: place.address,
+    p_place_category: place.category || '',
+    p_place_latitude: place.latitude,
+    p_place_longitude: place.longitude,
+  } as never;
+  const { data, error } = await supabase.rpc(
+    createAppointmentRpc,
+    createAppointmentParams,
+  );
 
-  if (placeError || !placeData) {
-    console.error('[createAppointmentAction] place upsert failed', {
-      message: placeError?.message,
-      code: placeError?.code,
-      details: placeError?.details,
-      hint: placeError?.hint,
-      kakaoId: place.kakaoId,
+  const row = ((data as CreateAppointmentRpcRow[] | null) ?? [])[0] ?? null;
+  if (error || !row) {
+    console.error('[createAppointmentAction] create transaction rpc failed', {
+      message: error?.message,
+      code: error?.code,
+      details: error?.details,
+      hint: error?.hint,
+      userId: user.id,
       groupId: resolvedGroupId,
+      placeKakaoId: place.kakaoId,
     });
-    return actionError('missing-place', '장소 정보를 저장할 수 없습니다.');
-  }
 
-  const { data: appointmentData, error: appointmentError } = await supabase
-    .from('appointments')
-    .insert({
-      title,
-      creator_id: user.id,
-      group_id: resolvedGroupId,
-      start_at: startAt.toISOString(),
-      ends_at: endsAt.toISOString(),
-      place_id: placeData.place_id,
-      status: 'pending',
-    })
-    .select('appointment_id')
-    .single();
+    if (error?.code === '42501') {
+      return actionError('forbidden', '약속 생성 권한이 없습니다.');
+    }
 
-  if (appointmentError || !appointmentData) {
-    console.error('[createAppointmentAction] appointment insert failed', {
-      message: appointmentError?.message,
-      code: appointmentError?.code,
-      details: appointmentError?.details,
-      hint: appointmentError?.hint,
-      groupId: resolvedGroupId,
-      placeId: placeData?.place_id,
-    });
     return actionError('server-error', '약속 생성 중 오류가 발생했습니다.');
   }
 
-  const { error: memberError } = await supabase
-    .from('appointment_members')
-    .insert({
-      appointment_id: appointmentData.appointment_id,
-      user_id: user.id,
-      role: 'owner',
-    });
-
-  if (memberError) {
-    console.error(
-      '[createAppointmentAction] appointment member insert failed',
-      {
-        message: memberError?.message,
-        code: memberError?.code,
-        details: memberError?.details,
-        hint: memberError?.hint,
-        appointmentId: appointmentData.appointment_id,
-      },
-    );
-    return actionError(
-      'server-error',
-      '약속 멤버 등록 중 오류가 발생했습니다.',
-    );
-  }
-
-  return actionSuccess({ appointmentId: appointmentData.appointment_id });
+  return actionSuccess({ appointmentId: row.appointment_id });
 }

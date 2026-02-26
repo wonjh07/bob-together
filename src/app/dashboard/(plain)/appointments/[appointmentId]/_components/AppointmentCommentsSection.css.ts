@@ -102,6 +102,22 @@ export const list = style({
   gap: '18px',
 });
 
+export const loadMoreButton = style({
+  alignSelf: 'center',
+  border: 'none',
+  background: 'transparent',
+  color: vars.color.subText,
+  fontSize: vars.fontSize.subText,
+  fontWeight: vars.fontWeight.semibold,
+  cursor: 'pointer',
+  selectors: {
+    '&:disabled': {
+      opacity: 0.6,
+      cursor: 'not-allowed',
+    },
+  },
+});
+
 export const card = style({
   display: 'flex',
   justifyContent: 'space-between',

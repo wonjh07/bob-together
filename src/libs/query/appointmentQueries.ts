@@ -11,12 +11,15 @@ import {
   searchAppointmentsByTitleAction,
 } from '@/actions/appointment';
 import { appointmentKeys } from '@/libs/query/appointmentKeys';
+import { type QueryScope } from '@/libs/query/queryScope';
 
 import type {
   AppointmentCommentItem,
+  AppointmentCommentsCursor,
   AppointmentDetailItem,
   AppointmentHistoryCursor,
   AppointmentHistoryItem,
+  AppointmentListCursor,
   ReviewableAppointmentItem,
   ReviewableAppointmentsCursor,
   AppointmentReviewTargetItem,
@@ -36,11 +39,12 @@ export const APPOINTMENT_LIST_LIMIT = 10;
 
 export type AppointmentPage = {
   appointments: AppointmentListItem[];
-  nextCursor: string | null;
+  nextCursor: AppointmentListCursor | null;
 };
 
 const APPOINTMENT_SEARCH_LIMIT = 10;
 const APPOINTMENT_HISTORY_LIMIT = 10;
+const APPOINTMENT_COMMENTS_LIMIT = 20;
 const MY_COMMENT_LIST_LIMIT = 10;
 const MY_REVIEW_LIST_LIMIT = 10;
 const REVIEWABLE_APPOINTMENT_LIST_LIMIT = 6;
@@ -92,10 +96,11 @@ export type AppointmentReviewTargetData = {
   target: AppointmentReviewTargetItem;
 };
 
-export type AppointmentCommentsData = {
+export type AppointmentCommentsPage = {
   comments: AppointmentCommentItem[];
   commentCount: number;
-  currentUserId: string | null;
+  nextCursor: AppointmentCommentsCursor | null;
+  currentUserId: string;
 };
 
 export type AppointmentInvitationStateData = {
@@ -109,12 +114,21 @@ export function createAppointmentListQueryOptions(
   groupId: string | null,
   period: PeriodFilter,
   type: TypeFilter,
+  scope?: QueryScope,
 ) {
   return {
-    queryKey: appointmentKeys.list(groupId, period, type) as AppointmentQueryKey,
+    queryKey: appointmentKeys.list(
+      groupId,
+      period,
+      type,
+      scope,
+    ) as AppointmentQueryKey,
     queryFn: async ({
       pageParam,
-    }: QueryFunctionContext<AppointmentQueryKey, string | null>) => {
+    }: QueryFunctionContext<
+      AppointmentQueryKey,
+      AppointmentListCursor | null
+    >) => {
       if (!groupId) {
         return { appointments: [], nextCursor: null };
       }
@@ -137,14 +151,17 @@ export function createAppointmentListQueryOptions(
 
       return result.data;
     },
-    initialPageParam: null as string | null,
+    initialPageParam: null as AppointmentListCursor | null,
     getNextPageParam: (lastPage: AppointmentPage) => lastPage.nextCursor ?? null,
   };
 }
 
-export function createAppointmentSearchQueryOptions(query: string) {
+export function createAppointmentSearchQueryOptions(
+  query: string,
+  scope?: QueryScope,
+) {
   return {
-    queryKey: appointmentKeys.search(query) as AppointmentSearchQueryKey,
+    queryKey: appointmentKeys.search(query, scope) as AppointmentSearchQueryKey,
     queryFn: async ({
       pageParam,
     }: QueryFunctionContext<
@@ -177,9 +194,9 @@ export function createAppointmentSearchQueryOptions(query: string) {
   };
 }
 
-export function createAppointmentHistoryQueryOptions() {
+export function createAppointmentHistoryQueryOptions(scope?: QueryScope) {
   return {
-    queryKey: appointmentKeys.history() as AppointmentHistoryQueryKey,
+    queryKey: appointmentKeys.history(scope) as AppointmentHistoryQueryKey,
     queryFn: async ({
       pageParam,
     }: QueryFunctionContext<
@@ -207,9 +224,9 @@ export function createAppointmentHistoryQueryOptions() {
   };
 }
 
-export function createMyReviewsQueryOptions() {
+export function createMyReviewsQueryOptions(scope?: QueryScope) {
   return {
-    queryKey: appointmentKeys.myReviews() as MyReviewListQueryKey,
+    queryKey: appointmentKeys.myReviews(scope) as MyReviewListQueryKey,
     queryFn: async ({
       pageParam,
     }: QueryFunctionContext<MyReviewListQueryKey, MyReviewCursor | null>) => {
@@ -233,9 +250,9 @@ export function createMyReviewsQueryOptions() {
   };
 }
 
-export function createMyCommentsQueryOptions() {
+export function createMyCommentsQueryOptions(scope?: QueryScope) {
   return {
-    queryKey: appointmentKeys.myComments() as MyCommentsQueryKey,
+    queryKey: appointmentKeys.myComments(scope) as MyCommentsQueryKey,
     queryFn: async ({
       pageParam,
     }: QueryFunctionContext<MyCommentsQueryKey, MyCommentCursor | null>) => {
@@ -259,9 +276,9 @@ export function createMyCommentsQueryOptions() {
   };
 }
 
-export function createReviewableAppointmentsQueryOptions() {
+export function createReviewableAppointmentsQueryOptions(scope?: QueryScope) {
   return {
-    queryKey: appointmentKeys.reviewable() as ReviewableAppointmentsQueryKey,
+    queryKey: appointmentKeys.reviewable(scope) as ReviewableAppointmentsQueryKey,
     queryFn: async ({
       pageParam,
     }: QueryFunctionContext<
@@ -289,10 +306,14 @@ export function createReviewableAppointmentsQueryOptions() {
   };
 }
 
-export function createAppointmentReviewTargetQueryOptions(appointmentId: string) {
+export function createAppointmentReviewTargetQueryOptions(
+  appointmentId: string,
+  scope?: QueryScope,
+) {
   return {
     queryKey: appointmentKeys.reviewTarget(
       appointmentId,
+      scope,
     ) as AppointmentReviewTargetQueryKey,
     queryFn: async (_: QueryFunctionContext<AppointmentReviewTargetQueryKey>) => {
       const result = await getAppointmentReviewTargetAction(appointmentId);
@@ -310,9 +331,15 @@ export function createAppointmentReviewTargetQueryOptions(appointmentId: string)
   };
 }
 
-export function createAppointmentDetailQueryOptions(appointmentId: string) {
+export function createAppointmentDetailQueryOptions(
+  appointmentId: string,
+  scope?: QueryScope,
+) {
   return {
-    queryKey: appointmentKeys.detail(appointmentId) as AppointmentDetailQueryKey,
+    queryKey: appointmentKeys.detail(
+      appointmentId,
+      scope,
+    ) as AppointmentDetailQueryKey,
     queryFn: async (_: QueryFunctionContext<AppointmentDetailQueryKey>) => {
       const result = await getAppointmentDetailAction(appointmentId);
 
@@ -329,11 +356,26 @@ export function createAppointmentDetailQueryOptions(appointmentId: string) {
   };
 }
 
-export function createAppointmentCommentsQueryOptions(appointmentId: string) {
+export function createAppointmentCommentsQueryOptions(
+  appointmentId: string,
+  scope?: QueryScope,
+) {
   return {
-    queryKey: appointmentKeys.comments(appointmentId) as AppointmentCommentsQueryKey,
-    queryFn: async (_: QueryFunctionContext<AppointmentCommentsQueryKey>) => {
-      const result = await getAppointmentCommentsAction(appointmentId);
+    queryKey: appointmentKeys.comments(
+      appointmentId,
+      scope,
+    ) as AppointmentCommentsQueryKey,
+    queryFn: async ({
+      pageParam,
+    }: QueryFunctionContext<
+      AppointmentCommentsQueryKey,
+      AppointmentCommentsCursor | null
+    >) => {
+      const result = await getAppointmentCommentsAction({
+        appointmentId,
+        cursor: pageParam ?? undefined,
+        limit: APPOINTMENT_COMMENTS_LIMIT,
+      });
 
       if (!result.ok || !result.data) {
         throw new Error(
@@ -345,15 +387,20 @@ export function createAppointmentCommentsQueryOptions(appointmentId: string) {
 
       return result.data;
     },
+    initialPageParam: null as AppointmentCommentsCursor | null,
+    getNextPageParam: (lastPage: AppointmentCommentsPage) =>
+      lastPage.nextCursor ?? null,
   };
 }
 
 export function createAppointmentInvitationStateQueryOptions(
   appointmentId: string,
+  scope?: QueryScope,
 ) {
   return {
     queryKey: appointmentKeys.invitationState(
       appointmentId,
+      scope,
     ) as AppointmentInvitationStateQueryKey,
     queryFn: async (_: QueryFunctionContext<AppointmentInvitationStateQueryKey>) => {
       const result = await getAppointmentInvitationStateAction(appointmentId);

@@ -1,83 +1,60 @@
 'use server';
 
-import { createSupabaseServerClient } from '@/libs/supabase/server';
+import { requireUser } from '@/actions/_common/guards';
+import { actionError, actionSuccess } from '@/actions/_common/result';
 
 import type { JoinGroupResult } from './_shared';
+
+interface JoinGroupRpcRow {
+  ok: boolean;
+  error_code: string | null;
+  group_id: string | null;
+}
 
 export async function joinGroupAction(
   groupId: string,
 ): Promise<JoinGroupResult> {
   if (!groupId) {
-    return {
-      ok: false,
-      error: 'invalid-format',
-      message: '그룹 정보가 필요합니다.',
-    };
+    return actionError('invalid-format', '그룹 정보가 필요합니다.');
   }
 
-  const supabase = createSupabaseServerClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const auth = await requireUser();
+  if (!auth.ok) {
+    return auth;
+  }
+  const { supabase, user } = auth;
 
-  if (userError || !userData.user) {
-    return {
-      ok: false,
-      error: 'unauthorized',
-      message: '로그인이 필요합니다.',
-    };
+  const joinGroupRpc = 'join_group_transactional' as never;
+  const joinGroupRpcParams = {
+    p_user_id: user.id,
+    p_group_id: groupId,
+  } as never;
+  const { data, error } = await supabase.rpc(joinGroupRpc, joinGroupRpcParams);
+
+  if (error) {
+    if (error.code === '42501') {
+      return actionError('forbidden', '그룹 가입 권한이 없습니다.');
+    }
+    return actionError('server-error', '그룹 가입 중 오류가 발생했습니다.');
   }
 
-  const { data: groupData, error: groupError } = await supabase
-    .from('groups')
-    .select('group_id')
-    .eq('group_id', groupId)
-    .maybeSingle();
-
-  if (groupError || !groupData) {
-    return {
-      ok: false,
-      error: 'group-not-found',
-      message: '그룹을 찾을 수 없습니다.',
-    };
+  const row = ((data as JoinGroupRpcRow[] | null) ?? [])[0] ?? null;
+  if (!row) {
+    return actionError('server-error', '그룹 가입 중 오류가 발생했습니다.');
   }
 
-  const { data: memberData, error: memberCheckError } = await supabase
-    .from('group_members')
-    .select('group_id')
-    .eq('group_id', groupId)
-    .eq('user_id', userData.user.id)
-    .maybeSingle();
-
-  if (memberCheckError) {
-    return {
-      ok: false,
-      error: 'server-error',
-      message: '그룹 상태를 확인할 수 없습니다.',
-    };
+  if (!row.ok) {
+    switch (row.error_code) {
+      case 'group-not-found':
+        return actionError('group-not-found', '그룹을 찾을 수 없습니다.');
+      case 'invalid-format':
+        return actionError('invalid-format', '그룹 정보가 필요합니다.');
+      case 'forbidden':
+        return actionError('forbidden', '그룹 가입 권한이 없습니다.');
+      default:
+        return actionError('server-error', '그룹 가입 중 오류가 발생했습니다.');
+    }
   }
 
-  if (memberData) {
-    return {
-      ok: true,
-      data: { groupId },
-    };
-  }
-
-  const { error: joinError } = await supabase.from('group_members').insert({
-    group_id: groupId,
-    user_id: userData.user.id,
-    role: 'member',
-  });
-
-  if (joinError) {
-    return {
-      ok: false,
-      error: 'server-error',
-      message: '그룹 가입 중 오류가 발생했습니다.',
-    };
-  }
-
-  return {
-    ok: true,
-    data: { groupId },
-  };
+  return actionSuccess({ groupId: row.group_id ?? groupId });
 }

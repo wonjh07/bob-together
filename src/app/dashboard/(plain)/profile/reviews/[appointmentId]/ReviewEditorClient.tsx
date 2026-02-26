@@ -13,6 +13,7 @@ import { createAppointmentReviewTargetQueryOptions } from '@/libs/query/appointm
 import {
   invalidateReviewMutationQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 import { extractDistrict } from '@/utils/address';
 import { formatDateDot } from '@/utils/dateFormat';
 
@@ -27,11 +28,12 @@ export default function ReviewEditorClient({
 }: ReviewEditorClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const queryScope = useQueryScope();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const initializedAppointmentIdRef = useRef<string | null>(null);
 
   const reviewTargetQuery = useQuery({
-    ...createAppointmentReviewTargetQueryOptions(appointmentId),
+    ...createAppointmentReviewTargetQueryOptions(appointmentId, queryScope),
     enabled: Boolean(appointmentId),
   });
 

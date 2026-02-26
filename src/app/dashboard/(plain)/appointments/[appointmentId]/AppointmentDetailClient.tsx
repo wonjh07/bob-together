@@ -14,6 +14,7 @@ import UserIdentityInline from '@/components/ui/UserIdentityInline';
 import {
   createAppointmentDetailQueryOptions,
 } from '@/libs/query/appointmentQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 import { extractDistrict } from '@/utils/address';
 import {
   formatDateDot,
@@ -33,7 +34,10 @@ export default function AppointmentDetailClient({
   appointmentId,
 }: AppointmentDetailClientProps) {
   const router = useRouter();
-  const detailQuery = useQuery(createAppointmentDetailQueryOptions(appointmentId));
+  const queryScope = useQueryScope();
+  const detailQuery = useQuery(
+    createAppointmentDetailQueryOptions(appointmentId, queryScope),
+  );
 
   if (detailQuery.isLoading) {
     return (

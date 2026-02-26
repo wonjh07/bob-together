@@ -8,6 +8,7 @@ import {
   type GroupSearchItem,
 } from '@/actions/group';
 import { groupKeys } from '@/libs/query/groupKeys';
+import { type QueryScope } from '@/libs/query/queryScope';
 
 import type { QueryFunctionContext } from '@tanstack/react-query';
 
@@ -28,9 +29,9 @@ export type GroupManagePage = {
   nextCursor: GroupManageCursor | null;
 };
 
-export function createMyGroupsQueryOptions() {
+export function createMyGroupsQueryOptions(scope?: QueryScope) {
   return {
-    queryKey: groupKeys.myGroups(),
+    queryKey: groupKeys.myGroups(scope),
     queryFn: async (_: QueryFunctionContext<MyGroupsQueryKey>) => {
       const result = await getMyGroupsAction();
 
@@ -47,9 +48,9 @@ export function createMyGroupsQueryOptions() {
   };
 }
 
-export function createGroupManageQueryOptions() {
+export function createGroupManageQueryOptions(scope?: QueryScope) {
   return {
-    queryKey: groupKeys.manage() as GroupManageQueryKey,
+    queryKey: groupKeys.manage(scope) as GroupManageQueryKey,
     queryFn: async ({
       pageParam,
     }: QueryFunctionContext<GroupManageQueryKey, GroupManageCursor | null>) => {
@@ -73,9 +74,12 @@ export function createGroupManageQueryOptions() {
   };
 }
 
-export function createGroupSearchQueryOptions(query: string) {
+export function createGroupSearchQueryOptions(
+  query: string,
+  scope?: QueryScope,
+) {
   return {
-    queryKey: groupKeys.search(query) as GroupSearchQueryKey,
+    queryKey: groupKeys.search(query, scope) as GroupSearchQueryKey,
     queryFn: async ({
       pageParam,
     }: QueryFunctionContext<GroupSearchQueryKey, GroupSearchCursor | null>) => {

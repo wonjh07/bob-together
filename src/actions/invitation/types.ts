@@ -1,7 +1,8 @@
 import type { ActionResult, CommonErrorCode } from '@/types/result';
 
 export interface InvitationCursor {
-  offset: number;
+  createdTime: string;
+  invitationId: string;
 }
 
 export interface InvitationListItem {

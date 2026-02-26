@@ -1,5 +1,81 @@
 # DECISIONS
 
+## React Query 사용자 스코프 키 도입 (2026-02-26)
+- Decision: React Query 키에 `query scope`(예: `user:{userId}`)를 선택적으로 부여해 사용자 단위로 캐시를 분리한다.
+- Alternatives: 인증 이벤트에서 전역 `queryClient.clear()`에만 의존
+- Reason: 로그인/계정 전환/새로고침 경로에서 쿼리 키 자체가 분리되도록 만들어 교차 계정 캐시 노출 리스크를 구조적으로 줄이기 위함
+- Scope:
+  - `src/libs/query/queryScope.ts`
+  - `src/provider/query-scope-provider.tsx`
+  - `src/app/providers.tsx`
+  - `src/app/layout.tsx`
+  - `src/libs/query/*Keys.ts`, `src/libs/query/*Queries.ts`
+  - dashboard/profile/search/detail 관련 query option 호출부 및 SSR prefetch 페이지
+
+## Auth 이벤트 캐시 초기화 조건 보정 (2026-02-26)
+- Decision: 전역 Query 캐시 초기화는 `SIGNED_OUT`는 즉시 수행하고, `SIGNED_IN`은 초기 세션 복원이 아닌 **실제 계정 전환 시점**에만 수행한다.
+- Alternatives: 기존처럼 `SIGNED_IN`/`SIGNED_OUT` 모두 무조건 `queryClient.clear()`
+- Reason: 새로고침/초기 세션 복원에서도 `SIGNED_IN`이 발생할 수 있어, 무조건 clear 시 무한스크롤 페이지가 빈 상태로 보이는 회귀가 발생하기 때문
+- Scope: `src/app/providers.tsx`
+
+## 약속 초대 전송 RPC 통합 (2026-02-26)
+- Decision: `sendAppointmentInvitationAction`의 다중 검증/insert 흐름을 RPC(`send_appointment_invitation_transactional`) 단일 호출로 통합한다.
+- Alternatives: 기존 액션에서 약속/멤버/그룹멤버/초대 중복을 순차 다중 쿼리로 검증 후 insert
+- Reason: 초대 전송 경로의 권한/중복/상태 검증을 DB 함수에 고정해 원자성과 일관성을 높이고, 액션 코드 복잡도를 줄이기 위함
+- Scope: `supabase/migrations/20260226018000_send_appointment_invitation_transaction_rpc.sql`, `src/actions/appointment/[appointmentId]/members/invite.ts`, `src/actions/appointment/[appointmentId]/members/invite.test.ts`
+
+## 3회 이상 DB 호출 액션 RPC 통합 (2026-02-26)
+- Decision: 3회 이상 DB 호출을 수행하던 그룹/약속/리뷰 액션을 액션당 1개 RPC 호출 + 결과 매핑 구조로 전환한다.
+- Alternatives: 기존 액션에서 순차 다중 쿼리(검증/검색/집계/쓰기) 유지
+- Reason: 액션 책임을 최소화(입력검증/인증/단일 RPC 호출/매핑)하고, 중간 단계 실패에 따른 상태 불일치와 성능 편차를 줄이기 위함
+- Scope:
+  - Migrations:
+    - `supabase/migrations/20260226019000_join_group_transaction_rpc.sql`
+    - `supabase/migrations/20260226020000_create_group_transaction_rpc.sql`
+    - `supabase/migrations/20260226021000_send_group_invitation_transaction_rpc.sql`
+    - `supabase/migrations/20260226022000_search_group_invitable_users_transaction_rpc.sql`
+    - `supabase/migrations/20260226023000_search_appointment_invitable_users_transaction_rpc.sql`
+    - `supabase/migrations/20260226024000_join_appointment_transaction_rpc.sql`
+    - `supabase/migrations/20260226025000_get_appointment_invitation_state_transaction_rpc.sql`
+    - `supabase/migrations/20260226026000_update_appointment_transaction_rpc.sql`
+    - `supabase/migrations/20260226027000_get_appointment_review_target_transaction_rpc.sql`
+    - `supabase/migrations/20260226028000_submit_place_review_transaction_rpc.sql`
+  - Actions:
+    - `src/actions/group/joinGroupAction.ts`
+    - `src/actions/group/createGroupAction.ts`
+    - `src/actions/group/sendGroupInvitationAction.ts`
+    - `src/actions/group/searchGroupInvitableUsersAction.ts`
+    - `src/actions/appointment/[appointmentId]/members/searchInvitees.ts`
+    - `src/actions/appointment/[appointmentId]/members/join.ts`
+    - `src/actions/appointment/[appointmentId]/members/getInvitationState.ts`
+    - `src/actions/appointment/[appointmentId]/update.ts`
+    - `src/actions/appointment/review/getTarget.ts`
+    - `src/actions/appointment/review/submit.ts`
+
+## 받은 초대 목록 조회 RPC 통합 (2026-02-26)
+- Decision: `listReceivedInvitationsAction` 조회를 액션 내 조인/커서 조건 쿼리에서 RPC(`list_received_invitations_with_cursor`) 호출로 통합한다.
+- Alternatives: 기존 액션에서 `invitations + users/groups/appointments` 조인과 키셋 커서 조건 문자열(`or`)을 직접 조합
+- Reason: 커서 조건/정렬/제한(`limit + 1`) 규칙을 DB 함수에 고정해 페이지네이션 안정성을 높이고, 액션 코드 복잡도를 줄이기 위함
+- Scope: `supabase/migrations/20260226017000_list_received_invitations_with_cursor_rpc.sql`, `src/actions/invitation/listReceived.ts`, `src/actions/invitation/listReceived.test.ts`
+
+## 내 댓글 조회 RPC 통합 (2026-02-26)
+- Decision: `listMyCommentsAction` 조회를 액션 내 조인/커서 조건 쿼리에서 RPC(`list_my_comments_with_cursor`) 호출로 통합한다.
+- Alternatives: 기존 액션에서 `appointment_comments + appointments` 조인과 키셋 커서 조건 문자열(`or`)을 직접 조합
+- Reason: 커서 조건/정렬/제한(`limit + 1`) 규칙을 DB 함수에 고정해 페이지네이션 안정성을 높이고, 액션 코드 복잡도를 줄이기 위함
+- Scope: `supabase/migrations/20260226016000_list_my_comments_with_cursor_rpc.sql`, `src/actions/appointment/comment/listMine.ts`, `src/actions/appointment/comment/listMine.test.ts`
+
+## 약속 생성 원자성 보장 RPC 전환 (2026-02-26)
+- Decision: 약속 생성 흐름을 앱 단의 다중 쿼리(`places upsert` → `appointments insert` → `appointment_members insert`)에서 DB RPC 단일 트랜잭션(`create_appointment_with_owner_member`) 호출로 전환한다.
+- Alternatives: 현재 순차 쿼리 유지 + 실패 시 보상 삭제(수동 rollback)
+- Reason: 중간 단계 실패 시 owner 멤버가 없는 orphan appointment가 남는 일관성 위험을 제거하고, 생성 경로를 원자적으로 보장하기 위함
+- Scope: `supabase/migrations/20260226014000_create_appointment_with_owner_member_rpc.sql`, `src/actions/appointment/create.ts`
+
+## 초대 응답 원자성 보장 RPC 전환 (2026-02-26)
+- Decision: 초대 수락/거절 흐름을 앱 단의 다중 쿼리(멤버 insert + 초대 상태 update)에서 DB RPC 단일 트랜잭션(`respond_to_invitation_transactional`) 호출로 전환한다.
+- Alternatives: 현재 순차 쿼리 유지 + 부분 실패 시 사후 보정
+- Reason: 수락 중간 단계 실패 시 `멤버 반영됨 + 초대 pending` 불일치 상태를 제거하고, 응답 처리의 일관성을 보장하기 위함
+- Scope: `supabase/migrations/20260226015000_respond_invitation_transaction_rpc.sql`, `src/actions/invitation/respond.ts`
+
 ## Template
 - Decision:
 - Alternatives:
@@ -233,3 +309,93 @@
 - Alternatives: `GroupStep`/`TitleStep`/`DateTimeStep`/`PlaceStep`에서 `NextButton`을 유지하며 step별로 다음 이동 로직을 분산 유지
 - Reason: 네비게이션 패턴을 상단바 기준으로 통일하고, step 이동 검증 로직을 한 곳에서 관리해 중복/드리프트를 줄이기 위함
 - Scope: `src/app/dashboard/(plain)/appointments/create/MultiStepFormClient.tsx`, `src/app/dashboard/(plain)/appointments/create/_components/{GroupStep,TitleStep,DateTimeStep,PlaceStep}.tsx`, `src/app/dashboard/(plain)/appointments/create/_components/ui/NextButton.*`
+
+## 히스토리 조회 RPC 통합 (2026-02-25)
+- Decision: 프로필 히스토리 약속 조회를 다중 쿼리(`appointments` + `appointment_members` + `user_review`)에서 단일 RPC(`list_appointment_history_with_stats`) 호출로 통합한다.
+- Alternatives: 기존 액션에서 3개 쿼리를 유지하고 앱 레이어에서 집계 처리
+- Reason: 장소 리뷰 집계/내 리뷰 여부 판별을 앱에서 대량 row 처리하던 병목을 제거하고, 히스토리 페이지 요청당 DB round trip 수를 줄이기 위함
+- Scope: `supabase/migrations/20260225213000_list_appointment_history_with_stats_rpc.sql`, `src/actions/appointment/history/list.ts`, `src/actions/appointment/history/list.test.ts`
+
+## 장소 상세 조회 RPC 통합 (2026-02-25)
+- Decision: 장소 상세 조회를 `places` + `user_review` 다중 쿼리에서 단일 RPC(`get_place_detail_with_stats`) 호출로 통합한다.
+- Alternatives: 기존 액션에서 상세 조회와 리뷰 집계를 각각 조회하고 앱 레이어에서 평균/개수 계산
+- Reason: 상세 진입 시 DB 왕복 횟수와 앱 레이어 집계 비용을 줄여 응답 시간을 안정화하기 위함
+- Scope: `supabase/migrations/20260225223000_get_place_detail_with_stats_rpc.sql`, `src/actions/place.ts`, `src/actions/place.test.ts`
+
+## 초대 검색 상태 조회 범위 축소 (2026-02-25)
+- Decision: 그룹/약속 초대 검색 시 멤버/초대 상태 조회를 전체 그룹/약속 범위가 아니라 검색 후보 사용자 ID 집합 범위로 제한한다.
+- Alternatives: 기존처럼 검색마다 `group_members`/`appointment_members`/`invitations`를 전체 조회 후 앱에서 필터
+- Reason: 입력당 불필요한 row 스캔/전송을 줄여 대규모 그룹에서 검색 응답 지연을 완화하기 위함
+- Scope: `src/actions/group/searchGroupInvitableUsersAction.ts`, `src/actions/appointment/[appointmentId]/members/searchInvitees.ts`, 관련 테스트 2건
+
+## 알림 목록 페이지네이션 키셋 전환 (2026-02-25)
+- Decision: 받은 초대 목록 조회를 `offset` 커서에서 `created_time + invitation_id` 키셋 커서로 전환한다.
+- Alternatives: 기존 `offset` 기반 `range(offset, offset + limit)` 유지
+- Reason: 페이지가 깊어질수록 커지는 offset 스캔 비용을 줄이고, 알림 이력 데이터 증가 시 응답 지연을 완화하기 위함
+- Scope: `src/actions/invitation/listReceived.ts`, `src/actions/invitation/types.ts`, `src/actions/invitation/listReceived.test.ts`
+
+## 내 댓글 목록 페이지네이션 키셋 전환 (2026-02-25)
+- Decision: `listMyCommentsAction` 페이지네이션을 `offset` 커서에서 `created_at + comment_id` 키셋 커서로 전환한다.
+- Alternatives: 기존 `offset` 기반 `range(offset, offset + limit)` 유지
+- Reason: 내 댓글 데이터가 누적될 때 깊은 페이지 요청의 offset 스캔 비용을 줄여 응답 지연을 완화하기 위함
+- Scope: `src/actions/appointment/comment/listMine.ts`, `src/actions/appointment/types.ts`, `src/actions/appointment/comment/listMine.test.ts`
+
+## 장소 리뷰 목록 RPC 키셋 전환 (2026-02-25)
+- Decision: 장소 리뷰 목록 조회를 액션 내 `offset` 쿼리에서 RPC(`list_place_reviews_with_cursor`) 기반 키셋 커서(`updated_at + review_id`)로 전환한다.
+- Alternatives: 기존 `range(offset, offset + limit)` 유지
+- Reason: 리뷰가 많은 장소에서 깊은 페이지 offset 스캔 비용을 줄이고, 서버 액션의 쿼리 조합 복잡도(`or` 필터 + 커서 조건)를 DB 함수로 단순화하기 위함
+- Scope: `supabase/migrations/20260225235900_list_place_reviews_with_cursor_rpc.sql`, `src/actions/place.ts`, `src/actions/place.test.ts`
+
+## 내 리뷰 목록 RPC 키셋 전환 (2026-02-25)
+- Decision: `listMyReviewsAction` 조회를 액션 내 `offset` 쿼리에서 RPC(`list_my_reviews_with_cursor`) 기반 키셋 커서(`updated_at + review_id`)로 전환한다.
+- Alternatives: 기존 `range(offset, offset + limit)` 유지
+- Reason: 리뷰 데이터가 누적될수록 커지는 offset 스캔 비용을 줄이고, 클라이언트 페이지네이션 커서를 장소 리뷰/알림/댓글과 동일한 키셋 패턴으로 통일하기 위함
+- Scope: `supabase/migrations/20260226001000_list_my_reviews_with_cursor_rpc.sql`, `src/actions/appointment/review/listMine.ts`, `src/actions/appointment/review/listMine.test.ts`, `src/actions/appointment/types.ts`
+
+## 리뷰 가능 목록 RPC 키셋 전환 (2026-02-25)
+- Decision: `listReviewableAppointmentsAction` 조회를 `offset` 기반 RPC에서 키셋 RPC(`list_reviewable_appointments_with_stats_cursor`)로 전환한다.
+- Alternatives: 기존 `list_reviewable_appointments_with_stats(p_offset, p_limit)` 유지
+- Reason: 리뷰 대기 데이터가 누적될 때 깊은 페이지 요청의 offset 스캔 비용을 줄이고, 프로필 리뷰 영역 페이지네이션 패턴을 키셋으로 통일하기 위함
+- Scope: `supabase/migrations/20260226004000_list_reviewable_appointments_with_stats_cursor_rpc.sql`, `src/actions/appointment/review/list.ts`, `src/actions/appointment/review/list.test.ts`, `src/actions/appointment/types.ts`
+
+## 대시보드 약속 목록 커서 안정화 (2026-02-25)
+- Decision: 대시보드 약속 목록 조회 커서를 단일 `start_at`에서 복합 키셋(`start_at + appointment_id`)으로 전환한다.
+- Alternatives: 기존 `start_at` 단일 커서 유지
+- Reason: 동일 시작 시각(`start_at`)의 약속이 여러 건일 때 페이지 경계에서 누락/중복이 발생할 수 있어 정렬/커서 일관성을 보장하기 위함
+- Scope: `supabase/migrations/20260226005000_list_appointments_with_stats_cursor_rpc.sql`, `src/actions/appointment/list.ts`, `src/actions/appointment/list.test.ts`, `src/libs/query/appointmentQueries.ts`, `src/app/dashboard/_components/AppointmentList.tsx`, `src/actions/appointment/types.ts`
+
+## 프로필 히스토리 커서 안정화 (2026-02-25)
+- Decision: 프로필 히스토리 조회 커서를 `offset`에서 복합 키셋(`ends_at + appointment_id`)으로 전환한다.
+- Alternatives: 기존 `offset` 유지
+- Reason: 히스토리 데이터 증가 시 깊은 페이지 offset 스캔 비용을 줄이고, 페이지네이션 기준을 대시보드/리뷰 목록과 동일한 키셋 패턴으로 통일하기 위함
+- Scope: `supabase/migrations/20260226005500_list_appointment_history_with_stats_cursor_rpc.sql`, `src/actions/appointment/history/list.ts`, `src/actions/appointment/history/list.test.ts`, `src/actions/appointment/types.ts`
+
+## 키셋 페이지네이션 인덱스 보강 (2026-02-25)
+- Decision: 최근 전환한 키셋 페이지네이션 쿼리 패턴에 맞춰 `appointments`/`appointment_comments`/`invitations`/`user_review`에 복합(부분) 인덱스를 추가한다.
+- Alternatives: 기존 인덱스 상태 유지(쿼리 플래너에만 의존)
+- Reason: 키셋 커서 전환만으로는 대량 데이터에서 정렬+필터 비용이 남을 수 있어, 실제 실행 계획에서 인덱스 탐색을 유도해 응답 시간 편차를 줄이기 위함
+- Scope: `supabase/migrations/20260226012000_add_keyset_pagination_indexes.sql`
+
+## 인증 상태 전환 시 쿼리 캐시 전역 초기화 (2026-02-25)
+- Decision: 앱 전역 `Providers`에서 Supabase auth 상태(`SIGNED_IN`/`SIGNED_OUT`)를 구독하고, 이벤트 시 React Query 캐시를 전체 초기화한다.
+- Alternatives: 로그인/로그아웃 화면에서만 수동 `queryClient.clear()` 유지
+- Reason: 특정 화면 경로를 거치지 않는 인증 상태 변화(세션 만료/재인증/탭 간 상태 변화 등)에서도 이전 계정 캐시가 노출되지 않도록 보장하기 위함
+- Scope: `src/app/providers.tsx`
+
+## 약속 상세 댓글 목록 키셋 전환 (2026-02-25)
+- Decision: 약속 상세 댓글 조회를 전체 조회(`count exact`)에서 키셋 페이지네이션(`created_at + comment_id`) 기반 무한 스크롤 패턴으로 전환한다.
+- Alternatives: 기존 `getAppointmentCommentsAction` 단일 조회 + 상세 페이지 SSR prefetch 유지
+- Reason: 댓글 수가 많아질수록 커지는 응답/하이드레이션 payload와 브라우저 렌더 부담을 줄여 상세 페이지 초기 체감 성능을 안정화하기 위함
+- Scope: `src/actions/appointment/[appointmentId]/comments/list.ts`, `src/libs/query/appointmentQueries.ts`, `src/app/dashboard/(plain)/appointments/[appointmentId]/_components/AppointmentCommentsSection.tsx`, `src/app/dashboard/(plain)/appointments/[appointmentId]/page.tsx`, `src/actions/appointment/[appointmentId]/comments/list.test.ts`
+
+## React Query 기본 동작 안정화 (2026-02-25)
+- Decision: 전역 QueryClient 기본값을 `focus 재조회 비활성 + mount/reconnect 재조회 활성 + retry 0` 프로파일로 조정한다.
+- Alternatives: 기본값 유지(`focus` 기반 자동 재조회, query retry=1)
+- Reason: 사용 중 원치 않는 자동 재조회와 재시도로 인한 UI 흔들림/중복 토스트를 줄이고, 화면 재진입 시점에 예측 가능한 갱신으로 통일하기 위함
+- Scope: `src/libs/query/clientQueryClient.ts`
+
+## 키셋 커서 datetime 오프셋 허용 (2026-02-25)
+- Decision: 키셋 페이지네이션 커서의 datetime 스키마를 `z.string().datetime({ offset: true })`로 통일한다.
+- Alternatives: 기본 `datetime()` 유지
+- Reason: Postgres timestamptz 문자열(`+00:00` 오프셋 포함)을 기본 `datetime()`가 거부해 `유효한 커서 정보가 아닙니다.` 오류가 발생하는 문제를 방지하기 위함
+- Scope: `src/actions/appointment/review/list.ts`, `src/actions/appointment/review/listMine.ts`, `src/actions/appointment/history/list.ts`, `src/actions/appointment/comment/listMine.ts`, `src/actions/appointment/[appointmentId]/comments/list.ts`, `src/actions/invitation/listReceived.ts`, `src/actions/place.ts`

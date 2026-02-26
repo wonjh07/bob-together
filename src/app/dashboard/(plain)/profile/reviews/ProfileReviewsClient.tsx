@@ -20,13 +20,15 @@ import {
 import {
   invalidateReviewMutationQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 
 import MyReviewCard from './_components/MyReviewCard';
 import * as styles from './page.css';
 
 export default function ProfileReviewsClient() {
   const queryClient = useQueryClient();
-  const queryOptions = createMyReviewsQueryOptions();
+  const queryScope = useQueryScope();
+  const queryOptions = createMyReviewsQueryOptions(queryScope);
   const [openedMenuAppointmentId, setOpenedMenuAppointmentId] = useState<
     string | null
   >(null);

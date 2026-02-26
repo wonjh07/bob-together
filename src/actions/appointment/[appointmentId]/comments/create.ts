@@ -61,7 +61,24 @@ export async function createAppointmentCommentAction(params: {
     )
     .single();
 
-  if (insertError || !commentData) {
+  if (insertError) {
+    if (insertError.code === '42501' || insertError.code === '23503') {
+      return actionError('forbidden', '댓글 작성 권한이 없습니다.');
+    }
+
+    console.error('[createAppointmentCommentAction] insert failed', {
+      code: insertError.code,
+      message: insertError.message,
+      details: insertError.details,
+      hint: insertError.hint,
+      appointmentId,
+      userId,
+    });
+
+    return actionError('server-error', '댓글 작성 중 오류가 발생했습니다.');
+  }
+
+  if (!commentData) {
     return actionError('forbidden', '댓글 작성 권한이 없습니다.');
   }
 

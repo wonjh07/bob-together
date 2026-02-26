@@ -9,6 +9,7 @@ import {
   createAppointmentSearchQueryOptions,
   type AppointmentSearchPage,
 } from '@/libs/query/appointmentQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 import { formatDateDot, formatTimeRange24 } from '@/utils/dateFormat';
 
 import AppointmentSearchCard from './AppointmentSearchCard';
@@ -22,7 +23,11 @@ export default function AppointmentSearchResults({
   query,
 }: AppointmentSearchResultsProps) {
   const normalizedQuery = query.trim();
-  const queryOptions = createAppointmentSearchQueryOptions(normalizedQuery);
+  const queryScope = useQueryScope();
+  const queryOptions = createAppointmentSearchQueryOptions(
+    normalizedQuery,
+    queryScope,
+  );
 
   const {
     data,

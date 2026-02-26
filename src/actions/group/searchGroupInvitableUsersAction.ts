@@ -1,6 +1,7 @@
 'use server';
 
-import { createSupabaseServerClient } from '@/libs/supabase/server';
+import { requireUser } from '@/actions/_common/guards';
+import { actionError, actionSuccess } from '@/actions/_common/result';
 import { groupSearchSchema } from '@/schemas/group';
 
 import { mapUser, type SearchGroupInvitableUsersResult } from './_shared';
@@ -11,12 +12,11 @@ interface UserRow {
   nickname: string | null;
 }
 
-interface GroupMemberRow {
-  user_id: string;
-}
-
-interface PendingInvitationRow {
-  invitee_id: string;
+interface SearchGroupInvitableUsersRpcRow {
+  ok: boolean;
+  error_code: string | null;
+  users: unknown;
+  pending_invitee_ids: string[] | null;
 }
 
 export async function searchGroupInvitableUsersAction(
@@ -24,108 +24,69 @@ export async function searchGroupInvitableUsersAction(
   query: string,
 ): Promise<SearchGroupInvitableUsersResult> {
   if (!groupId) {
-    return {
-      ok: false,
-      error: 'invalid-format',
-      message: '그룹 정보가 필요합니다.',
-    };
+    return actionError('invalid-format', '그룹 정보가 필요합니다.');
   }
 
   const parsed = groupSearchSchema.safeParse(query);
 
   if (!parsed.success) {
     const firstError = parsed.error.issues[0];
-    return {
-      ok: false,
-      error: 'invalid-format',
-      message: firstError?.message || '검색어를 입력해주세요.',
-    };
+    return actionError('invalid-format', firstError?.message || '검색어를 입력해주세요.');
   }
 
-  const supabase = createSupabaseServerClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-
-  if (userError || !userData.user) {
-    return {
-      ok: false,
-      error: 'unauthorized',
-      message: '로그인이 필요합니다.',
-    };
+  const auth = await requireUser();
+  if (!auth.ok) {
+    return auth;
   }
+  const { supabase, user } = auth;
 
-  const inviterId = userData.user.id;
-  const normalizedQuery = parsed.data;
-
-  const { data: inviterMembership, error: inviterMembershipError } =
-    await supabase
-      .from('group_members')
-      .select('group_id')
-      .eq('group_id', groupId)
-      .eq('user_id', inviterId)
-      .maybeSingle();
-
-  if (inviterMembershipError || !inviterMembership) {
-    return {
-      ok: false,
-      error: 'forbidden',
-      message: '그룹을 찾을 수 없거나 접근 권한이 없습니다.',
-    };
-  }
-
-  const [
-    { data: candidates, error: candidatesError },
-    { data: existingMembers, error: existingMembersError },
-    { data: pendingInvites, error: pendingInvitesError },
-  ] = await Promise.all([
-    supabase
-      .from('users')
-      .select('user_id, name, nickname')
-      .or(`nickname.ilike.%${normalizedQuery}%,name.ilike.%${normalizedQuery}%`)
-      .neq('user_id', inviterId)
-      .limit(20),
-    supabase.from('group_members').select('user_id').eq('group_id', groupId),
-    supabase
-      .from('invitations')
-      .select('invitee_id')
-      .eq('group_id', groupId)
-      .eq('type', 'group')
-      .eq('status', 'pending'),
-  ]);
-
-  if (candidatesError || existingMembersError || pendingInvitesError) {
-    return {
-      ok: false,
-      error: 'server-error',
-      message: '사용자 검색 중 오류가 발생했습니다.',
-    };
-  }
-
-  const existingMemberIds = new Set(
-    ((existingMembers as GroupMemberRow[] | null) ?? []).map(
-      (row) => row.user_id,
-    ),
-  );
-  const pendingInviteeIds = new Set(
-    ((pendingInvites as PendingInvitationRow[] | null) ?? []).map(
-      (row) => row.invitee_id,
-    ),
+  const searchGroupInviteesRpc =
+    'search_group_invitable_users_transactional' as never;
+  const searchGroupInviteesParams = {
+    p_inviter_id: user.id,
+    p_group_id: groupId,
+    p_query: parsed.data,
+    p_limit: 6,
+    p_candidate_limit: 20,
+  } as never;
+  const { data, error } = await supabase.rpc(
+    searchGroupInviteesRpc,
+    searchGroupInviteesParams,
   );
 
-  const users = ((candidates as UserRow[] | null) ?? [])
-    .filter(
-      (row) =>
-        row.user_id &&
-        !existingMemberIds.has(row.user_id),
-    )
-    .slice(0, 6)
+  if (error) {
+    if (error.code === '42501') {
+      return actionError('forbidden', '그룹을 찾을 수 없거나 접근 권한이 없습니다.');
+    }
+    return actionError('server-error', '사용자 검색 중 오류가 발생했습니다.');
+  }
+
+  const row =
+    ((data as SearchGroupInvitableUsersRpcRow[] | null) ?? [])[0] ?? null;
+  if (!row) {
+    return actionError('server-error', '사용자 검색 중 오류가 발생했습니다.');
+  }
+
+  if (!row.ok) {
+    switch (row.error_code) {
+      case 'forbidden':
+        return actionError('forbidden', '그룹을 찾을 수 없거나 접근 권한이 없습니다.');
+      case 'invalid-format':
+        return actionError('invalid-format', '검색어를 입력해주세요.');
+      default:
+        return actionError('server-error', '사용자 검색 중 오류가 발생했습니다.');
+    }
+  }
+
+  const candidateRows = Array.isArray(row.users)
+    ? (row.users as UserRow[])
+    : [];
+  const users = candidateRows
+    .filter((candidate) => Boolean(candidate?.user_id))
     .map(mapUser);
+  const pendingInviteeIds = Array.isArray(row.pending_invitee_ids)
+    ? row.pending_invitee_ids.filter((id): id is string => typeof id === 'string')
+    : [];
 
-  const pendingInviteeIdsInResult = users
-    .map((user) => user.userId)
-    .filter((userId) => pendingInviteeIds.has(userId));
-
-  return {
-    ok: true,
-    data: { users, pendingInviteeIds: pendingInviteeIdsInResult },
-  };
+  return actionSuccess({ users, pendingInviteeIds });
 }

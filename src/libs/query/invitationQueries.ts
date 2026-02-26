@@ -1,5 +1,6 @@
 import { listReceivedInvitationsAction } from '@/actions/invitation';
 import { invitationKeys } from '@/libs/query/invitationKeys';
+import { type QueryScope } from '@/libs/query/queryScope';
 
 import type { InvitationCursor, InvitationListItem } from '@/actions/invitation';
 import type { QueryFunctionContext } from '@tanstack/react-query';
@@ -13,9 +14,9 @@ export type InvitationPage = {
   nextCursor: InvitationCursor | null;
 };
 
-export function createReceivedInvitationsQueryOptions() {
+export function createReceivedInvitationsQueryOptions(scope?: QueryScope) {
   return {
-    queryKey: invitationKeys.received() as InvitationQueryKey,
+    queryKey: invitationKeys.received(scope) as InvitationQueryKey,
     queryFn: async ({
       pageParam,
     }: QueryFunctionContext<InvitationQueryKey, InvitationCursor | null>) => {

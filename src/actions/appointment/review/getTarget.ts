@@ -7,38 +7,27 @@ import { actionError, actionSuccess } from '@/actions/_common/result';
 
 import type { GetAppointmentReviewTargetResult } from '../types';
 
-const USER_REVIEW_TABLE = 'user_review' as never;
-
 const getReviewTargetSchema = z.object({
   appointmentId: z.string().uuid('유효한 약속 정보가 필요합니다.'),
 });
 
-interface ReviewTargetRow {
-  appointment_id: string;
-  title: string;
-  start_at: string;
-  ends_at: string;
-  status: 'pending' | 'canceled';
-  creator_id: string;
-  place_id: string;
-  place: {
-    place_id: string;
-    name: string | null;
-    address: string | null;
-    category: string | null;
-  } | null;
-}
-
-interface PlaceReviewRow {
-  score: number | null;
-  review: string | null;
-}
-
-function hasReviewContent(row: { score: number | null; review: string | null } | null) {
-  if (!row) return false;
-  if (typeof row.score === 'number') return true;
-  if (typeof row.review === 'string' && row.review.trim().length > 0) return true;
-  return false;
+interface GetAppointmentReviewTargetRpcRow {
+  ok: boolean;
+  error_code: string | null;
+  appointment_id: string | null;
+  title: string | null;
+  start_at: string | null;
+  ends_at: string | null;
+  place_id: string | null;
+  place_name: string | null;
+  place_address: string | null;
+  place_category: string | null;
+  review_avg: number | null;
+  review_count: number | null;
+  my_score: number | null;
+  my_review: string | null;
+  has_my_review_row: boolean | null;
+  has_reviewed: boolean | null;
 }
 
 export async function getAppointmentReviewTargetAction(
@@ -55,108 +44,78 @@ export async function getAppointmentReviewTargetAction(
   }
   const { supabase, user } = auth;
 
-  const { data, error } = await supabase
-    .from('appointments')
-    .select(
-      `
-      appointment_id,
-      title,
-      start_at,
-      ends_at,
-      status,
-      creator_id,
-      place_id,
-      place:places!appointments_place_id_fkey(
-        place_id,
-        name,
-        address,
-        category
-      )
-      `,
-    )
-    .eq('appointment_id', parsed.data.appointmentId)
-    .maybeSingle();
+  const getReviewTargetRpc =
+    'get_appointment_review_target_transactional' as never;
+  const getReviewTargetParams = {
+    p_user_id: user.id,
+    p_appointment_id: parsed.data.appointmentId,
+  } as never;
+  const { data, error } = await supabase.rpc(
+    getReviewTargetRpc,
+    getReviewTargetParams,
+  );
 
-  if (error || !data) {
-    return actionError('forbidden', '리뷰 대상 약속을 찾을 수 없습니다.');
-  }
-
-  const appointment = data as ReviewTargetRow;
-  const nowTime = Date.now();
-  const endsAtTime = new Date(appointment.ends_at).getTime();
-
-  if (appointment.status === 'canceled' || endsAtTime > nowTime) {
-    return actionError('forbidden', '종료된 약속만 리뷰를 작성할 수 있습니다.');
-  }
-
-  if (appointment.creator_id !== user.id) {
-    const { data: membershipData, error: membershipError } = await supabase
-      .from('appointment_members')
-      .select('appointment_id')
-      .eq('appointment_id', appointment.appointment_id)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (membershipError || !membershipData) {
+  if (error) {
+    if (error.code === '42501') {
       return actionError('forbidden', '리뷰 작성 권한이 없습니다.');
+    }
+    return actionError('server-error', '리뷰 대상 조회 중 오류가 발생했습니다.');
+  }
+
+  const row =
+    ((data as GetAppointmentReviewTargetRpcRow[] | null) ?? [])[0] ?? null;
+  if (!row) {
+    return actionError('server-error', '리뷰 대상 조회 중 오류가 발생했습니다.');
+  }
+
+  if (!row.ok) {
+    switch (row.error_code) {
+      case 'forbidden-not-found':
+        return actionError('forbidden', '리뷰 대상 약속을 찾을 수 없습니다.');
+      case 'forbidden-not-ended':
+        return actionError('forbidden', '종료된 약속만 리뷰를 작성할 수 있습니다.');
+      case 'forbidden-no-permission':
+      case 'forbidden':
+        return actionError('forbidden', '리뷰 작성 권한이 없습니다.');
+      case 'invalid-format':
+        return actionError('invalid-format', '유효한 약속 정보가 필요합니다.');
+      default:
+        return actionError('server-error', '리뷰 대상 조회 중 오류가 발생했습니다.');
     }
   }
 
-  const [placeReviewsResult, myReviewResult] = await Promise.all([
-    supabase
-      .from(USER_REVIEW_TABLE)
-      .select('score, review')
-      .eq('place_id', appointment.place_id)
-      .not('appointment_id', 'is', null)
-      .or('score.not.is.null,review.not.is.null'),
-    supabase
-      .from(USER_REVIEW_TABLE)
-      .select('score, review')
-      .eq('appointment_id', appointment.appointment_id)
-      .eq('user_id', user.id)
-      .maybeSingle(),
-  ]);
-
-  const placeReviewRows =
-    (placeReviewsResult.data as unknown as PlaceReviewRow[] | null) ?? [];
-  let reviewSum = 0;
-  let reviewCount = 0;
-  for (const row of placeReviewRows) {
-    if (typeof row.score !== 'number') continue;
-    reviewSum += row.score;
-    reviewCount += 1;
+  if (
+    !row.appointment_id ||
+    !row.title ||
+    !row.start_at ||
+    !row.ends_at ||
+    !row.place_id
+  ) {
+    return actionError('server-error', '리뷰 대상 조회 중 오류가 발생했습니다.');
   }
-
-  const reviewAverage =
-    reviewCount > 0 ? Number((reviewSum / reviewCount).toFixed(1)) : null;
-
-  const myReviewRow = (myReviewResult.data as unknown as {
-    score: number | null;
-    review: string | null;
-  } | null) ?? null;
-  const alreadyReviewed = hasReviewContent(myReviewRow);
 
   return actionSuccess({
     target: {
-      appointmentId: appointment.appointment_id,
-      title: appointment.title,
-      startAt: appointment.start_at,
-      endsAt: appointment.ends_at,
+      appointmentId: row.appointment_id,
+      title: row.title,
+      startAt: row.start_at,
+      endsAt: row.ends_at,
       place: {
-        placeId: appointment.place_id,
-        name: appointment.place?.name || '장소 미정',
-        address: appointment.place?.address || '',
-        category: appointment.place?.category ?? null,
-        reviewAverage,
-        reviewCount,
+        placeId: row.place_id,
+        name: row.place_name || '장소 미정',
+        address: row.place_address || '',
+        category: row.place_category ?? null,
+        reviewAverage: row.review_avg ?? null,
+        reviewCount: row.review_count ?? 0,
       },
-      myReview: myReviewRow
-        ? {
-            score: myReviewRow.score,
-            content: myReviewRow.review,
-          }
-        : null,
-      hasReviewed: alreadyReviewed,
+      myReview:
+        row.has_my_review_row === true
+          ? {
+              score: row.my_score,
+              content: row.my_review,
+            }
+          : null,
+      hasReviewed: row.has_reviewed === true,
       canWriteReview: true,
     },
   });

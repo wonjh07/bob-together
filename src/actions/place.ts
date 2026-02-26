@@ -26,7 +26,6 @@ export type SearchPlacesResult = ActionResult<
   PlaceErrorCode
 >;
 
-const USER_REVIEW_TABLE = 'user_review';
 const DEFAULT_PLACE_REVIEW_LIMIT = 10;
 const MAX_PLACE_REVIEW_LIMIT = 30;
 
@@ -38,30 +37,44 @@ const listPlaceReviewsSchema = z.object({
   placeId: z.string().uuid('유효한 장소 ID가 아닙니다.'),
   cursor: z
     .object({
-      offset: z.number().int().min(0, '유효한 커서 정보가 아닙니다.'),
+      updatedAt: z.string().datetime({
+        offset: true,
+        message: '유효한 커서 정보가 아닙니다.',
+      }),
+      reviewId: z.string().uuid('유효한 커서 정보가 아닙니다.'),
     })
     .nullable()
     .optional(),
   limit: z.number().int().min(1).max(MAX_PLACE_REVIEW_LIMIT).optional(),
 });
 
-interface PlaceReviewStatRow {
-  score: number | null;
+interface PlaceDetailRpcRow {
+  place_id: string;
+  name: string;
+  address: string;
+  category: string | null;
+  latitude: number;
+  longitude: number;
+  review_avg: number | string | null;
+  review_count: number | string | null;
 }
 
-interface PlaceReviewRow {
-  review_id: string;
-  user_id: string;
-  score: number | null;
-  review: string | null;
-  edited_at: string | null;
-  updated_at: string;
-  user: {
-    user_id: string;
-    name: string | null;
-    nickname: string | null;
-    profile_image: string | null;
-  } | null;
+function toRoundedAverage(value: number | string | null): number | null {
+  if (value === null) {
+    return null;
+  }
+
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+
+  return Number(numeric.toFixed(1));
+}
+
+function toCount(value: number | string | null): number {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0 ? Math.floor(numeric) : 0;
 }
 
 export interface PlaceDetailItem {
@@ -76,7 +89,8 @@ export interface PlaceDetailItem {
 }
 
 export interface PlaceReviewCursor {
-  offset: number;
+  updatedAt: string;
+  reviewId: string;
 }
 
 export interface PlaceReviewItem {
@@ -207,36 +221,18 @@ export async function getPlaceDetailAction(
   }
 
   const { supabase } = auth;
+  const placeDetailRpc = 'get_place_detail_with_stats' as never;
+  const placeDetailParams = {
+    p_place_id: parsed.data.placeId,
+  } as never;
 
-  const { data: place, error: placeError } = await supabase
-    .from('places')
-    .select('place_id, name, address, category, latitude, longitude')
-    .eq('place_id', parsed.data.placeId)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc(placeDetailRpc, placeDetailParams);
+  const placeRows = (data as PlaceDetailRpcRow[] | null) ?? [];
+  const place = placeRows[0] ?? null;
 
-  if (placeError || !place) {
+  if (error || !place) {
     return actionError('server-error', '장소 정보를 찾을 수 없습니다.');
   }
-
-  const { data: reviewRows, error: reviewError } = await supabase
-    .from(USER_REVIEW_TABLE)
-    .select('score')
-    .eq('place_id', parsed.data.placeId)
-    .not('appointment_id', 'is', null)
-    .not('score', 'is', null);
-
-  if (reviewError) {
-    return actionError('server-error', '장소 리뷰 요약을 불러오지 못했습니다.');
-  }
-
-  const reviewStats = (reviewRows as unknown as PlaceReviewStatRow[] | null) ?? [];
-  const reviewCount = reviewStats.length;
-  const reviewSum = reviewStats.reduce(
-    (sum, row) => sum + (typeof row.score === 'number' ? row.score : 0),
-    0,
-  );
-  const reviewAverage =
-    reviewCount > 0 ? Number((reviewSum / reviewCount).toFixed(1)) : null;
 
   return actionSuccess({
     place: {
@@ -246,8 +242,8 @@ export async function getPlaceDetailAction(
       category: place.category || null,
       latitude: place.latitude,
       longitude: place.longitude,
-      reviewAverage,
-      reviewCount,
+      reviewAverage: toRoundedAverage(place.review_avg),
+      reviewCount: toCount(place.review_count),
     },
   });
 }
@@ -269,38 +265,33 @@ export async function listPlaceReviewsAction(params: {
 
   const { supabase } = auth;
   const { placeId, cursor, limit = DEFAULT_PLACE_REVIEW_LIMIT } = parsed.data;
-  const offset = cursor?.offset ?? 0;
+  const listReviewsRpc = 'list_place_reviews_with_cursor' as never;
+  const listReviewsRpcParams = {
+    p_place_id: placeId,
+    p_limit: limit,
+    p_cursor_updated_at: cursor?.updatedAt ?? null,
+    p_cursor_review_id: cursor?.reviewId ?? null,
+  } as never;
 
-  const { data, error } = await supabase
-    .from(USER_REVIEW_TABLE)
-    .select(
-      `
-      review_id,
-      user_id,
-      score,
-      review,
-      edited_at,
-      updated_at,
-      user:users(
-        user_id,
-        name,
-        nickname,
-        profile_image
-      )
-      `,
-    )
-    .eq('place_id', placeId)
-    .not('appointment_id', 'is', null)
-    .or('score.not.is.null,review.not.is.null')
-    .order('updated_at', { ascending: false })
-    .order('review_id', { ascending: false })
-    .range(offset, offset + limit);
+  const { data, error } = await supabase.rpc(listReviewsRpc, listReviewsRpcParams);
 
   if (error) {
     return actionError('server-error', '장소 리뷰를 불러오지 못했습니다.');
   }
 
-  const rows = (data as unknown as PlaceReviewRow[] | null) ?? [];
+  type PlaceReviewRpcRow = {
+    review_id: string;
+    user_id: string;
+    score: number | null;
+    review: string | null;
+    edited_at: string | null;
+    updated_at: string;
+    user_name: string | null;
+    user_nickname: string | null;
+    user_profile_image: string | null;
+  };
+
+  const rows = (data as PlaceReviewRpcRow[] | null) ?? [];
   if (rows.length === 0) {
     return actionSuccess({
       reviews: [],
@@ -310,13 +301,14 @@ export async function listPlaceReviewsAction(params: {
 
   const hasMore = rows.length > limit;
   const visibleRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = visibleRows[visibleRows.length - 1];
 
   const reviews: PlaceReviewItem[] = visibleRows.map((row) => ({
     reviewId: row.review_id,
     userId: row.user_id,
-    userName: row.user?.name ?? null,
-    userNickname: row.user?.nickname ?? null,
-    userProfileImage: row.user?.profile_image ?? null,
+    userName: row.user_name ?? null,
+    userNickname: row.user_nickname ?? null,
+    userProfileImage: row.user_profile_image ?? null,
     score:
       typeof row.score === 'number' && row.score > 0
         ? row.score
@@ -327,9 +319,10 @@ export async function listPlaceReviewsAction(params: {
 
   return actionSuccess({
     reviews,
-    nextCursor: hasMore
+    nextCursor: hasMore && lastRow
       ? {
-          offset: offset + limit,
+          updatedAt: lastRow.updated_at,
+          reviewId: lastRow.review_id,
         }
       : null,
   });

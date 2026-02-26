@@ -5,9 +5,9 @@ import {
 } from '@tanstack/react-query';
 
 import {
-  createAppointmentCommentsQueryOptions,
   createAppointmentDetailQueryOptions,
 } from '@/libs/query/appointmentQueries';
+import { getServerQueryScope } from '@/libs/query/getServerQueryScope';
 
 import AppointmentDetailClient from './AppointmentDetailClient';
 
@@ -22,11 +22,11 @@ export default async function AppointmentDetailPage({
 }: AppointmentDetailPageProps) {
   const appointmentId = params.appointmentId;
   const queryClient = new QueryClient();
+  const queryScope = await getServerQueryScope();
 
-  await Promise.allSettled([
-    queryClient.prefetchQuery(createAppointmentDetailQueryOptions(appointmentId)),
-    queryClient.prefetchQuery(createAppointmentCommentsQueryOptions(appointmentId)),
-  ]);
+  await queryClient.prefetchQuery(
+    createAppointmentDetailQueryOptions(appointmentId, queryScope),
+  );
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

@@ -68,7 +68,25 @@ export async function updateAppointmentCommentAction(params: {
     )
     .maybeSingle();
 
-  if (updateError || !updatedData) {
+  if (updateError) {
+    if (updateError.code === '42501' || updateError.code === '23503') {
+      return actionError('forbidden', '댓글 수정 권한이 없습니다.');
+    }
+
+    console.error('[updateAppointmentCommentAction] update failed', {
+      code: updateError.code,
+      message: updateError.message,
+      details: updateError.details,
+      hint: updateError.hint,
+      appointmentId,
+      commentId,
+      userId: user.id,
+    });
+
+    return actionError('server-error', '댓글 수정 중 오류가 발생했습니다.');
+  }
+
+  if (!updatedData) {
     return actionError('forbidden', '댓글 수정 권한이 없습니다.');
   }
 

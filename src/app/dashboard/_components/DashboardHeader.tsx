@@ -6,14 +6,16 @@ import { useState } from 'react';
 import { GroupDropdown } from '@/app/dashboard/_components/GroupsDropdown';
 import { createMyGroupsQueryOptions } from '@/libs/query/groupQueries';
 import { useGroupContext } from '@/provider/group-provider';
+import { useQueryScope } from '@/provider/query-scope-provider';
 
 import * as styles from './DashboardHeader.css';
 
 export function DashboardHeader() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { currentGroupId, setCurrentGroupId } = useGroupContext();
+  const queryScope = useQueryScope();
   const { data: groups = [], isLoading } = useQuery(
-    createMyGroupsQueryOptions(),
+    createMyGroupsQueryOptions(queryScope),
   );
 
   const currentGroupName =

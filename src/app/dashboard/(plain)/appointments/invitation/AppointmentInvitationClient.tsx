@@ -13,11 +13,11 @@ import {
 } from '@/actions/appointment';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import SearchInput from '@/components/ui/SearchInput';
-import { appointmentKeys } from '@/libs/query/appointmentKeys';
 import {
   createAppointmentInvitationStateQueryOptions,
   type AppointmentInvitationStateData,
 } from '@/libs/query/appointmentQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 import { groupSearchFormSchema } from '@/schemas/group';
 
 import {
@@ -54,6 +54,7 @@ export default function AppointmentInvitationClient({
 }: AppointmentInvitationClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const queryScope = useQueryScope();
   const [resultUsers, setResultUsers] = useState<AppointmentInviteeSummary[]>([]);
   const [isSearched, setIsSearched] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -72,8 +73,12 @@ export default function AppointmentInvitationClient({
     mode: 'onChange',
   });
 
+  const invitationStateQueryOptions = createAppointmentInvitationStateQueryOptions(
+    appointmentId,
+    queryScope,
+  );
   const invitationStateQuery = useQuery({
-    ...createAppointmentInvitationStateQueryOptions(appointmentId),
+    ...invitationStateQueryOptions,
     enabled: !!appointmentId,
   });
 
@@ -129,7 +134,7 @@ export default function AppointmentInvitationClient({
     if (!appointmentId) return;
 
     queryClient.setQueryData<AppointmentInvitationStateData>(
-      appointmentKeys.invitationState(appointmentId),
+      invitationStateQueryOptions.queryKey,
       (prev) =>
         updater(
           prev ?? {

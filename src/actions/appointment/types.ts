@@ -8,20 +8,34 @@ export interface AppointmentSearchCursor {
   appointmentId: string;
 }
 
+export interface AppointmentListCursor {
+  startAt: string;
+  appointmentId: string;
+}
+
 export interface AppointmentHistoryCursor {
-  offset: number;
+  endsAt: string;
+  appointmentId: string;
 }
 
 export interface MyReviewCursor {
-  offset: number;
+  updatedAt: string;
+  reviewId: string;
 }
 
 export interface ReviewableAppointmentsCursor {
-  offset: number;
+  endsAt: string;
+  appointmentId: string;
 }
 
 export interface MyCommentCursor {
-  offset: number;
+  createdAt: string;
+  commentId: string;
+}
+
+export interface AppointmentCommentsCursor {
+  createdAt: string;
+  commentId: string;
 }
 
 export interface AppointmentSearchItem {
@@ -181,14 +195,14 @@ export interface ListAppointmentsParams {
   groupId: string;
   period?: PeriodFilter;
   type?: TypeFilter;
-  cursor?: string;
+  cursor?: AppointmentListCursor | null;
   limit?: number;
 }
 
 export type ListAppointmentsResult = ActionResult<
   {
     appointments: AppointmentListItem[];
-    nextCursor: string | null;
+    nextCursor: AppointmentListCursor | null;
   },
   AppointmentErrorCode
 >;
@@ -263,6 +277,7 @@ export type GetAppointmentCommentsResult = ActionResult<
   {
     commentCount: number;
     comments: AppointmentCommentItem[];
+    nextCursor: AppointmentCommentsCursor | null;
     currentUserId: string;
   },
   AppointmentErrorCode

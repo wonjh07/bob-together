@@ -4,6 +4,7 @@ import {
   dehydrate,
 } from '@tanstack/react-query';
 
+import { getServerQueryScope } from '@/libs/query/getServerQueryScope';
 import {
   createPlaceDetailQueryOptions,
   createPlaceReviewsQueryOptions,
@@ -20,10 +21,13 @@ type PlaceDetailPageProps = {
 export default async function PlaceDetailPage({ params }: PlaceDetailPageProps) {
   const placeId = params.placeId;
   const queryClient = new QueryClient();
+  const queryScope = await getServerQueryScope();
 
   await Promise.allSettled([
-    queryClient.prefetchQuery(createPlaceDetailQueryOptions(placeId)),
-    queryClient.prefetchInfiniteQuery(createPlaceReviewsQueryOptions(placeId)),
+    queryClient.prefetchQuery(createPlaceDetailQueryOptions(placeId, queryScope)),
+    queryClient.prefetchInfiniteQuery(
+      createPlaceReviewsQueryOptions(placeId, queryScope),
+    ),
   ]);
 
   return (

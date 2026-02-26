@@ -10,14 +10,14 @@ import {
   createReviewableAppointmentsQueryOptions,
   type ReviewableAppointmentsPage,
 } from '@/libs/query/appointmentQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 import { formatDateDot, formatTimeRange24 } from '@/utils/dateFormat';
 
 import * as styles from './ReviewsWaitList.css';
 
-import type { WheelEvent } from 'react';
-
 export function ReviewsWaitList() {
-  const queryOptions = createReviewableAppointmentsQueryOptions();
+  const queryScope = useQueryScope();
+  const queryOptions = createReviewableAppointmentsQueryOptions(queryScope);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -65,17 +65,31 @@ export function ReviewsWaitList() {
     scrollContainerRef,
   ]);
 
-  const handleHorizontalWheel = (event: WheelEvent<HTMLDivElement>) => {
+  useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container) return;
-    if (container.scrollWidth <= container.clientWidth) return;
+    if (!container) {
+      return;
+    }
 
-    // Trackpad horizontal gesture should keep native behavior.
-    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+    const handleWheel = (event: WheelEvent) => {
+      if (container.scrollWidth <= container.clientWidth) {
+        return;
+      }
 
-    event.preventDefault();
-    container.scrollLeft += event.deltaY;
-  };
+      // Trackpad horizontal gesture should keep native behavior.
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+        return;
+      }
+
+      event.preventDefault();
+      container.scrollLeft += event.deltaY;
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, [items.length]);
 
   if (isLoading) {
     return (
@@ -109,8 +123,7 @@ export function ReviewsWaitList() {
     <section className={styles.container}>
       <div
         ref={scrollContainerRef}
-        className={styles.scrollRow}
-        onWheel={handleHorizontalWheel}>
+        className={styles.scrollRow}>
         {items.map((review) => {
           return (
             <article key={review.appointmentId} className={styles.card}>
@@ -133,6 +146,7 @@ export function ReviewsWaitList() {
               />
               <Link
                 href={`/dashboard/profile/reviews/${review.appointmentId}`}
+                prefetch={false}
                 className={styles.writeButton}>
                 리뷰 남기기
               </Link>

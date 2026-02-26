@@ -15,36 +15,6 @@ const APPOINTMENT_ID = '10000000-0000-4000-8000-000000000001';
 const INVITER_ID = '10000000-0000-4000-8000-000000000002';
 const INVITEE_ID = '10000000-0000-4000-8000-000000000003';
 
-type AppointmentQueryResult = {
-  appointment_id: string;
-  group_id: string;
-  status: 'pending' | 'confirmed' | 'canceled';
-  ends_at: string;
-} | null;
-
-function createAppointmentSupabaseMock(result: AppointmentQueryResult) {
-  const appointmentsQuery = {
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    maybeSingle: jest.fn().mockResolvedValue({
-      data: result,
-      error: null,
-    }),
-  };
-
-  const supabase = {
-    from: jest.fn((table: string) => {
-      if (table === 'appointments') {
-        return appointmentsQuery;
-      }
-
-      throw new Error(`unexpected table access: ${table}`);
-    }),
-  };
-
-  return { supabase, appointmentsQuery };
-}
-
 describe('sendAppointmentInvitationAction', () => {
   const mockRequireUser = requireUser as jest.Mock;
 
@@ -63,12 +33,11 @@ describe('sendAppointmentInvitationAction', () => {
   });
 
   it('취소된 약속은 초대를 차단한다', async () => {
-    const { supabase } = createAppointmentSupabaseMock({
-      appointment_id: APPOINTMENT_ID,
-      group_id: '10000000-0000-4000-8000-000000000009',
-      status: 'canceled',
-      ends_at: new Date(Date.now() + 60_000).toISOString(),
+    const rpc = jest.fn().mockResolvedValue({
+      data: [{ ok: false, error_code: 'forbidden-appointment-canceled' }],
+      error: null,
     });
+    const supabase = { rpc };
 
     mockRequireUser.mockResolvedValue({
       ok: true,
@@ -78,6 +47,11 @@ describe('sendAppointmentInvitationAction', () => {
 
     const result = await sendAppointmentInvitationAction(APPOINTMENT_ID, INVITEE_ID);
 
+    expect(rpc).toHaveBeenCalledWith('send_appointment_invitation_transactional', {
+      p_inviter_id: INVITER_ID,
+      p_appointment_id: APPOINTMENT_ID,
+      p_invitee_id: INVITEE_ID,
+    });
     expect(result).toEqual({
       ok: false,
       error: 'forbidden',
@@ -86,12 +60,11 @@ describe('sendAppointmentInvitationAction', () => {
   });
 
   it('종료된 약속은 초대를 차단한다', async () => {
-    const { supabase } = createAppointmentSupabaseMock({
-      appointment_id: APPOINTMENT_ID,
-      group_id: '10000000-0000-4000-8000-000000000009',
-      status: 'pending',
-      ends_at: new Date(Date.now() - 60_000).toISOString(),
+    const rpc = jest.fn().mockResolvedValue({
+      data: [{ ok: false, error_code: 'forbidden-appointment-ended' }],
+      error: null,
     });
+    const supabase = { rpc };
 
     mockRequireUser.mockResolvedValue({
       ok: true,
@@ -105,6 +78,48 @@ describe('sendAppointmentInvitationAction', () => {
       ok: false,
       error: 'forbidden',
       message: '종료된 약속은 초대할 수 없습니다.',
+    });
+  });
+
+  it('이미 멤버인 사용자는 초대를 차단한다', async () => {
+    const rpc = jest.fn().mockResolvedValue({
+      data: [{ ok: false, error_code: 'already-member' }],
+      error: null,
+    });
+    const supabase = { rpc };
+
+    mockRequireUser.mockResolvedValue({
+      ok: true,
+      supabase,
+      user: { id: INVITER_ID },
+    });
+
+    const result = await sendAppointmentInvitationAction(APPOINTMENT_ID, INVITEE_ID);
+
+    expect(result).toEqual({
+      ok: false,
+      error: 'already-member',
+      message: '이미 약속에 참여한 사용자입니다.',
+    });
+  });
+
+  it('정상 요청이면 초대 전송에 성공한다', async () => {
+    const rpc = jest.fn().mockResolvedValue({
+      data: [{ ok: true, error_code: null }],
+      error: null,
+    });
+    const supabase = { rpc };
+
+    mockRequireUser.mockResolvedValue({
+      ok: true,
+      supabase,
+      user: { id: INVITER_ID },
+    });
+
+    const result = await sendAppointmentInvitationAction(APPOINTMENT_ID, INVITEE_ID);
+
+    expect(result).toEqual({
+      ok: true,
     });
   });
 });

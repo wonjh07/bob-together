@@ -5,6 +5,7 @@ import {
   type PlaceReviewItem,
 } from '@/actions/place';
 import { placeKeys } from '@/libs/query/placeKeys';
+import { type QueryScope } from '@/libs/query/queryScope';
 
 import type { QueryFunctionContext } from '@tanstack/react-query';
 
@@ -18,9 +19,12 @@ export type PlaceReviewsPage = {
   nextCursor: PlaceReviewCursor | null;
 };
 
-export function createPlaceDetailQueryOptions(placeId: string) {
+export function createPlaceDetailQueryOptions(
+  placeId: string,
+  scope?: QueryScope,
+) {
   return {
-    queryKey: placeKeys.detail(placeId) as PlaceDetailQueryKey,
+    queryKey: placeKeys.detail(placeId, scope) as PlaceDetailQueryKey,
     queryFn: async (_: QueryFunctionContext<PlaceDetailQueryKey>) => {
       const result = await getPlaceDetailAction(placeId);
 
@@ -37,9 +41,12 @@ export function createPlaceDetailQueryOptions(placeId: string) {
   };
 }
 
-export function createPlaceReviewsQueryOptions(placeId: string) {
+export function createPlaceReviewsQueryOptions(
+  placeId: string,
+  scope?: QueryScope,
+) {
   return {
-    queryKey: placeKeys.reviews(placeId) as PlaceReviewsQueryKey,
+    queryKey: placeKeys.reviews(placeId, scope) as PlaceReviewsQueryKey,
     queryFn: async ({
       pageParam,
     }: QueryFunctionContext<PlaceReviewsQueryKey, PlaceReviewCursor | null>) => {

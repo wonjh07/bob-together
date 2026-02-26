@@ -20,13 +20,15 @@ import {
 import {
   invalidateMyCommentMutationQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 
 import MyCommentCard from './_components/MyCommentCard';
 import * as styles from './page.css';
 
 export default function ProfileCommentsClient() {
   const queryClient = useQueryClient();
-  const queryOptions = createMyCommentsQueryOptions();
+  const queryScope = useQueryScope();
+  const queryOptions = createMyCommentsQueryOptions(queryScope);
   const [openedMenuCommentId, setOpenedMenuCommentId] = useState<string | null>(
     null,
   );

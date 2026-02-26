@@ -17,6 +17,7 @@ import {
   type GroupSearchPage,
 } from '@/libs/query/groupQueries';
 import { invalidateGroupMembershipQueries } from '@/libs/query/invalidateGroupQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 
 import GroupSearchCard from './GroupSearchCard';
 import * as styles from './GroupSearchResults.css';
@@ -27,7 +28,8 @@ interface GroupSearchResultsProps {
 
 export default function GroupSearchResults({ query }: GroupSearchResultsProps) {
   const normalizedQuery = query.trim();
-  const queryOptions = createGroupSearchQueryOptions(normalizedQuery);
+  const queryScope = useQueryScope();
+  const queryOptions = createGroupSearchQueryOptions(normalizedQuery, queryScope);
   const queryClient = useQueryClient();
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
 

@@ -7,14 +7,17 @@ import { actionError, actionSuccess } from '@/actions/_common/result';
 
 import type { ListMyReviewsResult, MyReviewItem } from '../types';
 
-const USER_REVIEW_TABLE = 'user_review' as never;
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 30;
 
 const listMyReviewsSchema = z.object({
   cursor: z
     .object({
-      offset: z.number().int().min(0),
+      updatedAt: z.string().datetime({
+        offset: true,
+        message: '유효한 커서 정보가 아닙니다.',
+      }),
+      reviewId: z.string().uuid('유효한 커서 정보가 아닙니다.'),
     })
     .nullable()
     .optional(),
@@ -24,19 +27,15 @@ const listMyReviewsSchema = z.object({
 type ListMyReviewsParams = z.infer<typeof listMyReviewsSchema>;
 
 interface MyReviewRow {
+  review_id: string;
   appointment_id: string | null;
   place_id: string;
   score: number | null;
   review: string | null;
   edited_at: string | null;
   created_at: string;
-  appointment: {
-    appointment_id: string;
-    place: {
-      place_id: string;
-      name: string | null;
-    } | null;
-  } | null;
+  updated_at: string;
+  place_name: string | null;
 }
 
 export async function listMyReviewsAction(
@@ -52,42 +51,24 @@ export async function listMyReviewsAction(
     return auth;
   }
 
-  const { supabase, user } = auth;
+  const { supabase } = auth;
   const { cursor, limit = DEFAULT_LIMIT } = parsed.data;
-  const offset = cursor?.offset ?? 0;
-
-  const { data, error } = await supabase
-    .from(USER_REVIEW_TABLE)
-    .select(
-      `
-      appointment_id,
-      place_id,
-      score,
-      review,
-      edited_at,
-      created_at,
-      appointment:appointments!user_review_appointment_id_fkey(
-        appointment_id,
-        place:places!appointments_place_id_fkey(
-          place_id,
-          name
-        )
-      )
-      `,
-    )
-    .eq('user_id', user.id)
-    .not('appointment_id', 'is', null)
-    .or('score.not.is.null,review.not.is.null')
-    .order('edited_at', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false })
-    .order('appointment_id', { ascending: false })
-    .range(offset, offset + limit);
+  const listMyReviewsRpc = 'list_my_reviews_with_cursor' as never;
+  const listMyReviewsParams = {
+    p_limit: limit,
+    p_cursor_updated_at: cursor?.updatedAt ?? null,
+    p_cursor_review_id: cursor?.reviewId ?? null,
+  } as never;
+  const { data, error } = await supabase.rpc(
+    listMyReviewsRpc,
+    listMyReviewsParams,
+  );
 
   if (error) {
     return actionError('server-error', '내 리뷰 목록을 불러오지 못했습니다.');
   }
 
-  const rows = (data as unknown as MyReviewRow[] | null) ?? [];
+  const rows = (data as MyReviewRow[] | null) ?? [];
   if (rows.length === 0) {
     return actionSuccess({
       reviews: [],
@@ -97,6 +78,7 @@ export async function listMyReviewsAction(
 
   const hasMore = rows.length > limit;
   const visibleRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = visibleRows[visibleRows.length - 1];
 
   const reviews: MyReviewItem[] = visibleRows
     .filter((row): row is MyReviewRow & { appointment_id: string } =>
@@ -105,7 +87,7 @@ export async function listMyReviewsAction(
     .map((row) => ({
       appointmentId: row.appointment_id,
       placeId: row.place_id,
-      placeName: row.appointment?.place?.name || '장소 미정',
+      placeName: row.place_name || '장소 미정',
       score: Math.max(0, Math.min(5, Math.round(row.score ?? 0))),
       content: row.review?.trim() || '',
       editedAt: row.edited_at || row.created_at,
@@ -113,9 +95,10 @@ export async function listMyReviewsAction(
 
   return actionSuccess({
     reviews,
-    nextCursor: hasMore
+    nextCursor: hasMore && lastRow
       ? {
-          offset: offset + limit,
+          updatedAt: lastRow.updated_at,
+          reviewId: lastRow.review_id,
         }
       : null,
   });

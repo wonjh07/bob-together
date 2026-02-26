@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from '@/libs/supabase/server';
 
-import { createQueryMock, mockUser, resetAllMocks } from './_testUtils';
+import { mockUser, resetAllMocks } from './_testUtils';
 import { sendGroupInvitationAction } from './sendGroupInvitationAction';
 
 jest.mock('@/libs/supabase/server');
@@ -9,9 +9,8 @@ describe('sendGroupInvitationAction', () => {
   beforeEach(resetAllMocks);
 
   it('초대자가 멤버가 아니면 forbidden을 반환한다', async () => {
-    const membershipQuery = createQueryMock();
-    membershipQuery.maybeSingle.mockResolvedValue({
-      data: null,
+    const rpc = jest.fn().mockResolvedValue({
+      data: [{ ok: false, error_code: 'forbidden' }],
       error: null,
     });
 
@@ -19,7 +18,7 @@ describe('sendGroupInvitationAction', () => {
       auth: {
         getUser: jest.fn().mockResolvedValue({ data: { user: mockUser } }),
       },
-      from: jest.fn().mockReturnValue(membershipQuery),
+      rpc,
     };
 
     (createSupabaseServerClient as jest.Mock).mockReturnValue(
@@ -33,5 +32,13 @@ describe('sendGroupInvitationAction', () => {
       error: 'forbidden',
       message: '그룹 멤버만 초대할 수 있습니다.',
     });
+    expect(rpc).toHaveBeenCalledWith(
+      'send_group_invitation_transactional',
+      expect.objectContaining({
+        p_inviter_id: mockUser.id,
+        p_group_id: 'group-1',
+        p_invitee_id: 'user-2',
+      }),
+    );
   });
 });

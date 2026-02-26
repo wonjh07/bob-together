@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { logoutAction } from '@/actions/auth';
@@ -17,12 +18,14 @@ export function ProfileDropdown({
   triggerClassName,
   triggerIconClassName,
 }: ProfileDropdownProps) {
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogout = async () => {
     setIsLoading(true);
     try {
+      queryClient.clear();
       await logoutAction();
       // redirect가 성공하면 여기까지 오지 않음
     } catch (error) {

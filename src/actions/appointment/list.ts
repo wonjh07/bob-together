@@ -45,14 +45,20 @@ export async function listAppointmentsAction(
   const { supabase, user } = auth;
   const userId = user.id;
 
-  const { data, error } = await supabase.rpc('list_appointments_with_stats', {
+  const listAppointmentsRpc = 'list_appointments_with_stats_cursor' as never;
+  const listAppointmentsParams = {
     p_user_id: userId,
     p_group_id: groupId,
     p_period: period,
     p_type: type,
-    p_cursor: cursor ?? undefined,
+    p_cursor_start_at: cursor?.startAt ?? null,
+    p_cursor_appointment_id: cursor?.appointmentId ?? null,
     p_limit: limit,
-  });
+  } as never;
+  const { data, error } = await supabase.rpc(
+    listAppointmentsRpc,
+    listAppointmentsParams,
+  );
 
   if (error) {
     console.error('[listAppointmentsAction] rpc failed', {
@@ -71,7 +77,13 @@ export async function listAppointmentsAction(
   const visibleRows = hasMore ? rows.slice(0, limit) : rows;
 
   const lastAppointment = visibleRows[visibleRows.length - 1];
-  const nextCursor = hasMore && lastAppointment ? lastAppointment.start_at : null;
+  const nextCursor =
+    hasMore && lastAppointment
+      ? {
+          startAt: lastAppointment.start_at,
+          appointmentId: lastAppointment.appointment_id,
+        }
+      : null;
 
   const mappedAppointments: AppointmentListItem[] = visibleRows.map((row) => {
     return {

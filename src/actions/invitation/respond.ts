@@ -4,7 +4,6 @@ import { z } from 'zod';
 
 import { parseOrFail, requireUser } from '@/actions/_common/guards';
 import { actionError, actionSuccess } from '@/actions/_common/result';
-import { isAppointmentEndedByTime } from '@/utils/appointmentStatus';
 
 import type { RespondToInvitationResult } from './types';
 
@@ -13,17 +12,75 @@ const respondToInvitationSchema = z.object({
   decision: z.enum(['accepted', 'rejected']),
 });
 
-interface InvitationRow {
-  invitation_id: string;
-  type: 'group' | 'appointment';
-  status: 'pending' | 'accepted' | 'rejected' | 'canceled';
-  group_id: string;
+interface RespondInvitationRpcRow {
+  ok: boolean;
+  error_code: string | null;
+  invitation_id: string | null;
+  invitation_type: 'group' | 'appointment' | null;
+  group_id: string | null;
   appointment_id: string | null;
+  status: 'pending' | 'accepted' | 'rejected' | 'canceled' | null;
 }
 
-interface AppointmentStatusRow {
-  status: 'pending' | 'canceled';
-  ends_at: string;
+function mapRpcBusinessError(
+  code: string | null,
+): {
+  error: 'invitation-not-found' | 'invitation-already-responded' | 'invalid-invitation' | 'forbidden' | 'invalid-format' | 'server-error';
+  message: string;
+} {
+  switch (code) {
+    case 'invitation-not-found':
+      return {
+        error: 'invitation-not-found',
+        message: '초대 정보를 찾을 수 없습니다.',
+      };
+    case 'invitation-already-responded':
+      return {
+        error: 'invitation-already-responded',
+        message: '이미 처리된 초대입니다.',
+      };
+    case 'invalid-invitation':
+      return {
+        error: 'invalid-invitation',
+        message: '유효하지 않은 약속 초대입니다.',
+      };
+    case 'forbidden-group-membership':
+      return {
+        error: 'forbidden',
+        message:
+          '그룹 멤버가 아니라 약속 초대를 수락할 수 없습니다. 그룹 초대를 먼저 수락해주세요.',
+      };
+    case 'forbidden-appointment-canceled':
+      return {
+        error: 'forbidden',
+        message: '취소된 약속은 수락할 수 없습니다.',
+      };
+    case 'forbidden-appointment-ended':
+      return {
+        error: 'forbidden',
+        message: '종료된 약속은 수락할 수 없습니다.',
+      };
+    case 'forbidden-join-appointment':
+      return {
+        error: 'forbidden',
+        message: '약속에 참여할 권한이 없습니다. 그룹 가입 상태를 확인해주세요.',
+      };
+    case 'forbidden':
+      return {
+        error: 'forbidden',
+        message: '초대 처리 권한이 없습니다.',
+      };
+    case 'invalid-format':
+      return {
+        error: 'invalid-format',
+        message: '요청 형식이 올바르지 않습니다.',
+      };
+    default:
+      return {
+        error: 'server-error',
+        message: '초대 상태를 변경하지 못했습니다.',
+      };
+  }
 }
 
 export async function respondToInvitationAction(input: {
@@ -43,151 +100,52 @@ export async function respondToInvitationAction(input: {
   const { supabase, user } = auth;
   const { invitationId, decision } = parsed.data;
 
-  const { data: invitation, error: invitationError } = await supabase
-    .from('invitations')
-    .select('invitation_id, type, status, group_id, appointment_id')
-    .eq('invitation_id', invitationId)
-    .eq('invitee_id', user.id)
-    .maybeSingle<InvitationRow>();
+  const respondInvitationRpc = 'respond_to_invitation_transactional' as never;
+  const respondInvitationParams = {
+    p_user_id: user.id,
+    p_invitation_id: invitationId,
+    p_decision: decision,
+  } as never;
+  const { data, error } = await supabase.rpc(
+    respondInvitationRpc,
+    respondInvitationParams,
+  );
 
-  if (invitationError || !invitation) {
-    return actionError('invitation-not-found', '초대 정보를 찾을 수 없습니다.');
-  }
-
-  if (invitation.status !== 'pending') {
-    return actionError(
-      'invitation-already-responded',
-      '이미 처리된 초대입니다.',
-    );
-  }
-
-  if (decision === 'accepted') {
-    if (invitation.type === 'group') {
-      const { data: existingGroupMember } = await supabase
-        .from('group_members')
-        .select('user_id')
-        .eq('group_id', invitation.group_id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!existingGroupMember) {
-        const { error: joinGroupError } = await supabase
-          .from('group_members')
-          .insert({
-            group_id: invitation.group_id,
-            user_id: user.id,
-            role: 'member',
-          });
-
-        if (joinGroupError && joinGroupError.code !== '23505') {
-          return actionError('server-error', '그룹 참여 처리 중 오류가 발생했습니다.');
-        }
-      }
+  if (error) {
+    if (error.code === '42501') {
+      return actionError('forbidden', '초대 처리 권한이 없습니다.');
     }
-
-    if (invitation.type === 'appointment') {
-      if (!invitation.appointment_id) {
-        return actionError('invalid-invitation', '유효하지 않은 약속 초대입니다.');
-      }
-
-      const { data: groupMembership, error: groupMembershipError } =
-        await supabase
-          .from('group_members')
-          .select('user_id')
-          .eq('group_id', invitation.group_id)
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-      if (groupMembershipError) {
-        return actionError('server-error', '초대 수락 권한 확인 중 오류가 발생했습니다.');
-      }
-
-      if (!groupMembership) {
-        return actionError(
-          'forbidden',
-          '그룹 멤버가 아니라 약속 초대를 수락할 수 없습니다. 그룹 초대를 먼저 수락해주세요.',
-        );
-      }
-
-      const { data: appointment, error: appointmentError } = await supabase
-        .from('appointments')
-        .select('status, ends_at')
-        .eq('appointment_id', invitation.appointment_id)
-        .maybeSingle<AppointmentStatusRow>();
-
-      if (appointmentError || !appointment) {
-        return actionError('invitation-not-found', '약속 정보를 찾을 수 없습니다.');
-      }
-
-      if (appointment.status === 'canceled') {
-        return actionError('forbidden', '취소된 약속은 수락할 수 없습니다.');
-      }
-
-      if (isAppointmentEndedByTime(appointment.ends_at)) {
-        return actionError('forbidden', '종료된 약속은 수락할 수 없습니다.');
-      }
-
-      const { data: existingAppointmentMember } = await supabase
-        .from('appointment_members')
-        .select('user_id')
-        .eq('appointment_id', invitation.appointment_id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!existingAppointmentMember) {
-        const { error: joinAppointmentError } = await supabase
-          .from('appointment_members')
-          .insert({
-            appointment_id: invitation.appointment_id,
-            user_id: user.id,
-            role: 'member',
-          });
-
-        if (joinAppointmentError && joinAppointmentError.code !== '23505') {
-          if (joinAppointmentError.code === '42501') {
-            return actionError(
-              'forbidden',
-              '약속에 참여할 권한이 없습니다. 그룹 가입 상태를 확인해주세요.',
-            );
-          }
-
-          return actionError(
-            'server-error',
-            '약속 참여 처리 중 오류가 발생했습니다.',
-          );
-        }
-      }
-    }
-  }
-
-  const { data: updated, error: updateError } = await supabase
-    .from('invitations')
-    .update({
-      status: decision,
-      responded_time: new Date().toISOString(),
-    })
-    .eq('invitation_id', invitationId)
-    .eq('invitee_id', user.id)
-    .eq('status', 'pending')
-    .select('invitation_id')
-    .maybeSingle();
-
-  if (updateError) {
     return actionError('server-error', '초대 상태를 변경하지 못했습니다.');
   }
 
-  if (!updated) {
-    return actionError(
-      'invitation-already-responded',
-      '이미 처리된 초대입니다.',
-    );
+  const row = ((data as RespondInvitationRpcRow[] | null) ?? [])[0] ?? null;
+  if (!row) {
+    return actionError('server-error', '초대 상태를 변경하지 못했습니다.');
+  }
+
+  if (!row.ok) {
+    const mapped = mapRpcBusinessError(row.error_code);
+    return actionError(mapped.error, mapped.message);
+  }
+
+  if (
+    !row.invitation_id ||
+    !row.group_id ||
+    !row.invitation_type ||
+    !row.status
+  ) {
+    return actionError('server-error', '초대 상태를 변경하지 못했습니다.');
+  }
+
+  if (row.status !== 'accepted' && row.status !== 'rejected') {
+    return actionError('server-error', '초대 상태를 변경하지 못했습니다.');
   }
 
   return actionSuccess({
-    invitationId: invitation.invitation_id,
-    status: decision,
-    type: invitation.type,
-    groupId: invitation.group_id,
-    appointmentId: invitation.appointment_id,
+    invitationId: row.invitation_id,
+    status: row.status,
+    type: row.invitation_type,
+    groupId: row.group_id,
+    appointmentId: row.appointment_id,
   });
 }

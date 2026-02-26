@@ -1,8 +1,14 @@
+import { withQueryScope, type QueryScope } from './queryScope';
+
 export const groupKeys = {
   all: ['groups'] as const,
-  myGroups: () => [...groupKeys.all, 'my'] as const,
-  manage: () => [...groupKeys.all, 'manage'] as const,
-  detail: (groupId: string) => [...groupKeys.all, 'detail', groupId] as const,
+  myGroups: (scope?: QueryScope) =>
+    withQueryScope([...groupKeys.all, 'my'] as const, scope),
+  manage: (scope?: QueryScope) =>
+    withQueryScope([...groupKeys.all, 'manage'] as const, scope),
+  detail: (groupId: string, scope?: QueryScope) =>
+    withQueryScope([...groupKeys.all, 'detail', groupId] as const, scope),
   searchRoot: () => [...groupKeys.all, 'search'] as const,
-  search: (query: string) => [...groupKeys.searchRoot(), query] as const,
+  search: (query: string, scope?: QueryScope) =>
+    withQueryScope([...groupKeys.searchRoot(), query] as const, scope),
 };

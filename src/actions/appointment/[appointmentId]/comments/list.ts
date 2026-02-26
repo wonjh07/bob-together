@@ -7,27 +7,34 @@ import { actionError, actionSuccess } from '@/actions/_common/result';
 
 import type {
   AppointmentCommentItem,
+  AppointmentCommentsCursor,
   GetAppointmentCommentsResult,
 } from '@/actions/appointment/types';
 
-const appointmentIdSchema = z.string().uuid('유효한 약속 ID가 아닙니다.');
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 50;
 
-interface AppointmentCommentRow {
-  comment_id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-  users: {
-    name: string | null;
-    nickname: string | null;
-    profile_image: string | null;
-  } | null;
-}
+const listAppointmentCommentsSchema = z.object({
+  appointmentId: z.string().uuid('유효한 약속 ID가 아닙니다.'),
+  cursor: z
+    .object({
+      createdAt: z.string().datetime({
+        offset: true,
+        message: '유효한 커서 정보가 아닙니다.',
+      }),
+      commentId: z.string().uuid('유효한 커서 정보가 아닙니다.'),
+    })
+    .nullable()
+    .optional(),
+  limit: z.number().int().min(1).max(MAX_LIMIT).optional(),
+});
+
+type ListAppointmentCommentsParams = z.infer<typeof listAppointmentCommentsSchema>;
 
 export async function getAppointmentCommentsAction(
-  appointmentId: string,
+  params: ListAppointmentCommentsParams,
 ): Promise<GetAppointmentCommentsResult> {
-  const parsed = parseOrFail(appointmentIdSchema, appointmentId);
+  const parsed = parseOrFail(listAppointmentCommentsSchema, params);
   if (!parsed.ok) {
     return parsed;
   }
@@ -38,37 +45,80 @@ export async function getAppointmentCommentsAction(
   }
 
   const { supabase, user } = auth;
+  const { appointmentId, cursor, limit = DEFAULT_LIMIT } = parsed.data;
   const userId = user.id;
+  const isFirstPage = !cursor;
 
-  const { data: appointmentData, error: appointmentError } = await supabase
-    .from('appointments')
-    .select('appointment_id')
-    .eq('appointment_id', parsed.data)
-    .maybeSingle();
+  if (isFirstPage) {
+    const { data: appointmentData, error: appointmentError } = await supabase
+      .from('appointments')
+      .select('appointment_id')
+      .eq('appointment_id', appointmentId)
+      .maybeSingle();
 
-  if (appointmentError || !appointmentData) {
-    return actionError('forbidden', '댓글을 볼 권한이 없습니다.');
+    if (appointmentError || !appointmentData) {
+      return actionError('forbidden', '댓글을 볼 권한이 없습니다.');
+    }
   }
 
-  const { data, count, error } = await supabase
+  let query = supabase
     .from('appointment_comments')
     .select(
       'comment_id, content, created_at, user_id, users(name, nickname, profile_image)',
-      {
-        count: 'exact',
-      },
+      isFirstPage ? { count: 'exact' } : undefined,
     )
-    .eq('appointment_id', parsed.data)
+    .eq('appointment_id', appointmentId)
     .eq('is_deleted', false)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: true });
+    .is('deleted_at', null);
+
+  if (cursor) {
+    query = query.or(
+      `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},comment_id.lt.${cursor.commentId})`,
+    );
+  }
+
+  const { data, error, count } = await query
+    .order('created_at', { ascending: false })
+    .order('comment_id', { ascending: false })
+    .limit(limit + 1);
 
   if (error) {
     return actionError('server-error', '댓글을 불러오지 못했습니다.');
   }
 
+  let commentCount = 0;
+  if (isFirstPage) {
+    if (typeof count !== 'number') {
+      return actionError('server-error', '댓글 수를 불러오지 못했습니다.');
+    }
+    commentCount = count;
+  }
+
+  type AppointmentCommentRow = {
+    comment_id: string;
+    content: string;
+    created_at: string;
+    user_id: string;
+    users: {
+      name: string | null;
+      nickname: string | null;
+      profile_image: string | null;
+    } | null;
+  };
+
   const rows = (data as AppointmentCommentRow[] | null) ?? [];
-  const comments: AppointmentCommentItem[] = rows.map((row) => ({
+  const hasMore = rows.length > limit;
+  const visibleRowsDesc = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = visibleRowsDesc[visibleRowsDesc.length - 1] ?? null;
+  const visibleRowsAsc = [...visibleRowsDesc].reverse();
+  const nextCursor: AppointmentCommentsCursor | null = hasMore && lastRow
+    ? {
+        createdAt: lastRow.created_at,
+        commentId: lastRow.comment_id,
+      }
+    : null;
+
+  const comments: AppointmentCommentItem[] = visibleRowsAsc.map((row) => ({
     commentId: row.comment_id,
     content: row.content,
     createdAt: row.created_at,
@@ -79,8 +129,9 @@ export async function getAppointmentCommentsAction(
   }));
 
   return actionSuccess({
-    commentCount: count ?? comments.length,
+    commentCount,
     comments,
+    nextCursor,
     currentUserId: userId,
   });
 }

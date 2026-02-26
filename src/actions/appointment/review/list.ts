@@ -16,7 +16,11 @@ const MAX_LIMIT = 20;
 const listReviewableSchema = z.object({
   cursor: z
     .object({
-      offset: z.number().int().min(0),
+      endsAt: z.string().datetime({
+        offset: true,
+        message: '유효한 커서 정보가 아닙니다.',
+      }),
+      appointmentId: z.string().uuid('유효한 커서 정보가 아닙니다.'),
     })
     .nullable()
     .optional(),
@@ -51,14 +55,14 @@ export async function listReviewableAppointmentsAction(
 
   const { supabase, user } = auth;
   const { cursor, limit = DEFAULT_LIMIT } = parsed.data;
-  const offset = cursor?.offset ?? 0;
 
   const { data, error } = await supabase.rpc(
-    'list_reviewable_appointments_with_stats' as never,
+    'list_reviewable_appointments_with_stats_cursor' as never,
     {
       p_user_id: user.id,
-      p_offset: offset,
       p_limit: limit,
+      p_cursor_ends_at: cursor?.endsAt ?? null,
+      p_cursor_appointment_id: cursor?.appointmentId ?? null,
     } as never,
   );
 
@@ -76,6 +80,7 @@ export async function listReviewableAppointmentsAction(
 
   const hasMore = rows.length > limit;
   const visibleRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = visibleRows[visibleRows.length - 1];
 
   const appointments: ReviewableAppointmentItem[] = visibleRows.map((row) => ({
     appointmentId: row.appointment_id,
@@ -93,9 +98,10 @@ export async function listReviewableAppointmentsAction(
 
   return actionSuccess({
     appointments,
-    nextCursor: hasMore
+    nextCursor: hasMore && lastRow
       ? {
-          offset: offset + limit,
+          endsAt: lastRow.ends_at,
+          appointmentId: lastRow.appointment_id,
         }
       : null,
   });

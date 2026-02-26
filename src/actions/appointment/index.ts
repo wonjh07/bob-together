@@ -3,6 +3,8 @@ export type {
   AppointmentDetailItem,
   AppointmentHistoryCursor,
   AppointmentHistoryItem,
+  AppointmentListCursor,
+  AppointmentCommentsCursor,
   AppointmentMemberItem,
   AppointmentInviteeSummary,
   AppointmentReviewTargetItem,

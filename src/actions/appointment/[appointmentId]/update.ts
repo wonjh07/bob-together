@@ -68,62 +68,58 @@ export async function updateAppointmentAction(params: {
   }
   const { supabase, user } = auth;
 
-  const { data: appointmentData, error: appointmentError } = await supabase
-    .from('appointments')
-    .select('creator_id')
-    .eq('appointment_id', appointmentId)
-    .maybeSingle();
+  const updateAppointmentRpc = 'update_appointment_transactional' as never;
+  const updateAppointmentParams = {
+    p_user_id: user.id,
+    p_appointment_id: appointmentId,
+    p_title: title,
+    p_start_at: startAt.toISOString(),
+    p_ends_at: endsAt.toISOString(),
+    p_place_id: place.placeId ?? null,
+    p_place_kakao_id: place.kakaoId ?? null,
+    p_place_name: place.name,
+    p_place_address: place.address,
+    p_place_category: place.category ?? null,
+    p_place_latitude: place.latitude,
+    p_place_longitude: place.longitude,
+  } as never;
+  const { data, error } = await supabase.rpc(
+    updateAppointmentRpc,
+    updateAppointmentParams,
+  );
 
-  if (appointmentError || !appointmentData) {
-    return actionError('server-error', '약속 정보를 찾을 수 없습니다.');
-  }
-
-  if (appointmentData.creator_id !== user.id) {
-    return actionError('forbidden', '약속 작성자만 수정할 수 있습니다.');
-  }
-
-  let resolvedPlaceId = place.placeId ?? null;
-
-  if (!resolvedPlaceId) {
-    if (!place.kakaoId) {
-      return actionError('missing-place', '장소 정보를 확인해주세요.');
+  if (error) {
+    if (error.code === '42501') {
+      return actionError('forbidden', '약속 작성자만 수정할 수 있습니다.');
     }
-
-    const { data: placeData, error: placeError } = await supabase
-      .from('places')
-      .upsert(
-        {
-          kakao_id: place.kakaoId,
-          name: place.name,
-          address: place.address,
-          category: place.category || '',
-          latitude: place.latitude,
-          longitude: place.longitude,
-        },
-        { onConflict: 'kakao_id' },
-      )
-      .select('place_id')
-      .single();
-
-    if (placeError || !placeData) {
-      return actionError('missing-place', '장소 정보를 저장할 수 없습니다.');
-    }
-
-    resolvedPlaceId = placeData.place_id;
-  }
-
-  const { error: updateError } = await supabase
-    .from('appointments')
-    .update({
-      title,
-      start_at: startAt.toISOString(),
-      ends_at: endsAt.toISOString(),
-      place_id: resolvedPlaceId,
-    })
-    .eq('appointment_id', appointmentId);
-
-  if (updateError) {
     return actionError('server-error', '약속 수정에 실패했습니다.');
+  }
+
+  const row =
+    (
+      (data as {
+        ok: boolean;
+        error_code: string | null;
+        appointment_id: string | null;
+      }[] | null) ?? []
+    )[0] ?? null;
+  if (!row) {
+    return actionError('server-error', '약속 수정에 실패했습니다.');
+  }
+
+  if (!row.ok) {
+    switch (row.error_code) {
+      case 'appointment-not-found':
+        return actionError('server-error', '약속 정보를 찾을 수 없습니다.');
+      case 'forbidden':
+        return actionError('forbidden', '약속 작성자만 수정할 수 있습니다.');
+      case 'missing-place':
+        return actionError('missing-place', '장소 정보를 확인해주세요.');
+      case 'invalid-format':
+        return actionError('invalid-format', '약속 정보를 확인해주세요.');
+      default:
+        return actionError('server-error', '약속 수정에 실패했습니다.');
+    }
   }
 
   return actionSuccess({ appointmentId });

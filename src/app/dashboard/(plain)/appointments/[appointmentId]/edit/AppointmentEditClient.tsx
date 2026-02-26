@@ -19,6 +19,7 @@ import { createAppointmentDetailQueryOptions } from '@/libs/query/appointmentQue
 import {
   invalidateAppointmentDetailAndCollectionQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 import { extractDistrict } from '@/utils/address';
 import {
   getEffectiveAppointmentStatus,
@@ -62,13 +63,16 @@ export default function AppointmentEditClient({
 }: AppointmentEditClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const queryScope = useQueryScope();
   const [title, setTitle] = useState(initialTitle);
   const [date, setDate] = useState(initialDate);
   const [startTime, setStartTime] = useState(initialStartTime);
   const [endTime, setEndTime] = useState(initialEndTime);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const detailQuery = useQuery(createAppointmentDetailQueryOptions(appointmentId));
+  const detailQuery = useQuery(
+    createAppointmentDetailQueryOptions(appointmentId, queryScope),
+  );
   const currentStatus = detailQuery.data?.appointment.status ?? initialStatus;
   const currentEndsAt = detailQuery.data?.appointment.endsAt ?? initialEndsAt;
   const isEndedByTime = isAppointmentEndedByTime(currentEndsAt);

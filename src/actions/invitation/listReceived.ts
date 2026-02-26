@@ -16,7 +16,11 @@ const MAX_LIMIT = 30;
 const listReceivedInvitationsSchema = z.object({
   cursor: z
     .object({
-      offset: z.number().int().min(0, '유효한 offset이 아닙니다.'),
+      createdTime: z.string().datetime({
+        offset: true,
+        message: '유효한 커서 정보가 아닙니다.',
+      }),
+      invitationId: z.string().uuid('유효한 커서 정보가 아닙니다.'),
     })
     .nullable()
     .optional(),
@@ -34,19 +38,13 @@ interface InvitationRow {
   created_time: string;
   group_id: string;
   appointment_id: string | null;
-  inviter: {
-    user_id: string;
-    name: string | null;
-    nickname: string | null;
-    profile_image: string | null;
-  } | null;
-  group: {
-    name: string | null;
-  } | null;
-  appointment: {
-    title: string | null;
-    ends_at: string | null;
-  } | null;
+  inviter_id: string | null;
+  inviter_name: string | null;
+  inviter_nickname: string | null;
+  inviter_profile_image: string | null;
+  group_name: string | null;
+  appointment_title: string | null;
+  appointment_ends_at: string | null;
 }
 
 export async function listReceivedInvitationsAction(
@@ -62,40 +60,18 @@ export async function listReceivedInvitationsAction(
     return auth;
   }
 
-  const { supabase, user } = auth;
+  const { supabase } = auth;
   const { cursor, limit = DEFAULT_LIMIT } = parsed.data;
-  const offset = cursor?.offset ?? 0;
-
-  const { data, error } = await supabase
-    .from('invitations')
-    .select(
-      `
-      invitation_id,
-      type,
-      status,
-      created_time,
-      group_id,
-      appointment_id,
-      inviter:users!invitations_inviter_id_fkey(
-        user_id,
-        name,
-        nickname,
-        profile_image
-      ),
-      group:groups!invitations_group_id_fkey(
-        name
-      ),
-      appointment:appointments!invitations_appointment_id_fkey(
-        title,
-        ends_at
-      )
-      `,
-    )
-    .eq('invitee_id', user.id)
-    .in('status', ['pending', 'accepted', 'rejected'])
-    .order('created_time', { ascending: false })
-    .order('invitation_id', { ascending: false })
-    .range(offset, offset + limit);
+  const listReceivedInvitationsRpc = 'list_received_invitations_with_cursor' as never;
+  const listReceivedInvitationsParams = {
+    p_limit: limit,
+    p_cursor_created_time: cursor?.createdTime ?? null,
+    p_cursor_invitation_id: cursor?.invitationId ?? null,
+  } as never;
+  const { data, error } = await supabase.rpc(
+    listReceivedInvitationsRpc,
+    listReceivedInvitationsParams,
+  );
 
   if (error) {
     return actionError('server-error', '알림 목록을 불러오지 못했습니다.');
@@ -114,28 +90,30 @@ export async function listReceivedInvitationsAction(
 
   const hasMore = rows.length > limit;
   const visibleRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = visibleRows[visibleRows.length - 1];
 
   const invitations: InvitationListItem[] = visibleRows.map((row) => ({
     invitationId: row.invitation_id,
     type: row.type,
     status: row.status,
     createdTime: row.created_time,
-    inviterId: row.inviter?.user_id ?? '',
-    inviterName: row.inviter?.name ?? null,
-    inviterNickname: row.inviter?.nickname ?? null,
-    inviterProfileImage: row.inviter?.profile_image ?? null,
+    inviterId: row.inviter_id ?? '',
+    inviterName: row.inviter_name ?? null,
+    inviterNickname: row.inviter_nickname ?? null,
+    inviterProfileImage: row.inviter_profile_image ?? null,
     groupId: row.group_id,
-    groupName: row.group?.name ?? null,
+    groupName: row.group_name ?? null,
     appointmentId: row.appointment_id,
-    appointmentTitle: row.appointment?.title ?? null,
-    appointmentEndsAt: row.appointment?.ends_at ?? null,
+    appointmentTitle: row.appointment_title ?? null,
+    appointmentEndsAt: row.appointment_ends_at ?? null,
   }));
 
   return actionSuccess({
     invitations,
-    nextCursor: hasMore
+    nextCursor: hasMore && lastRow
       ? {
-          offset: offset + limit,
+          createdTime: lastRow.created_time,
+          invitationId: lastRow.invitation_id,
         }
       : null,
   });

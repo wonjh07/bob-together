@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -19,6 +20,7 @@ type LoginInput = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const {
     register,
@@ -39,6 +41,7 @@ export default function LoginForm() {
       }
 
       toast.success('로그인 성공!');
+      queryClient.clear();
       router.replace(resolveLoginRedirectPath(searchParams.get('redirect')));
     } catch (err) {
       toast.error('로그인 중 오류가 발생했습니다.');

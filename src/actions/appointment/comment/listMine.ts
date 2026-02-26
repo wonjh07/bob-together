@@ -13,7 +13,11 @@ const MAX_LIMIT = 30;
 const listMyCommentsSchema = z.object({
   cursor: z
     .object({
-      offset: z.number().int().min(0, '유효한 offset이 아닙니다.'),
+      createdAt: z.string().datetime({
+        offset: true,
+        message: '유효한 커서 정보가 아닙니다.',
+      }),
+      commentId: z.string().uuid('유효한 커서 정보가 아닙니다.'),
     })
     .nullable()
     .optional(),
@@ -27,9 +31,7 @@ interface MyCommentRow {
   appointment_id: string;
   content: string;
   created_at: string;
-  appointment: {
-    title: string | null;
-  } | null;
+  appointment_title: string | null;
 }
 
 export async function listMyCommentsAction(
@@ -45,29 +47,18 @@ export async function listMyCommentsAction(
     return auth;
   }
 
-  const { supabase, user } = auth;
+  const { supabase } = auth;
   const { cursor, limit = DEFAULT_LIMIT } = parsed.data;
-  const offset = cursor?.offset ?? 0;
-
-  const { data, error } = await supabase
-    .from('appointment_comments')
-    .select(
-      `
-      comment_id,
-      appointment_id,
-      content,
-      created_at,
-      appointment:appointments!appointment_comments_appointment_id_fkey(
-        title
-      )
-      `,
-    )
-    .eq('user_id', user.id)
-    .eq('is_deleted', false)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .order('comment_id', { ascending: false })
-    .range(offset, offset + limit);
+  const listMyCommentsRpc = 'list_my_comments_with_cursor' as never;
+  const listMyCommentsParams = {
+    p_limit: limit,
+    p_cursor_created_at: cursor?.createdAt ?? null,
+    p_cursor_comment_id: cursor?.commentId ?? null,
+  } as never;
+  const { data, error } = await supabase.rpc(
+    listMyCommentsRpc,
+    listMyCommentsParams,
+  );
 
   if (error) {
     return actionError('server-error', '내 댓글 목록을 불러오지 못했습니다.');
@@ -83,20 +74,22 @@ export async function listMyCommentsAction(
 
   const hasMore = rows.length > limit;
   const visibleRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = visibleRows[visibleRows.length - 1];
 
   const comments: MyCommentItem[] = visibleRows.map((row) => ({
     commentId: row.comment_id,
     appointmentId: row.appointment_id,
-    appointmentTitle: row.appointment?.title || '약속',
+    appointmentTitle: row.appointment_title || '약속',
     content: row.content,
     createdAt: row.created_at,
   }));
 
   return actionSuccess({
     comments,
-    nextCursor: hasMore
+    nextCursor: hasMore && lastRow
       ? {
-          offset: offset + limit,
+          createdAt: lastRow.created_at,
+          commentId: lastRow.comment_id,
         }
       : null,
   });

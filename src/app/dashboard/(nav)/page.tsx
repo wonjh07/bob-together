@@ -9,6 +9,7 @@ import { getMyGroupsAction } from '@/actions/group';
 import { AppointmentList } from '@/app/dashboard/_components/AppointmentList';
 import { DashboardHeader } from '@/app/dashboard/_components/DashboardHeader';
 import { createAppointmentListQueryOptions } from '@/libs/query/appointmentQueries';
+import { getServerQueryScope } from '@/libs/query/getServerQueryScope';
 import { createMyGroupsQueryOptions } from '@/libs/query/groupQueries';
 import { getSelectedGroupCookie } from '@/libs/server/groupSelection';
 import { GroupProvider } from '@/provider/group-provider';
@@ -33,12 +34,13 @@ export default async function DashboardPage() {
         : null;
 
   const queryClient = new QueryClient();
+  const queryScope = await getServerQueryScope();
 
-  await queryClient.prefetchQuery(createMyGroupsQueryOptions());
+  await queryClient.prefetchQuery(createMyGroupsQueryOptions(queryScope));
 
   if (initialGroupId) {
     await queryClient.prefetchInfiniteQuery(
-      createAppointmentListQueryOptions(initialGroupId, 'all', 'all'),
+      createAppointmentListQueryOptions(initialGroupId, 'all', 'all', queryScope),
     );
   }
 

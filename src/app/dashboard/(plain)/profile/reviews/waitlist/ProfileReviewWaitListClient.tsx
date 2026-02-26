@@ -12,13 +12,15 @@ import {
   createReviewableAppointmentsQueryOptions,
   type ReviewableAppointmentsPage,
 } from '@/libs/query/appointmentQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 import { formatDateDot } from '@/utils/dateFormat';
 
 import * as styles from './page.css';
 import * as cardStyles from '../../history/_components/HistoryAppointmentCard.css';
 
 export default function ProfileReviewWaitListClient() {
-  const queryOptions = createReviewableAppointmentsQueryOptions();
+  const queryScope = useQueryScope();
+  const queryOptions = createReviewableAppointmentsQueryOptions(queryScope);
 
   const {
     data,
@@ -92,11 +94,13 @@ export default function ProfileReviewWaitListClient() {
               <div className={cardStyles.buttonRow}>
                 <Link
                   href={`/dashboard/appointments/${appointment.appointmentId}`}
+                  prefetch={false}
                   className={cardStyles.detailButton}>
                   상세보기
                 </Link>
                 <Link
                   href={`/dashboard/profile/reviews/${appointment.appointmentId}`}
+                  prefetch={false}
                   className={cardStyles.reviewButton}>
                   리뷰 남기기
                 </Link>

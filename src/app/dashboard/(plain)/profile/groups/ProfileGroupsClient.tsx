@@ -22,6 +22,7 @@ import {
   type GroupManagePage,
 } from '@/libs/query/groupQueries';
 import { invalidateGroupMembershipQueries } from '@/libs/query/invalidateGroupQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 
 import GroupManageCard from './_components/GroupManageCard';
 import * as styles from './page.css';
@@ -36,7 +37,8 @@ const GROUP_TAB_OPTIONS: Array<{ value: GroupManageTab; label: string }> = [
 export default function ProfileGroupsClient() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const queryOptions = createGroupManageQueryOptions();
+  const queryScope = useQueryScope();
+  const queryOptions = createGroupManageQueryOptions(queryScope);
   const [activeTab, setActiveTab] = useState<GroupManageTab>('owned');
   const [openedMenuGroupId, setOpenedMenuGroupId] = useState<string | null>(
     null,

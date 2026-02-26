@@ -45,7 +45,25 @@ export async function deleteAppointmentCommentAction(params: {
     .select('comment_id')
     .maybeSingle();
 
-  if (deleteError || !deletedData) {
+  if (deleteError) {
+    if (deleteError.code === '42501' || deleteError.code === '23503') {
+      return actionError('forbidden', '댓글 삭제 권한이 없습니다.');
+    }
+
+    console.error('[deleteAppointmentCommentAction] delete failed', {
+      code: deleteError.code,
+      message: deleteError.message,
+      details: deleteError.details,
+      hint: deleteError.hint,
+      appointmentId,
+      commentId,
+      userId: user.id,
+    });
+
+    return actionError('server-error', '댓글 삭제 중 오류가 발생했습니다.');
+  }
+
+  if (!deletedData) {
     return actionError('forbidden', '댓글 삭제 권한이 없습니다.');
   }
 

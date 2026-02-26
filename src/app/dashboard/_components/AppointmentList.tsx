@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import {
+  type AppointmentListCursor,
   type PeriodFilter as PeriodFilterType,
   type TypeFilter as TypeFilterType,
 } from '@/actions/appointment';
@@ -16,6 +17,7 @@ import {
   type AppointmentQueryKey,
 } from '@/libs/query/appointmentQueries';
 import { useGroupContext } from '@/provider/group-provider';
+import { useQueryScope } from '@/provider/query-scope-provider';
 
 import { AppointmentCard } from './AppointmentCard';
 import * as styles from './AppointmentList.css';
@@ -25,6 +27,7 @@ import { TypeFilter } from './TypeFilter';
 export function AppointmentList() {
   const router = useRouter();
   const { currentGroupId } = useGroupContext();
+  const queryScope = useQueryScope();
 
   const [period, setPeriod] = useState<PeriodFilterType>('all');
   const [type, setType] = useState<TypeFilterType>('all');
@@ -32,6 +35,7 @@ export function AppointmentList() {
     currentGroupId,
     period,
     type,
+    queryScope,
   );
 
   const {
@@ -48,7 +52,7 @@ export function AppointmentList() {
     Error,
     InfiniteData<AppointmentPage>,
     AppointmentQueryKey,
-    string | null
+    AppointmentListCursor | null
   >({
     ...queryOptions,
     enabled: Boolean(currentGroupId),

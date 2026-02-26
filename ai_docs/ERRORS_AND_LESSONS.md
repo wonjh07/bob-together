@@ -6,6 +6,36 @@
 - Fix:
 - Lesson:
 
+## 새로고침 시 무한스크롤 리스트가 비어 보이는 문제
+- Context: 대시보드를 제외한 무한스크롤 리스트(히스토리/리뷰/댓글/알림/약속댓글 등)에서 새로고침 직후 데이터가 사라진 것처럼 보임
+- Cause: `Providers`에서 Supabase auth 이벤트 `SIGNED_IN` 발생 시마다 `queryClient.clear()`를 실행해, 초기 세션 복원 흐름에서도 React Query 캐시가 비워졌음
+- Fix: `INITIAL_SESSION` 이벤트에서 현재 유저를 먼저 동기화하고, `SIGNED_IN`에서는 **실제 계정 전환(currentUserId 변경)** 인 경우에만 캐시를 clear 하도록 변경. `SIGNED_OUT`은 기존대로 clear 유지
+- Lesson: 인증 이벤트 기반 캐시 초기화는 `이벤트명`이 아니라 `세션 전환 맥락(초기 복원 vs 계정 변경)`을 기준으로 분기해야 한다
+
+## 댓글 CRUD에서 DB 오류가 권한 오류로 오인됨
+- Context: 댓글 작성/수정/삭제 실패 시 사용자에게 대부분 `권한 없음` 메시지로만 노출되어 실제 장애와 권한 오류를 구분하기 어려웠음
+- Cause: `createAppointmentCommentAction`/`updateAppointmentCommentAction`/`deleteAppointmentCommentAction`이 DB 에러 코드를 구분하지 않고 광범위하게 `forbidden`으로 매핑
+- Fix: 에러 코드를 분기해 `42501`/`23503`만 `forbidden`으로 처리하고, 그 외 예외 코드는 `server-error`로 반환 + 서버 로그 기록
+- Lesson: 사용자 액션 실패는 최소한 `권한/입력/서버` 클래스 단위로 구분해 반환해야 재시도 판단과 장애 분석 속도를 확보할 수 있다
+
+## 리뷰 카드 영역에서 `preload but not used` 경고 반복 출력
+- Context: 프로필의 `작성 가능한 리뷰` 카드 리스트 렌더 직후 콘솔에 preload 경고가 반복적으로 출력됨
+- Cause: 카드마다 `next/link` 자동 prefetch가 실행되며 route 리소스를 preload했지만 사용자 즉시 이동이 없어 브라우저가 경고를 출력
+- Fix: 리뷰 카드 링크에 `prefetch={false}`를 명시해 불필요한 eager preload를 중단
+- Lesson: 카드형 무한/대량 리스트의 링크는 기본 prefetch를 그대로 두지 말고, 실제 이동 패턴이 낮으면 페이지 단위로 prefetch 정책을 명시해야 콘솔 노이즈와 네트워크 낭비를 줄일 수 있다
+
+## 프로필 진입 시 폰트 `preload but not used` 경고 출력
+- Context: 프로필 페이지 최초 진입 시 `/_next/static/media/*-s.p.woff` 경고가 콘솔에 출력됨
+- Cause: `next/font/local` 기본값(`preload: true`)으로 Pretendard 다중 weight가 초기 로드 시 preload되었고, 일부 weight(예: 200)는 즉시 사용되지 않음
+- Fix: 루트 폰트 설정(`src/app/layout.tsx`)에 `preload: false`를 추가해 과도한 초기 preload를 중단
+- Lesson: 다중 굵기 폰트를 등록할 때는 초기 화면에서 실제 사용하는 weight가 제한적이면 preload 정책을 명시적으로 조정해야 한다
+
+## 작성 가능한 리뷰 카드에서 마우스휠 가로 스크롤이 비활성화됨
+- Context: 프로필 홈의 `작성 가능한 리뷰` 카드에서 세로 휠을 돌려도 좌우 이동이 동작하지 않음
+- Cause: 휠 리스너 등록 effect가 `[]` 의존성으로 최초 1회만 실행되어, 로딩 상태에서 `container`가 없으면 리스너가 끝내 등록되지 않음
+- Fix: `ReviewsWaitList`의 휠 등록 effect 의존성을 `[items.length]`로 변경해 카드 렌더 이후 리스너가 등록되도록 수정
+- Lesson: 로딩/조건부 렌더링에 의해 DOM ref가 늦게 생기는 경우, 이벤트 바인딩 effect를 최초 1회로 고정하면 누락될 수 있으므로 마운트 트리거에 맞는 의존성을 명시해야 한다
+
 ## 프로필 빠른 링크/그룹 관리 상단 UI가 간헐적으로 깨져 보임
 - Context: 프로필 빠른 링크 섹션과 그룹 관리 상단(칩 + `그룹 찾기`/`새 그룹`)에서 간헐적으로 간격/크기/노출이 깨져 보이는 현상
 - Cause:

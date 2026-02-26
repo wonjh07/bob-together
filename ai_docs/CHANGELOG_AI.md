@@ -1,6 +1,198 @@
 # AI Changelog (Rolling)
 
+## 2026-02-26
+- Introduced user-scoped React Query keys for auth-safe cache partitioning:
+  - added query scope utilities/providers:
+    - `src/libs/query/queryScope.ts`
+    - `src/libs/query/getServerQueryScope.ts`
+    - `src/provider/query-scope-provider.tsx`
+  - wired initial scope from server session in root layout/provider:
+    - `src/app/layout.tsx`
+    - `src/app/providers.tsx`
+  - extended query key factories and query option factories with optional `scope`
+    across appointment/group/place/invitation domains
+  - applied scoped query options to dashboard/profile/search/detail/create/invitation clients
+    and SSR prefetch pages so hydration keys stay aligned
+- Fixed refresh-time infinite list cache reset issue:
+  - updated `src/app/providers.tsx` Supabase auth event handling
+  - `queryClient.clear()` is no longer executed on initial session restoration
+  - cache clear on `SIGNED_IN` now runs only when user account actually changes
+  - `SIGNED_OUT` keeps full cache clear behavior
+- Transactionalized multi-query group/member/review/update actions (3+ DB calls):
+  - added migrations:
+    - `supabase/migrations/20260226019000_join_group_transaction_rpc.sql`
+    - `supabase/migrations/20260226020000_create_group_transaction_rpc.sql`
+    - `supabase/migrations/20260226021000_send_group_invitation_transaction_rpc.sql`
+    - `supabase/migrations/20260226022000_search_group_invitable_users_transaction_rpc.sql`
+    - `supabase/migrations/20260226023000_search_appointment_invitable_users_transaction_rpc.sql`
+    - `supabase/migrations/20260226024000_join_appointment_transaction_rpc.sql`
+    - `supabase/migrations/20260226025000_get_appointment_invitation_state_transaction_rpc.sql`
+    - `supabase/migrations/20260226026000_update_appointment_transaction_rpc.sql`
+    - `supabase/migrations/20260226027000_get_appointment_review_target_transaction_rpc.sql`
+    - `supabase/migrations/20260226028000_submit_place_review_transaction_rpc.sql`
+  - switched actions to single RPC + mapping:
+    - `src/actions/group/joinGroupAction.ts`
+    - `src/actions/group/createGroupAction.ts`
+    - `src/actions/group/sendGroupInvitationAction.ts`
+    - `src/actions/group/searchGroupInvitableUsersAction.ts`
+    - `src/actions/appointment/[appointmentId]/members/searchInvitees.ts`
+    - `src/actions/appointment/[appointmentId]/members/join.ts`
+    - `src/actions/appointment/[appointmentId]/members/getInvitationState.ts`
+    - `src/actions/appointment/[appointmentId]/update.ts`
+    - `src/actions/appointment/review/getTarget.ts`
+    - `src/actions/appointment/review/submit.ts`
+  - updated action tests for RPC mocking:
+    - `src/actions/group/joinGroupAction.test.ts`
+    - `src/actions/group/createGroupAction.test.ts`
+    - `src/actions/group/sendGroupInvitationAction.test.ts`
+    - `src/actions/group/searchGroupInvitableUsersAction.test.ts`
+    - `src/actions/appointment/[appointmentId]/members/searchInvitees.test.ts`
+- Transactionalized appointment invitation send flow:
+  - added migration `supabase/migrations/20260226018000_send_appointment_invitation_transaction_rpc.sql`
+  - added RPC `send_appointment_invitation_transactional` for invite validation + insert
+  - `sendAppointmentInvitationAction` now calls RPC and maps business `error_code` to existing UX messages
+  - updated tests in `src/actions/appointment/[appointmentId]/members/invite.test.ts`
+- Optimized `받은 초대 목록` query path via RPC:
+  - added migration `supabase/migrations/20260226017000_list_received_invitations_with_cursor_rpc.sql`
+  - added RPC `list_received_invitations_with_cursor` (`created_time + invitation_id` keyset)
+  - `listReceivedInvitationsAction` now calls RPC instead of action-side join + cursor `or(...)`
+  - updated tests in `src/actions/invitation/listReceived.test.ts`
+- Optimized `내 댓글` query path via RPC:
+  - added migration `supabase/migrations/20260226016000_list_my_comments_with_cursor_rpc.sql`
+  - added RPC `list_my_comments_with_cursor` (`created_at + comment_id` keyset)
+  - `listMyCommentsAction` now calls RPC instead of action-side join + cursor `or(...)`
+  - updated tests in `src/actions/appointment/comment/listMine.test.ts`
+- Hardened appointment comment mutation error handling:
+  - `create/update/delete` comment actions now distinguish DB error classes
+  - permission/foreign-key errors (`42501`, `23503`) map to `forbidden`
+  - unexpected DB errors map to `server-error` with structured server logs
+  - added regression tests for all three comment mutations:
+    - `src/actions/appointment/[appointmentId]/comments/create.test.ts`
+    - `src/actions/appointment/[appointmentId]/comments/update.test.ts`
+    - `src/actions/appointment/[appointmentId]/comments/delete.test.ts`
+- Transactionalized invitation response flow:
+  - added RPC migration `supabase/migrations/20260226015000_respond_invitation_transaction_rpc.sql`
+  - new function `respond_to_invitation_transactional` atomically handles:
+    - invitation pending-state lock/check
+    - membership insert for accepted decision (group/appointment)
+    - invitation status update (`accepted`/`rejected`)
+  - `respondToInvitationAction` now calls the RPC and maps business error codes to existing UX messages
+- Transactionalized appointment creation flow:
+  - added RPC migration `supabase/migrations/20260226014000_create_appointment_with_owner_member_rpc.sql`
+  - new function `create_appointment_with_owner_member` atomically executes:
+    - place upsert (`kakao_id` conflict update)
+    - appointment insert
+    - owner membership insert
+  - `createAppointmentAction` now calls the RPC instead of running 3 separate writes
+- Added comment-list keyset support index for appointment detail:
+  - new migration `supabase/migrations/20260226013000_add_appointment_comments_appointment_index.sql`
+  - adds partial index `appointment_comments_appointment_created_id_active_idx`
+    on `(appointment_id, created_at desc, comment_id desc)` for active comments
+- Optimized appointment comments pagination query cost:
+  - `getAppointmentCommentsAction` now requests `count: 'exact'` only on first page (`cursor` 없는 요청)
+  - cursor pages skip exact count and return `commentCount: 0` to avoid repeated full count scans on every `fetchNextPage`
+  - updated tests in `src/actions/appointment/[appointmentId]/comments/list.test.ts`
+- Restored wheel-to-horizontal scroll behavior on profile review cards:
+  - fixed `ReviewsWaitList` wheel-listener effect dependency so listener is attached after list mount (post-loading)
+  - changed effect deps from `[]` to `[items.length]`
+  - file: `src/app/dashboard/(nav)/profile/_components/ReviewsWaitList.tsx`
+- Fixed local font preload warning on profile page:
+  - set `preload: false` on root `localFont` config to stop eager preload of all Pretendard weights on initial load
+  - file: `src/app/layout.tsx`
+- Reduced noisy preload warnings on reviewable-review cards:
+  - set `prefetch={false}` on review card navigation links to avoid eager route preloads that are not used immediately
+  - affected files:
+    - `src/app/dashboard/(nav)/profile/_components/ReviewsWaitList.tsx`
+    - `src/app/dashboard/(plain)/profile/reviews/waitlist/ProfileReviewWaitListClient.tsx`
+
 ## 2026-02-25
+- Fixed passive wheel listener warning in profile review wait-list:
+  - replaced React `onWheel` + `preventDefault()` with native `wheel` event listener registered as `{ passive: false }`
+  - removed console warning: `Unable to preventDefault inside passive event listener invocation.`
+  - file: `src/app/dashboard/(nav)/profile/_components/ReviewsWaitList.tsx`
+- Fixed cursor datetime validation for keyset pagination:
+  - changed cursor datetime schemas from `z.string().datetime(...)` to `z.string().datetime({ offset: true, ... })`
+  - prevents false `invalid-format` errors when DB returns ISO strings with timezone offsets (e.g. `+00:00`)
+  - affected actions: reviewable reviews, my reviews, history, my comments, appointment comments, invitation list, place reviews
+- Stabilized React Query default behavior for less jittery refresh:
+  - updated `src/libs/query/clientQueryClient.ts` defaults
+  - `staleTime`: 60s -> 30s, `gcTime`: 5m -> 15m
+  - disabled focus-triggered refetch (`refetchOnWindowFocus: false`)
+  - enabled reconnect/mount refetch (`refetchOnReconnect: true`, `refetchOnMount: true`)
+  - disabled automatic retries for queries/mutations (`retry: 0`)
+- Optimized appointment-detail comments loading:
+  - switched `getAppointmentCommentsAction` to keyset pagination (`created_at + comment_id`) with `limit + 1`
+  - fixed total comment count accuracy by using `count: 'exact'` on the comments query (removed planned/fallback estimate path)
+  - changed comments query to `useInfiniteQuery` and added `이전 댓글 더보기` in `AppointmentCommentsSection`
+  - reduced first-load payload by removing comments prefetch from appointment detail server page
+  - updated tests: `src/actions/appointment/[appointmentId]/comments/list.test.ts`
+- Hardened auth session cache lifecycle in app provider:
+  - added Supabase auth state subscription in `src/app/providers.tsx`
+  - on `SIGNED_IN` / `SIGNED_OUT`, React Query cache is globally cleared (`queryClient.clear()`)
+  - prevents stale cross-account query data when auth state changes outside specific login/logout screens
+- Optimized profile appointment history query path:
+  - added RPC migration `supabase/migrations/20260225213000_list_appointment_history_with_stats_rpc.sql`
+  - switched `listAppointmentHistoryAction` to single RPC call (`list_appointment_history_with_stats`)
+  - removed action-side multi-query aggregation (`appointments` + `appointment_members` + `user_review`)
+  - added tests `src/actions/appointment/history/list.test.ts` for rpc-error/empty/pagination mapping cases
+- Optimized place-detail query path:
+  - added RPC migration `supabase/migrations/20260225223000_get_place_detail_with_stats_rpc.sql`
+  - switched `getPlaceDetailAction` to single RPC call (`get_place_detail_with_stats`)
+  - removed action-side review score row fetch + JS aggregation
+  - added tests in `src/actions/place.test.ts` for invalid-id/rpc-error/mapping-rounding cases
+- Optimized invitation search query footprint:
+  - group invite search now fetches candidate users first, then resolves existing-member/pending state only for candidate user IDs (`in(...)`), instead of scanning whole group members/pending invites on each input
+  - appointment invite search now checks existing appointment members only for candidate user IDs (`in(...)`), instead of reading full appointment member set on each input
+  - updated tests:
+    - `src/actions/group/searchGroupInvitableUsersAction.test.ts`
+    - `src/actions/appointment/[appointmentId]/members/searchInvitees.test.ts`
+- Optimized notification invitation list pagination:
+  - switched `listReceivedInvitationsAction` from offset cursor to keyset cursor (`created_time + invitation_id`)
+  - replaced `range(offset, offset + limit)` with `limit(limit + 1)` + keyset `or(...)` filter
+  - updated cursor type in `src/actions/invitation/types.ts`
+  - added tests: `src/actions/invitation/listReceived.test.ts`
+- Optimized `내 댓글` list pagination:
+  - switched `listMyCommentsAction` from offset cursor to keyset cursor (`created_at + comment_id`)
+  - replaced `range(offset, offset + limit)` with `limit(limit + 1)` + keyset `or(...)` filter
+  - updated `MyCommentCursor` in `src/actions/appointment/types.ts`
+  - updated tests: `src/actions/appointment/comment/listMine.test.ts`
+- Optimized place reviews pagination:
+  - switched `listPlaceReviewsAction` from action-side `offset` query to RPC-based keyset pagination (`updated_at + review_id`)
+  - added migration `supabase/migrations/20260225235900_list_place_reviews_with_cursor_rpc.sql`
+  - `listPlaceReviewsAction` now calls `list_place_reviews_with_cursor` and maps `nextCursor` as `{ updatedAt, reviewId }`
+  - updated tests in `src/actions/place.test.ts` for cursor validation, rpc error, and keyset cursor mapping
+- Optimized `내 리뷰` list pagination:
+  - switched `listMyReviewsAction` from action-side `offset` query to RPC-based keyset pagination (`updated_at + review_id`)
+  - added migration `supabase/migrations/20260226001000_list_my_reviews_with_cursor_rpc.sql`
+  - `MyReviewCursor` changed to `{ updatedAt, reviewId }` in `src/actions/appointment/types.ts`
+  - added tests in `src/actions/appointment/review/listMine.test.ts` for cursor validation, rpc error, and keyset cursor mapping
+- Optimized `리뷰 가능한 약속` list pagination:
+  - switched `listReviewableAppointmentsAction` from offset-based RPC to keyset RPC (`ends_at + appointment_id`)
+  - added migration `supabase/migrations/20260226004000_list_reviewable_appointments_with_stats_cursor_rpc.sql`
+  - `ReviewableAppointmentsCursor` changed to `{ endsAt, appointmentId }` in `src/actions/appointment/types.ts`
+  - added tests in `src/actions/appointment/review/list.test.ts` for cursor validation, rpc error, and keyset cursor mapping
+- Stabilized dashboard appointment list pagination cursor:
+  - switched dashboard list action from single cursor (`start_at`) to composite keyset cursor (`start_at + appointment_id`)
+  - added migration `supabase/migrations/20260226005000_list_appointments_with_stats_cursor_rpc.sql`
+  - updated `ListAppointmentsParams/ListAppointmentsResult` cursor shape in `src/actions/appointment/types.ts`
+  - updated query pageParam typing in `src/libs/query/appointmentQueries.ts` and `src/app/dashboard/_components/AppointmentList.tsx`
+  - added tests in `src/actions/appointment/list.test.ts`
+- Stabilized profile history pagination cursor:
+  - switched `listAppointmentHistoryAction` from offset cursor to composite keyset cursor (`ends_at + appointment_id`)
+  - added migration `supabase/migrations/20260226005500_list_appointment_history_with_stats_cursor_rpc.sql`
+  - updated `AppointmentHistoryCursor` shape and history action/tests
+- Added keyset pagination support indexes:
+  - added migration `supabase/migrations/20260226012000_add_keyset_pagination_indexes.sql`
+  - includes composite/partial indexes for:
+    - appointments (`group_id + start_at + appointment_id`, `pending ends_at + appointment_id`)
+    - appointment_members (`user_id + appointment_id`)
+    - appointment_comments (active rows by `user_id + created_at + comment_id`)
+    - invitations (active received rows by `invitee_id + created_time + invitation_id`)
+    - user_review (`place_id + updated_at + review_id`, `user_id + updated_at + review_id`)
+- Hardened account-switch cache isolation:
+  - clear React Query cache on logout in `ProfileDrop` before `logoutAction()`
+  - clear React Query cache on login success in `LoginForm` before redirect
+  - prevents previous-account history/query data from flashing after account switch
 - Fixed place-detail back navigation fallback:
   - `PlaceDetailClient` now uses explicit `onBack={() => router.back()}` for `PlainTopNav`
   - prevents navigation to non-existent `/dashboard/places` parent route.

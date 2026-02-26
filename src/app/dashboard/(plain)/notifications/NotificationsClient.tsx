@@ -18,13 +18,15 @@ import {
   createReceivedInvitationsQueryOptions,
   type InvitationPage,
 } from '@/libs/query/invitationQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 
 import NotificationInviteCard from './_components/NotificationInviteCard';
 import * as styles from './page.css';
 
 export default function NotificationsClient() {
   const queryClient = useQueryClient();
-  const queryOptions = createReceivedInvitationsQueryOptions();
+  const queryScope = useQueryScope();
+  const queryOptions = createReceivedInvitationsQueryOptions(queryScope);
   const [processingInvitationId, setProcessingInvitationId] = useState<
     string | null
   >(null);

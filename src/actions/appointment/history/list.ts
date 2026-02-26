@@ -12,12 +12,15 @@ import type {
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 30;
-const USER_REVIEW_TABLE = 'user_review' as never;
 
 const listHistorySchema = z.object({
   cursor: z
     .object({
-      offset: z.number().int().min(0),
+      endsAt: z.string().datetime({
+        offset: true,
+        message: '유효한 커서 정보가 아닙니다.',
+      }),
+      appointmentId: z.string().uuid('유효한 커서 정보가 아닙니다.'),
     })
     .nullable()
     .optional(),
@@ -26,37 +29,37 @@ const listHistorySchema = z.object({
 
 type ListHistoryParams = z.infer<typeof listHistorySchema>;
 
-interface HistoryAppointmentRow {
+interface AppointmentHistoryRpcRow {
   appointment_id: string;
   title: string;
   start_at: string;
   ends_at: string;
   creator_id: string;
+  creator_name: string | null;
+  creator_nickname: string | null;
+  creator_profile_image: string | null;
   place_id: string;
-  creator: {
-    user_id: string;
-    name: string | null;
-    nickname: string | null;
-    profile_image: string | null;
-  } | null;
-  place: {
-    place_id: string;
-    name: string | null;
-    address: string | null;
-    category: string | null;
-  } | null;
+  place_name: string | null;
+  place_address: string | null;
+  place_category: string | null;
+  member_count: number | string | null;
+  review_avg: number | string | null;
+  review_count: number | string | null;
+  can_write_review: boolean | null;
 }
 
-interface AppointmentMemberRow {
-  appointment_id: string;
+function toCount(value: number | string | null): number {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0 ? Math.floor(numeric) : 0;
 }
 
-interface PlaceReviewRow {
-  appointment_id: string | null;
-  place_id: string;
-  user_id: string;
-  score: number | null;
-  review: string | null;
+function toNullableNumber(value: number | string | null): number | null {
+  if (value === null) {
+    return null;
+  }
+
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
 }
 
 export async function listAppointmentHistoryAction(
@@ -74,42 +77,17 @@ export async function listAppointmentHistoryAction(
 
   const { supabase, user } = auth;
   const { cursor, limit = DEFAULT_LIMIT } = parsed.data;
-  const offset = cursor?.offset ?? 0;
-  const nowIso = new Date().toISOString();
-
-  const { data, error } = await supabase
-    .from('appointments')
-    .select(
-      `
-      appointment_id,
-      title,
-      start_at,
-      ends_at,
-      creator_id,
-      place_id,
-      creator:users!appointments_creator_id_fkey(
-        user_id,
-        name,
-        nickname,
-        profile_image
-      ),
-      place:places!appointments_place_id_fkey(
-        place_id,
-        name,
-        address,
-        category
-      ),
-      participant:appointment_members!inner(
-        user_id
-      )
-      `,
-    )
-    .eq('participant.user_id', user.id)
-    .neq('status', 'canceled')
-    .lte('ends_at', nowIso)
-    .order('ends_at', { ascending: false })
-    .order('appointment_id', { ascending: false })
-    .range(offset, offset + limit);
+  const historyRpc = 'list_appointment_history_with_stats_cursor' as never;
+  const historyRpcParams = {
+    p_user_id: user.id,
+    p_limit: limit,
+    p_cursor_ends_at: cursor?.endsAt ?? null,
+    p_cursor_appointment_id: cursor?.appointmentId ?? null,
+  } as never;
+  const { data, error } = await supabase.rpc(
+    historyRpc,
+    historyRpcParams,
+  );
 
   if (error) {
     return {
@@ -119,9 +97,7 @@ export async function listAppointmentHistoryAction(
     };
   }
 
-  const rows = ((data as HistoryAppointmentRow[] | null) ?? []).filter(
-    (row) => row.appointment_id && row.place_id,
-  );
+  const rows = (data as AppointmentHistoryRpcRow[] | null) ?? [];
 
   if (rows.length === 0) {
     return actionSuccess({
@@ -132,94 +108,38 @@ export async function listAppointmentHistoryAction(
 
   const hasMore = rows.length > limit;
   const visibleRows = hasMore ? rows.slice(0, limit) : rows;
-  const appointmentIds = visibleRows.map((row) => row.appointment_id);
-  const placeIds = Array.from(new Set(visibleRows.map((row) => row.place_id)));
-
-  const [memberResult, placeReviewResult] = await Promise.all([
-    supabase
-      .from('appointment_members')
-      .select('appointment_id')
-      .in('appointment_id', appointmentIds),
-    supabase
-      .from(USER_REVIEW_TABLE)
-      .select('appointment_id, place_id, user_id, score, review')
-      .in('place_id', placeIds)
-      .not('appointment_id', 'is', null)
-      .or('score.not.is.null,review.not.is.null'),
-  ]);
-
-  const memberCountByAppointment = new Map<string, number>();
-  if (!memberResult.error) {
-    const memberRows = (memberResult.data as AppointmentMemberRow[] | null) ?? [];
-    for (const row of memberRows) {
-      memberCountByAppointment.set(
-        row.appointment_id,
-        (memberCountByAppointment.get(row.appointment_id) ?? 0) + 1,
-      );
-    }
-  }
-
-  const reviewStatsByPlace = new Map<string, { sum: number; count: number }>();
-  const reviewedAppointmentIds = new Set<string>();
-  if (!placeReviewResult.error) {
-    const placeReviewRows =
-      (placeReviewResult.data as unknown as PlaceReviewRow[] | null) ?? [];
-    for (const row of placeReviewRows) {
-      if (typeof row.score === 'number') {
-        const previous = reviewStatsByPlace.get(row.place_id) ?? { sum: 0, count: 0 };
-        reviewStatsByPlace.set(row.place_id, {
-          sum: previous.sum + row.score,
-          count: previous.count + 1,
-        });
-      }
-
-      const hasMyReview =
-        typeof row.appointment_id === 'string' &&
-        row.user_id === user.id &&
-        (typeof row.score === 'number' ||
-          (typeof row.review === 'string' && row.review.trim().length > 0));
-
-      if (hasMyReview && row.appointment_id) {
-        reviewedAppointmentIds.add(row.appointment_id);
-      }
-    }
-  }
+  const lastRow = visibleRows[visibleRows.length - 1];
 
   const appointments: AppointmentHistoryItem[] = visibleRows.map((row) => {
-    const stats = reviewStatsByPlace.get(row.place_id);
-    const reviewAverage =
-      stats && stats.count > 0
-        ? Number((stats.sum / stats.count).toFixed(1))
-        : null;
-
     return {
       appointmentId: row.appointment_id,
       title: row.title,
       startAt: row.start_at,
       endsAt: row.ends_at,
       creatorId: row.creator_id,
-      creatorName: row.creator?.name ?? null,
-      creatorNickname: row.creator?.nickname ?? null,
-      creatorProfileImage: row.creator?.profile_image ?? null,
+      creatorName: row.creator_name,
+      creatorNickname: row.creator_nickname,
+      creatorProfileImage: row.creator_profile_image,
       place: {
         placeId: row.place_id,
-        name: row.place?.name || '장소 미정',
-        address: row.place?.address || '',
-        category: row.place?.category ?? null,
-        reviewAverage,
-        reviewCount: stats?.count ?? 0,
+        name: row.place_name || '장소 미정',
+        address: row.place_address || '',
+        category: row.place_category,
+        reviewAverage: toNullableNumber(row.review_avg),
+        reviewCount: toCount(row.review_count),
       },
-      memberCount: memberCountByAppointment.get(row.appointment_id) ?? 0,
+      memberCount: toCount(row.member_count),
       isOwner: row.creator_id === user.id,
-      canWriteReview: !reviewedAppointmentIds.has(row.appointment_id),
+      canWriteReview: row.can_write_review !== false,
     };
   });
 
   return actionSuccess({
     appointments,
-    nextCursor: hasMore
+    nextCursor: hasMore && lastRow
       ? {
-          offset: offset + limit,
+          endsAt: lastRow.ends_at,
+          appointmentId: lastRow.appointment_id,
         }
       : null,
   });

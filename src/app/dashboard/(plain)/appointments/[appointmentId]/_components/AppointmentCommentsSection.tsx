@@ -1,6 +1,10 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+} from '@tanstack/react-query';
 import Image from 'next/image';
 import {
   useEffect,
@@ -16,19 +20,20 @@ import {
   deleteAppointmentCommentAction,
   updateAppointmentCommentAction,
   type AppointmentCommentItem,
+  type AppointmentCommentsCursor,
 } from '@/actions/appointment';
 import CommentIcon from '@/components/icons/CommentIcon';
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon';
 import OverflowMenu from '@/components/ui/OverflowMenu';
-import { appointmentKeys } from '@/libs/query/appointmentKeys';
 import {
   createAppointmentCommentsQueryOptions,
-  type AppointmentCommentsData,
+  type AppointmentCommentsPage,
 } from '@/libs/query/appointmentQueries';
 import {
   invalidateAppointmentListQueries,
   invalidateMyCommentsQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 import { formatRelativeKorean } from '@/utils/dateFormat';
 
 import * as styles from './AppointmentCommentsSection.css';
@@ -37,14 +42,30 @@ interface AppointmentCommentsSectionProps {
   appointmentId: string;
 }
 
+type AppointmentCommentsInfiniteData = InfiniteData<
+  AppointmentCommentsPage,
+  AppointmentCommentsCursor | null
+>;
+
 export default function AppointmentCommentsSection({
   appointmentId,
 }: AppointmentCommentsSectionProps) {
   const queryClient = useQueryClient();
-  const commentsQuery = useQuery(createAppointmentCommentsQueryOptions(appointmentId));
-  const comments = commentsQuery.data?.comments ?? [];
-  const commentCount = commentsQuery.data?.commentCount ?? 0;
-  const currentUserId = commentsQuery.data?.currentUserId ?? null;
+  const queryScope = useQueryScope();
+  const queryOptions = createAppointmentCommentsQueryOptions(
+    appointmentId,
+    queryScope,
+  );
+  const commentsQuery = useInfiniteQuery(queryOptions);
+  const pages = commentsQuery.data?.pages ?? [];
+  const comments = pages
+    .slice()
+    .reverse()
+    .flatMap((page) => page.comments);
+  const commentCount = pages[0]?.commentCount ?? comments.length;
+  const currentUserId = pages[0]?.currentUserId ?? null;
+  const hasMore = commentsQuery.hasNextPage ?? false;
+  const isLoadingMore = commentsQuery.isFetchingNextPage;
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
@@ -101,13 +122,35 @@ export default function AppointmentCommentsSection({
     }
 
     const nextComment = result.data.comment;
-    const nextComments = [...comments, nextComment];
-    queryClient.setQueryData<AppointmentCommentsData>(
-      appointmentKeys.comments(appointmentId),
-      {
-        comments: nextComments,
-        commentCount: nextComments.length,
-        currentUserId,
+    queryClient.setQueryData<AppointmentCommentsInfiniteData>(
+      queryOptions.queryKey,
+      (prev) => {
+        if (!prev || prev.pages.length === 0) {
+          return {
+            pages: [
+              {
+                comments: [nextComment],
+                commentCount: 1,
+                nextCursor: null,
+                currentUserId: nextComment.userId,
+              },
+            ],
+            pageParams: [null],
+          };
+        }
+
+        const [latestPage, ...restPages] = prev.pages;
+        return {
+          ...prev,
+          pages: [
+            {
+              ...latestPage,
+              comments: [...latestPage.comments, nextComment],
+              commentCount: latestPage.commentCount + 1,
+            },
+            ...restPages,
+          ],
+        };
       },
     );
     await Promise.all([
@@ -173,15 +216,22 @@ export default function AppointmentCommentsSection({
     }
 
     const updatedComment = result.data.comment;
-    const nextComments = comments.map((comment) =>
-        comment.commentId === editingCommentId ? updatedComment : comment,
-      );
-    queryClient.setQueryData<AppointmentCommentsData>(
-      appointmentKeys.comments(appointmentId),
-      {
-        comments: nextComments,
-        commentCount: nextComments.length,
-        currentUserId,
+    queryClient.setQueryData<AppointmentCommentsInfiniteData>(
+      queryOptions.queryKey,
+      (prev) => {
+        if (!prev) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          pages: prev.pages.map((page) => ({
+            ...page,
+            comments: page.comments.map((comment) =>
+              comment.commentId === editingCommentId ? updatedComment : comment,
+            ),
+          })),
+        };
       },
     );
     await invalidateMyCommentsQueries(queryClient);
@@ -226,15 +276,44 @@ export default function AppointmentCommentsSection({
     }
 
     const deletedCommentId = result.data.commentId;
-    const nextComments = comments.filter(
-      (comment) => comment.commentId !== deletedCommentId,
-    );
-    queryClient.setQueryData<AppointmentCommentsData>(
-      appointmentKeys.comments(appointmentId),
-      {
-        comments: nextComments,
-        commentCount: nextComments.length,
-        currentUserId,
+    queryClient.setQueryData<AppointmentCommentsInfiniteData>(
+      queryOptions.queryKey,
+      (prev) => {
+        if (!prev || prev.pages.length === 0) {
+          return prev;
+        }
+
+        let removed = false;
+        const nextPages = prev.pages.map((page) => {
+          const nextComments = page.comments.filter((comment) => {
+            if (comment.commentId === deletedCommentId) {
+              removed = true;
+              return false;
+            }
+            return true;
+          });
+
+          return {
+            ...page,
+            comments: nextComments,
+          };
+        });
+
+        if (!removed) {
+          return prev;
+        }
+
+        const [latestPage, ...restPages] = nextPages;
+        return {
+          ...prev,
+          pages: [
+            {
+              ...latestPage,
+              commentCount: Math.max(0, latestPage.commentCount - 1),
+            },
+            ...restPages,
+          ],
+        };
       },
     );
     await Promise.all([
@@ -245,6 +324,14 @@ export default function AppointmentCommentsSection({
       cancelEdit();
     }
     toast.success('댓글이 삭제되었습니다.');
+  };
+
+  const handleLoadOlderComments = async () => {
+    if (!hasMore || isLoadingMore) {
+      return;
+    }
+
+    await commentsQuery.fetchNextPage();
   };
 
   return (
@@ -279,6 +366,15 @@ export default function AppointmentCommentsSection({
 
       {comments.length > 0 ? (
         <div className={styles.list}>
+          {hasMore ? (
+            <button
+              type="button"
+              className={styles.loadMoreButton}
+              onClick={handleLoadOlderComments}
+              disabled={isLoadingMore}>
+              {isLoadingMore ? '불러오는 중...' : '이전 댓글 더보기'}
+            </button>
+          ) : null}
           {comments.map((comment) => {
             const displayName = comment.nickname || comment.name || '알 수 없음';
             const meta = [comment.name, formatRelativeKorean(comment.createdAt)]

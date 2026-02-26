@@ -14,53 +14,6 @@ jest.mock('@/actions/_common/guards', () => {
 const APPOINTMENT_ID = '20000000-0000-4000-8000-000000000001';
 const USER_ID = '20000000-0000-4000-8000-000000000002';
 
-type AppointmentQueryResult = {
-  appointment_id: string;
-  group_id: string;
-  status: 'pending' | 'confirmed' | 'canceled';
-  ends_at: string;
-} | null;
-
-function createAwaitableQuery<T>(result: { data: T; error: null }) {
-  const query = {
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    or: jest.fn().mockReturnThis(),
-    neq: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    maybeSingle: jest.fn().mockResolvedValue(result),
-    then: (
-      onFulfilled: (value: { data: T; error: null }) => unknown,
-      onRejected?: (reason: unknown) => unknown,
-    ) => Promise.resolve(result).then(onFulfilled, onRejected),
-  };
-
-  return query;
-}
-
-function createAppointmentSupabaseMock(result: AppointmentQueryResult) {
-  const appointmentsQuery = {
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    maybeSingle: jest.fn().mockResolvedValue({
-      data: result,
-      error: null,
-    }),
-  };
-
-  const supabase = {
-    from: jest.fn((table: string) => {
-      if (table === 'appointments') {
-        return appointmentsQuery;
-      }
-
-      throw new Error(`unexpected table access: ${table}`);
-    }),
-  };
-
-  return { supabase };
-}
-
 describe('searchAppointmentInvitableUsersAction', () => {
   const mockRequireUser = requireUser as jest.Mock;
 
@@ -82,16 +35,20 @@ describe('searchAppointmentInvitableUsersAction', () => {
   });
 
   it('취소된 약속은 검색을 차단한다', async () => {
-    const { supabase } = createAppointmentSupabaseMock({
-      appointment_id: APPOINTMENT_ID,
-      group_id: '20000000-0000-4000-8000-000000000009',
-      status: 'canceled',
-      ends_at: new Date(Date.now() + 60_000).toISOString(),
+    const rpc = jest.fn().mockResolvedValue({
+      data: [
+        {
+          ok: false,
+          error_code: 'forbidden-appointment-canceled',
+          users: [],
+        },
+      ],
+      error: null,
     });
 
     mockRequireUser.mockResolvedValue({
       ok: true,
-      supabase,
+      supabase: { rpc },
       user: { id: USER_ID },
     });
 
@@ -108,16 +65,20 @@ describe('searchAppointmentInvitableUsersAction', () => {
   });
 
   it('종료된 약속은 검색을 차단한다', async () => {
-    const { supabase } = createAppointmentSupabaseMock({
-      appointment_id: APPOINTMENT_ID,
-      group_id: '20000000-0000-4000-8000-000000000009',
-      status: 'pending',
-      ends_at: new Date(Date.now() - 60_000).toISOString(),
+    const rpc = jest.fn().mockResolvedValue({
+      data: [
+        {
+          ok: false,
+          error_code: 'forbidden-appointment-ended',
+          users: [],
+        },
+      ],
+      error: null,
     });
 
     mockRequireUser.mockResolvedValue({
       ok: true,
-      supabase,
+      supabase: { rpc },
       user: { id: USER_ID },
     });
 
@@ -133,77 +94,32 @@ describe('searchAppointmentInvitableUsersAction', () => {
     });
   });
 
-  it('pending 초대 대상도 검색 결과에 포함하고 기존 멤버는 제외한다', async () => {
-    const appointmentQuery = createAwaitableQuery({
-      data: {
-        appointment_id: APPOINTMENT_ID,
-        group_id: '20000000-0000-4000-8000-000000000009',
-        status: 'pending',
-        ends_at: new Date(Date.now() + 60_000).toISOString(),
-      },
-      error: null,
-    });
-
-    const inviterMembershipQuery = createAwaitableQuery({
-      data: { user_id: USER_ID },
-      error: null,
-    });
-
-    const candidatesQuery = createAwaitableQuery({
+  it('기존 멤버를 제외한 초대 대상을 반환한다', async () => {
+    const rpc = jest.fn().mockResolvedValue({
       data: [
         {
-          user_id: '20000000-0000-4000-8000-000000000003',
-          name: '기존 멤버',
-          nickname: 'member',
-          group_members: [{ group_id: '20000000-0000-4000-8000-000000000009' }],
-        },
-        {
-          user_id: '20000000-0000-4000-8000-000000000004',
-          name: '대기 멤버',
-          nickname: 'pending',
-          group_members: [{ group_id: '20000000-0000-4000-8000-000000000009' }],
-        },
-        {
-          user_id: '20000000-0000-4000-8000-000000000005',
-          name: '초대 가능',
-          nickname: 'available',
-          group_members: [{ group_id: '20000000-0000-4000-8000-000000000009' }],
+          ok: true,
+          error_code: null,
+          users: [
+            {
+              user_id: '20000000-0000-4000-8000-000000000004',
+              name: '대기 멤버',
+              nickname: 'pending',
+            },
+            {
+              user_id: '20000000-0000-4000-8000-000000000005',
+              name: '초대 가능',
+              nickname: 'available',
+            },
+          ],
         },
       ],
       error: null,
     });
 
-    const appointmentMembersQuery = createAwaitableQuery({
-      data: [{ user_id: '20000000-0000-4000-8000-000000000003' }],
-      error: null,
-    });
-
-    let appointmentMembersCallCount = 0;
-
-    const supabase = {
-      from: jest.fn((table: string) => {
-        if (table === 'appointments') {
-          return appointmentQuery;
-        }
-
-        if (table === 'appointment_members') {
-          appointmentMembersCallCount += 1;
-          return appointmentMembersCallCount === 1
-            ? inviterMembershipQuery
-            : appointmentMembersQuery;
-        }
-
-        if (table === 'users') {
-          return candidatesQuery;
-        }
-
-        throw new Error(`unexpected table access: ${table}`);
-      }),
-    };
-
     mockRequireUser.mockResolvedValue({
       ok: true,
-      supabase,
+      supabase: { rpc },
       user: { id: USER_ID },
     });
 
@@ -211,6 +127,17 @@ describe('searchAppointmentInvitableUsersAction', () => {
       appointmentId: APPOINTMENT_ID,
       query: '테스트',
     });
+
+    expect(rpc).toHaveBeenCalledWith(
+      'search_appointment_invitable_users_transactional',
+      expect.objectContaining({
+        p_inviter_id: USER_ID,
+        p_appointment_id: APPOINTMENT_ID,
+        p_query: '테스트',
+        p_limit: 6,
+        p_candidate_limit: 20,
+      }),
+    );
 
     expect(result).toEqual({
       ok: true,

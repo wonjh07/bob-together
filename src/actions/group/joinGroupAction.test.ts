@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from '@/libs/supabase/server';
 
-import { createQueryMock, mockUser, resetAllMocks } from './_testUtils';
+import { mockUser, resetAllMocks } from './_testUtils';
 import { joinGroupAction } from './joinGroupAction';
 
 jest.mock('@/libs/supabase/server');
@@ -9,15 +9,8 @@ describe('joinGroupAction', () => {
   beforeEach(resetAllMocks);
 
   it('이미 가입된 경우 ok를 반환한다', async () => {
-    const groupQuery = createQueryMock();
-    groupQuery.maybeSingle.mockResolvedValue({
-      data: { group_id: 'group-1' },
-      error: null,
-    });
-
-    const memberCheckQuery = createQueryMock();
-    memberCheckQuery.maybeSingle.mockResolvedValue({
-      data: { group_id: 'group-1' },
+    const rpc = jest.fn().mockResolvedValue({
+      data: [{ ok: true, error_code: null, group_id: 'group-1' }],
       error: null,
     });
 
@@ -25,10 +18,7 @@ describe('joinGroupAction', () => {
       auth: {
         getUser: jest.fn().mockResolvedValue({ data: { user: mockUser } }),
       },
-      from: jest
-        .fn()
-        .mockImplementationOnce(() => groupQuery)
-        .mockImplementationOnce(() => memberCheckQuery),
+      rpc,
     };
 
     (createSupabaseServerClient as jest.Mock).mockReturnValue(
@@ -38,5 +28,12 @@ describe('joinGroupAction', () => {
     const result = await joinGroupAction('group-1');
 
     expect(result).toEqual({ ok: true, data: { groupId: 'group-1' } });
+    expect(rpc).toHaveBeenCalledWith(
+      'join_group_transactional',
+      expect.objectContaining({
+        p_user_id: mockUser.id,
+        p_group_id: 'group-1',
+      }),
+    );
   });
 });

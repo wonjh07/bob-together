@@ -9,6 +9,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { CreateAppointmentProvider } from '@/app/dashboard/(plain)/appointments/create/providers';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { createMyGroupsQueryOptions } from '@/libs/query/groupQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 import { getDefaultDateTimeValues } from '@/utils/dateTime';
 
 import { CompleteStep } from './_components/CompleteStep';
@@ -135,8 +136,9 @@ function MultiStepFormClientContent() {
 export default function MultiStepFormClient({
   initialGroupId,
 }: MultiStepFormClientProps) {
+  const queryScope = useQueryScope();
   const { data: groups = [], isLoading } = useQuery(
-    createMyGroupsQueryOptions(),
+    createMyGroupsQueryOptions(queryScope),
   );
 
   return (

@@ -16,6 +16,7 @@ import {
   createPlaceReviewsQueryOptions,
   type PlaceReviewsPage,
 } from '@/libs/query/placeQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 import { extractDistrict } from '@/utils/address';
 
 import PlaceReviewCard from './_components/PlaceReviewCard';
@@ -27,9 +28,10 @@ interface PlaceDetailClientProps {
 
 export default function PlaceDetailClient({ placeId }: PlaceDetailClientProps) {
   const router = useRouter();
-  const detailQuery = useQuery(createPlaceDetailQueryOptions(placeId));
+  const queryScope = useQueryScope();
+  const detailQuery = useQuery(createPlaceDetailQueryOptions(placeId, queryScope));
   const reviewsQuery = useInfiniteQuery(
-    createPlaceReviewsQueryOptions(placeId),
+    createPlaceReviewsQueryOptions(placeId, queryScope),
   );
 
   const reviews =

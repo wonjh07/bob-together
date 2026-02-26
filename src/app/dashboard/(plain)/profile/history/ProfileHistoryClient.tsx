@@ -10,12 +10,14 @@ import {
   createAppointmentHistoryQueryOptions,
   type AppointmentHistoryPage,
 } from '@/libs/query/appointmentQueries';
+import { useQueryScope } from '@/provider/query-scope-provider';
 
 import HistoryAppointmentCard from './_components/HistoryAppointmentCard';
 import * as styles from './page.css';
 
 export default function ProfileHistoryClient() {
-  const queryOptions = createAppointmentHistoryQueryOptions();
+  const queryScope = useQueryScope();
+  const queryOptions = createAppointmentHistoryQueryOptions(queryScope);
 
   const {
     data,
