@@ -44,23 +44,7 @@ export async function createAppointmentAction(
     return auth;
   }
   const { supabase, user } = auth;
-
-  let resolvedGroupId = groupId;
-
-  if (!resolvedGroupId) {
-    const { data: groupData, error: groupError } = await supabase
-      .from('group_members')
-      .select('group_id')
-      .eq('user_id', user.id)
-      .order('joined_at', { ascending: false })
-      .maybeSingle();
-
-    if (groupError || !groupData) {
-      return actionError('missing-group', '가입한 그룹이 없습니다.');
-    }
-
-    resolvedGroupId = groupData.group_id;
-  }
+  const resolvedGroupId = groupId ?? null;
 
   const createAppointmentRpc = 'create_appointment_with_owner_member' as never;
   const createAppointmentParams = {
@@ -95,6 +79,9 @@ export async function createAppointmentAction(
 
     if (error?.code === '42501') {
       return actionError('forbidden', '약속 생성 권한이 없습니다.');
+    }
+    if (error?.code === 'P0001') {
+      return actionError('missing-group', '가입한 그룹이 없습니다.');
     }
 
     return actionError('server-error', '약속 생성 중 오류가 발생했습니다.');

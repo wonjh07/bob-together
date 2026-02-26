@@ -1,8 +1,7 @@
 'use server';
 
-import {
-  createSupabaseServerClient,
-} from '@/libs/supabase/server';
+import { requireUser } from '@/actions/_common/guards';
+import { actionError, actionSuccess } from '@/actions/_common/result';
 
 import {
   extractStoragePathFromPublicUrl,
@@ -11,62 +10,42 @@ import {
 } from './_shared';
 
 export async function deleteProfileImageAction(): Promise<DeleteProfileImageResult> {
-  const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getUser();
+  const auth = await requireUser();
+  if (!auth.ok) {
+    return auth;
+  }
+  const { supabase, user } = auth;
+  const clearProfileImageRpc = 'clear_user_profile_image_transactional' as never;
+  const clearProfileImageParams = {
+    p_user_id: user.id,
+  } as never;
+  const { data: clearProfileImageData, error: clearProfileImageError } =
+    await supabase.rpc(clearProfileImageRpc, clearProfileImageParams);
+  type ClearProfileImageRpcRow = {
+    ok: boolean;
+    error_code: string | null;
+    previous_profile_image: string | null;
+  };
+  const clearProfileImageRow = (
+    (clearProfileImageData as ClearProfileImageRpcRow[] | null) ?? []
+  )[0];
 
-  if (error || !data.user) {
-    return {
-      ok: false,
-      error: 'user-not-found',
-      message: '로그인 정보를 확인할 수 없습니다.',
-    };
+  if (clearProfileImageError || !clearProfileImageRow) {
+    return actionError('update-failed', '프로필 이미지 삭제에 실패했습니다.');
   }
 
-  const userId = data.user.id;
-  const { data: existingProfileRow, error: profileReadError } = await supabase
-    .from('users')
-    .select('profile_image')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (profileReadError) {
-    return {
-      ok: false,
-      error: 'update-failed',
-      message: '프로필 이미지 정보를 불러오지 못했습니다.',
-    };
+  if (!clearProfileImageRow.ok) {
+    if (clearProfileImageRow.error_code === 'not-found') {
+      return actionError('profile-not-found', '프로필 정보를 찾을 수 없습니다.');
+    }
+    return actionError('update-failed', '프로필 이미지 삭제에 실패했습니다.');
   }
 
-  const previousProfileImageUrl = existingProfileRow?.profile_image ?? null;
-  const previousProfileImagePath = previousProfileImageUrl
-    ? extractStoragePathFromPublicUrl(previousProfileImageUrl, PROFILE_IMAGE_BUCKET)
-    : null;
-
-  const { data: updatedProfileRow, error: profileUpdateError } = await supabase
-    .from('users')
-    .update({ profile_image: null })
-    .eq('user_id', userId)
-    .select('user_id')
-    .maybeSingle();
-
-  if (profileUpdateError || !updatedProfileRow) {
-    return {
-      ok: false,
-      error: 'update-failed',
-      message: '프로필 이미지 삭제에 실패했습니다.',
-    };
-  }
-
-  const { error: authUpdateError } = await supabase.auth.updateUser({
-    data: {
-      ...data.user.user_metadata,
-      profileImage: null,
-    },
-  });
-
-  if (authUpdateError) {
-    console.error('Failed to sync profileImage metadata:', authUpdateError);
-  }
+  const previousProfileImageUrl = clearProfileImageRow.previous_profile_image;
+  const previousProfileImagePath =
+    previousProfileImageUrl
+      ? extractStoragePathFromPublicUrl(previousProfileImageUrl, PROFILE_IMAGE_BUCKET)
+      : null;
 
   if (previousProfileImagePath) {
     const { error: removeError } = await supabase.storage
@@ -78,5 +57,20 @@ export async function deleteProfileImageAction(): Promise<DeleteProfileImageResu
     }
   }
 
-  return { ok: true, data: undefined };
+  const { error: authUpdateError } = await supabase.auth.updateUser({
+    data: {
+      ...user.user_metadata,
+      profileImage: null,
+    },
+  });
+
+  if (authUpdateError) {
+    console.error('Failed to sync profileImage metadata:', authUpdateError);
+    return actionError(
+      'metadata-sync-failed',
+      '프로필 이미지는 삭제되었지만 계정 정보 동기화에 실패했습니다.',
+    );
+  }
+
+  return actionSuccess();
 }

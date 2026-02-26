@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
 import InlineLoading from '@/components/ui/InlineLoading';
@@ -19,6 +20,7 @@ import * as styles from './page.css';
 import * as cardStyles from '../../history/_components/HistoryAppointmentCard.css';
 
 export default function ProfileReviewWaitListClient() {
+  const router = useRouter();
   const queryScope = useQueryScope();
   const queryOptions = createReviewableAppointmentsQueryOptions(queryScope);
 
@@ -50,7 +52,11 @@ export default function ProfileReviewWaitListClient() {
 
   return (
     <div className={styles.page}>
-      <PlainTopNav title="작성 가능한 리뷰" rightHidden />
+      <PlainTopNav
+        title="작성 가능한 리뷰"
+        onBack={() => router.back()}
+        rightHidden
+      />
 
       {hasState ? (
         <ListStateView

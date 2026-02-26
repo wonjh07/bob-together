@@ -1,55 +1,47 @@
 'use server';
 
-import {
-  createSupabaseServerClient,
-} from '@/libs/supabase/server';
+import { requireUser } from '@/actions/_common/guards';
+import { actionError, actionSuccess } from '@/actions/_common/result';
 
 import type { GetUserDataResult, UserData } from './_shared';
 
 export async function getUserData(): Promise<GetUserDataResult> {
-  const supabase = createSupabaseServerClient();
-
   try {
-    const { data, error } = await supabase.auth.getUser();
-
-    if (error || !data.user) {
-      return {
-        ok: false,
-        error: 'user-not-found',
-        message: error?.message || '사용자 정보를 불러올 수 없습니다.',
-      };
+    const auth = await requireUser();
+    if (!auth.ok) {
+      return auth;
     }
+    const { supabase, user } = auth;
 
     const { data: userRow } = await supabase
       .from('users')
       .select('name,nickname,profile_image')
-      .eq('user_id', data.user.id)
+      .eq('user_id', user.id)
       .maybeSingle();
 
     // Source of truth: users table, fallback to auth metadata
     const profileImage =
       userRow?.profile_image ??
-      data.user.user_metadata?.profileImage ??
-      data.user.user_metadata?.avatar_url ??
+      user.user_metadata?.profileImage ??
+      user.user_metadata?.avatar_url ??
       null;
 
-    const user: UserData = {
-      id: data.user.id,
-      email: data.user.email,
-      name: userRow?.name ?? data.user.user_metadata?.name,
-      nickname: userRow?.nickname ?? data.user.user_metadata?.nickname,
+    const userData: UserData = {
+      id: user.id,
+      email: user.email,
+      name: userRow?.name ?? user.user_metadata?.name,
+      nickname: userRow?.nickname ?? user.user_metadata?.nickname,
     };
 
     if (profileImage) {
-      user.profileImage = profileImage;
+      userData.profileImage = profileImage;
     }
 
-    return { ok: true, data: user };
+    return actionSuccess(userData);
   } catch (err) {
-    return {
-      ok: false,
-      error: 'server-error',
-      message: err instanceof Error ? err.message : '사용자 정보 불러오기 실패',
-    };
+    return actionError(
+      'server-error',
+      err instanceof Error ? err.message : '사용자 정보 불러오기 실패',
+    );
   }
 }

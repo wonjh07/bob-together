@@ -1,5 +1,7 @@
 'use server';
 
+import { z } from 'zod';
+
 import { requireUser } from '@/actions/_common/guards';
 import { actionError, actionSuccess } from '@/actions/_common/result';
 
@@ -16,6 +18,12 @@ export async function sendGroupInvitationAction(
 ): Promise<SendInvitationResult> {
   if (!groupId || !inviteeId) {
     return actionError('invalid-format', '초대 정보가 부족합니다.');
+  }
+  if (
+    !z.string().uuid().safeParse(groupId).success
+    || !z.string().uuid().safeParse(inviteeId).success
+  ) {
+    return actionError('invalid-format', '초대 정보 형식이 올바르지 않습니다.');
   }
 
   const auth = await requireUser();
@@ -54,7 +62,7 @@ export async function sendGroupInvitationAction(
   if (!row.ok) {
     switch (row.error_code) {
       case 'invalid-format':
-        return actionError('invalid-format', '본인은 초대할 수 없습니다.');
+        return actionError('invalid-format', '초대 정보 형식이 올바르지 않습니다.');
       case 'forbidden':
         return actionError('forbidden', '그룹 멤버만 초대할 수 있습니다.');
       case 'already-member':

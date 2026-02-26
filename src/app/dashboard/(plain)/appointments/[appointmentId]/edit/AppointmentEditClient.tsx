@@ -189,6 +189,7 @@ export default function AppointmentEditClient({
     <div className={styles.page}>
       <PlainTopNav
         title="약속 수정"
+        onBack={() => router.back()}
         rightLabel={isSubmitting ? '저장중' : '완료'}
         rightAriaLabel="수정 완료"
         onRightAction={handleComplete}

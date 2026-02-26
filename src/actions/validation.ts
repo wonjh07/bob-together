@@ -1,5 +1,6 @@
 'use server';
 
+import { actionError, actionSuccess } from '@/actions/_common/result';
 import { createSupabaseServerClient } from '@/libs/supabase/server';
 
 import type { ActionResult, ValidationErrorCode } from '@/types/result';
@@ -17,22 +18,14 @@ export async function checkEmailExists(
   email: string,
 ): Promise<CheckEmailExistsResult> {
   if (!email || typeof email !== 'string') {
-    return {
-      ok: false,
-      error: 'invalid-format',
-      message: 'Invalid email format',
-    };
+    return actionError('invalid-format', 'Invalid email format');
   }
 
   const normalizedEmail = email.trim().toLowerCase();
 
   // Email format validation
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-    return {
-      ok: false,
-      error: 'invalid-format',
-      message: 'Invalid email format',
-    };
+    return actionError('invalid-format', 'Invalid email format');
   }
 
   try {
@@ -44,20 +37,12 @@ export async function checkEmailExists(
 
     if (error) {
       console.error('Email check error:', error);
-      return {
-        ok: false,
-        error: 'check-failed',
-        message: 'Failed to check email',
-      };
+      return actionError('check-failed', 'Failed to check email');
     }
 
-    return { ok: true, data: { exists: Boolean(data) } };
+    return actionSuccess({ exists: Boolean(data) });
   } catch (error) {
     console.error('Email check error:', error);
-    return {
-      ok: false,
-      error: 'server-error',
-      message: 'Server error occurred',
-    };
+    return actionError('server-error', 'Server error occurred');
   }
 }

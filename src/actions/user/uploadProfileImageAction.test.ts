@@ -7,30 +7,11 @@ import { uploadProfileImageAction } from './uploadProfileImageAction';
 jest.mock('@/libs/supabase/server');
 
 describe('uploadProfileImageAction', () => {
-  const selectMaybeSingle = jest.fn();
-  const updateMaybeSingle = jest.fn();
+  const rpc = jest.fn();
   const storageUpload = jest.fn();
   const storageRemove = jest.fn();
   const storageGetPublicUrl = jest.fn();
 
-  const usersSelectChain = {
-    eq: jest.fn(() => ({
-      maybeSingle: selectMaybeSingle,
-    })),
-  };
-  const usersUpdateSelectChain = {
-    maybeSingle: updateMaybeSingle,
-  };
-  const usersUpdateEqChain = {
-    select: jest.fn(() => usersUpdateSelectChain),
-  };
-  const usersUpdateChain = {
-    eq: jest.fn(() => usersUpdateEqChain),
-  };
-  const usersTable = {
-    select: jest.fn(() => usersSelectChain),
-    update: jest.fn(() => usersUpdateChain),
-  };
   const storageBucket = {
     upload: storageUpload,
     remove: storageRemove,
@@ -41,12 +22,7 @@ describe('uploadProfileImageAction', () => {
       getUser: jest.fn(),
       updateUser: jest.fn(),
     },
-    from: jest.fn((table: string) => {
-      if (table === 'users') {
-        return usersTable;
-      }
-      throw new Error(`Unexpected table: ${table}`);
-    }),
+    rpc,
     storage: {
       from: jest.fn(() => storageBucket),
     },
@@ -57,8 +33,10 @@ describe('uploadProfileImageAction', () => {
 
     (createSupabaseServerClient as jest.Mock).mockReturnValue(mockSupabaseClient);
 
-    selectMaybeSingle.mockResolvedValue({ data: null, error: null });
-    updateMaybeSingle.mockResolvedValue({ data: { user_id: '123' }, error: null });
+    rpc.mockResolvedValue({
+      data: [{ ok: true, error_code: null, previous_profile_image: null }],
+      error: null,
+    });
     storageUpload.mockResolvedValue({ error: null });
     storageRemove.mockResolvedValue({ error: null });
     storageGetPublicUrl.mockReturnValue({
@@ -95,17 +73,21 @@ describe('uploadProfileImageAction', () => {
     });
   });
 
-  it('metadata 동기화 실패여도 업로드 성공을 반환해야 한다', async () => {
+  it('metadata 동기화 실패 시 metadata-sync-failed를 반환해야 한다', async () => {
     const consoleErrorSpy = jest
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
 
     try {
-      selectMaybeSingle.mockResolvedValue({
-        data: {
-          profile_image:
-            'https://example.com/storage/v1/object/public/profile-images/123/avatar-old.jpg',
-        },
+      rpc.mockResolvedValue({
+        data: [
+          {
+            ok: true,
+            error_code: null,
+            previous_profile_image:
+              'https://example.com/storage/v1/object/public/profile-images/123/avatar-old.jpg',
+          },
+        ],
         error: null,
       });
       mockSupabaseClient.auth.updateUser.mockResolvedValue({
@@ -118,7 +100,19 @@ describe('uploadProfileImageAction', () => {
 
       const result = await uploadProfileImageAction(formData);
 
-      expect(result.ok).toBe(true);
+      expect(result).toEqual({
+        ok: false,
+        error: 'metadata-sync-failed',
+        message: '프로필 이미지는 저장되었지만 계정 정보 동기화에 실패했습니다.',
+      });
+      expect(rpc).toHaveBeenCalledWith(
+        'set_user_profile_image_transactional',
+        {
+          p_user_id: '123',
+          p_profile_image:
+            'https://example.com/storage/v1/object/public/profile-images/123/avatar-new.jpg',
+        },
+      );
       expect(storageRemove).toHaveBeenCalledWith(['123/avatar-old.jpg']);
       expect(consoleErrorSpy).toHaveBeenCalled();
     } finally {
@@ -127,10 +121,14 @@ describe('uploadProfileImageAction', () => {
   });
 
   it('이전 profile_image URL 파싱에 실패해도 업로드 성공을 반환해야 한다', async () => {
-    selectMaybeSingle.mockResolvedValue({
-      data: {
-        profile_image: 'not-a-valid-url',
-      },
+    rpc.mockResolvedValue({
+      data: [
+        {
+          ok: true,
+          error_code: null,
+          previous_profile_image: 'not-a-valid-url',
+        },
+      ],
       error: null,
     });
 
@@ -142,5 +140,31 @@ describe('uploadProfileImageAction', () => {
 
     expect(result.ok).toBe(true);
     expect(storageRemove).not.toHaveBeenCalledWith(['not-a-valid-url']);
+  });
+
+  it('RPC가 not-found를 반환하면 profile-not-found를 반환해야 한다', async () => {
+    rpc.mockResolvedValue({
+      data: [
+        {
+          ok: false,
+          error_code: 'not-found',
+          previous_profile_image: null,
+        },
+      ],
+      error: null,
+    });
+
+    const formData = new FormData();
+    const file = new File(['jpeg data'], 'profile.jpg', { type: 'image/jpeg' });
+    formData.append('file', file);
+
+    const result = await uploadProfileImageAction(formData);
+
+    expect(result).toEqual({
+      ok: false,
+      error: 'profile-not-found',
+      message: '프로필 정보를 찾을 수 없습니다.',
+    });
+    expect(storageRemove).toHaveBeenCalled();
   });
 });

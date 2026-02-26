@@ -1,6 +1,8 @@
 'use server';
 
-import { requireUser } from '@/actions/_common/guards';
+import { z } from 'zod';
+
+import { parseOrFail, requireUser } from '@/actions/_common/guards';
 import { actionError, actionSuccess } from '@/actions/_common/result';
 
 import type {
@@ -28,14 +30,37 @@ interface AppointmentListRow {
   is_member: boolean;
 }
 
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 30;
+
+const listAppointmentsSchema = z.object({
+  groupId: z
+    .string()
+    .min(1, '그룹 ID가 필요합니다.')
+    .uuid('유효한 그룹 ID가 아닙니다.'),
+  period: z.enum(['today', 'week', 'month', 'all']).optional().default('all'),
+  type: z.enum(['all', 'created', 'joined']).optional().default('all'),
+  cursor: z
+    .object({
+      startAt: z.string().datetime({
+        offset: true,
+        message: '유효한 커서 정보가 아닙니다.',
+      }),
+      appointmentId: z.string().uuid('유효한 커서 정보가 아닙니다.'),
+    })
+    .nullable()
+    .optional(),
+  limit: z.number().int().min(1).max(MAX_LIMIT).optional().default(DEFAULT_LIMIT),
+});
+
 export async function listAppointmentsAction(
   params: ListAppointmentsParams,
 ): Promise<ListAppointmentsResult> {
-  const { groupId, period = 'all', type = 'all', cursor, limit = 10 } = params;
-
-  if (!groupId) {
-    return actionError('invalid-format', '그룹 ID가 필요합니다.');
+  const parsed = parseOrFail(listAppointmentsSchema, params);
+  if (!parsed.ok) {
+    return parsed;
   }
+  const { groupId, period, type, cursor, limit } = parsed.data;
 
   const auth = await requireUser();
   if (!auth.ok) {

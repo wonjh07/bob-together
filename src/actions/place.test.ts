@@ -38,6 +38,36 @@ describe('searchPlacesAction', () => {
       message: '위도와 경도는 함께 전달되어야 합니다.',
     });
   });
+
+  it('외부 API 호출 예외 시 server-error를 반환한다', async () => {
+    const originalKey = process.env.KAKAO_REST_API_KEY;
+    process.env.KAKAO_REST_API_KEY = 'test-key';
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const originalFetch = (globalThis as { fetch?: typeof fetch }).fetch;
+    const mockFetch = jest.fn().mockRejectedValue(new Error('network down'));
+    (globalThis as { fetch?: typeof fetch }).fetch =
+      mockFetch as unknown as typeof fetch;
+
+    try {
+      const result = await searchPlacesAction({ query: '스타벅스' });
+
+      expect(result).toEqual({
+        ok: false,
+        error: 'server-error',
+        message: '장소 검색 중 오류가 발생했습니다.',
+      });
+    } finally {
+      consoleErrorSpy.mockRestore();
+      process.env.KAKAO_REST_API_KEY = originalKey;
+      if (originalFetch) {
+        (globalThis as { fetch?: typeof fetch }).fetch = originalFetch;
+      } else {
+        delete (globalThis as { fetch?: typeof fetch }).fetch;
+      }
+    }
+  });
 });
 
 describe('getPlaceDetailAction', () => {

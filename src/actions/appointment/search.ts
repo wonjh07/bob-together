@@ -1,5 +1,7 @@
 'use server';
 
+import { z } from 'zod';
+
 import { parseOrFail, requireUser } from '@/actions/_common/guards';
 import { actionError, actionSuccess } from '@/actions/_common/result';
 import { appointmentSearchSchema } from '@/schemas/appointment';
@@ -29,17 +31,29 @@ interface SearchAppointmentsRow {
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 30;
+const searchAppointmentsByTitleSchema = z.object({
+  query: appointmentSearchSchema,
+  cursor: z
+    .object({
+      startAt: z.string().datetime({
+        offset: true,
+        message: '유효한 커서 정보가 아닙니다.',
+      }),
+      appointmentId: z.string().uuid('유효한 커서 정보가 아닙니다.'),
+    })
+    .nullable()
+    .optional(),
+  limit: z.number().int().min(1).max(MAX_LIMIT).optional().default(DEFAULT_LIMIT),
+});
 
 export async function searchAppointmentsByTitleAction(
   params: SearchAppointmentsByTitleParams,
 ): Promise<SearchAppointmentsResult> {
-  const parsed = parseOrFail(appointmentSearchSchema, params.query);
+  const parsed = parseOrFail(searchAppointmentsByTitleSchema, params);
   if (!parsed.ok) {
-    return actionError(
-      'invalid-format',
-      parsed.message || '검색어를 입력해주세요.',
-    );
+    return parsed;
   }
+  const { query, cursor, limit } = parsed.data;
 
   const auth = await requireUser();
   if (!auth.ok) {
@@ -47,12 +61,9 @@ export async function searchAppointmentsByTitleAction(
   }
   const { supabase, user } = auth;
 
-  const limit = Math.min(Math.max(params.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
-  const cursor = params.cursor ?? null;
-
   const { data, error } = await supabase.rpc('search_appointments_with_count', {
     p_user_id: user.id,
-    p_query: parsed.data,
+    p_query: query,
     p_limit: limit,
     p_cursor_start_at: cursor?.startAt ?? undefined,
     p_cursor_appointment_id: cursor?.appointmentId ?? undefined,

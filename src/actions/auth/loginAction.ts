@@ -1,5 +1,6 @@
 'use server';
 
+import { actionError, actionSuccess } from '@/actions/_common/result';
 import { createSupabaseServerClient } from '@/libs/supabase/server';
 import { loginSchema } from '@/schemas/auth';
 
@@ -13,11 +14,10 @@ export async function loginAction(
 
   if (!parsed.success) {
     const firstError = parsed.error.issues[0];
-    return {
-      ok: false,
-      error: 'invalid-email',
-      message: firstError?.message || '입력값이 올바르지 않습니다.',
-    };
+    return actionError(
+      'invalid-email',
+      firstError?.message || '입력값이 올바르지 않습니다.',
+    );
   }
 
   const { email: validatedEmail, password: validatedPassword } = parsed.data;
@@ -34,14 +34,13 @@ export async function loginAction(
       error.message?.toLowerCase().includes('invalid login credentials') ||
       error.message?.toLowerCase().includes('invalid credentials') ||
       error.status === 400;
-    return {
-      ok: false,
-      error: isInvalidCreds ? 'invalid-credentials' : 'login-failed',
-      message: isInvalidCreds
+    return actionError(
+      isInvalidCreds ? 'invalid-credentials' : 'login-failed',
+      isInvalidCreds
         ? '이메일 또는 비밀번호가 올바르지 않습니다.'
         : '로그인 중 오류가 발생했습니다.',
-    };
+    );
   }
 
-  return { ok: true };
+  return actionSuccess();
 }

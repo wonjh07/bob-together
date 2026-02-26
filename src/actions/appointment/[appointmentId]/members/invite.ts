@@ -20,7 +20,13 @@ interface SendAppointmentInvitationRpcRow {
 function mapRpcBusinessError(
   code: string | null,
 ): {
-  error: 'invalid-format' | 'forbidden' | 'already-member' | 'invite-already-sent' | 'server-error';
+  error:
+    | 'invalid-format'
+    | 'forbidden'
+    | 'already-member'
+    | 'invite-already-sent'
+    | 'appointment-not-found'
+    | 'server-error';
   message: string;
 } {
   switch (code) {
@@ -61,7 +67,7 @@ function mapRpcBusinessError(
       };
     case 'appointment-not-found':
       return {
-        error: 'server-error',
+        error: 'appointment-not-found',
         message: '약속 정보를 찾을 수 없습니다.',
       };
     case 'forbidden':

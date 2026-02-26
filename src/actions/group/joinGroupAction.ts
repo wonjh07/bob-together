@@ -1,5 +1,7 @@
 'use server';
 
+import { z } from 'zod';
+
 import { requireUser } from '@/actions/_common/guards';
 import { actionError, actionSuccess } from '@/actions/_common/result';
 
@@ -16,6 +18,9 @@ export async function joinGroupAction(
 ): Promise<JoinGroupResult> {
   if (!groupId) {
     return actionError('invalid-format', '그룹 정보가 필요합니다.');
+  }
+  if (!z.string().uuid().safeParse(groupId).success) {
+    return actionError('invalid-format', '유효한 그룹 ID가 아닙니다.');
   }
 
   const auth = await requireUser();

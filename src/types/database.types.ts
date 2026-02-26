@@ -521,6 +521,14 @@ export type Database = {
     }
     Functions: {
       check_email_exists: { Args: { p_email: string }; Returns: boolean }
+      clear_user_profile_image_transactional: {
+        Args: { p_user_id: string }
+        Returns: {
+          error_code: string
+          ok: boolean
+          previous_profile_image: string
+        }[]
+      }
       create_appointment_with_owner_member: {
         Args: {
           p_ends_at: string
@@ -546,6 +554,34 @@ export type Database = {
           error_code: string
           group_id: string
           group_name: string
+          ok: boolean
+        }[]
+      }
+      delete_my_review_transactional: {
+        Args: {
+          p_appointment_id: string
+          p_edited_at?: string
+          p_user_id: string
+        }
+        Returns: {
+          appointment_id: string
+          error_code: string
+          ok: boolean
+        }[]
+      }
+      get_appointment_comments_with_cursor: {
+        Args: {
+          p_appointment_id: string
+          p_cursor_comment_id?: string
+          p_cursor_created_at?: string
+          p_include_count?: boolean
+          p_limit?: number
+          p_user_id: string
+        }
+        Returns: {
+          comment_count: number
+          comments: Json
+          error_code: string
           ok: boolean
         }[]
       }
@@ -583,6 +619,15 @@ export type Database = {
           pending_invitee_ids: string[]
         }[]
       }
+      get_appointment_members_with_count: {
+        Args: { p_appointment_id: string; p_user_id: string }
+        Returns: {
+          error_code: string
+          member_count: number
+          members: Json
+          ok: boolean
+        }[]
+      }
       get_appointment_review_target_transactional: {
         Args: { p_appointment_id: string; p_user_id: string }
         Returns: {
@@ -602,6 +647,15 @@ export type Database = {
           review_count: number
           start_at: string
           title: string
+        }[]
+      }
+      get_group_members_with_count: {
+        Args: { p_group_id: string; p_user_id: string }
+        Returns: {
+          error_code: string
+          member_count: number
+          members: Json
+          ok: boolean
         }[]
       }
       get_place_detail_with_stats: {
@@ -625,6 +679,21 @@ export type Database = {
         }[]
       }
       join_group_transactional: {
+        Args: { p_group_id: string; p_user_id: string }
+        Returns: {
+          error_code: string
+          group_id: string
+          ok: boolean
+        }[]
+      }
+      leave_appointment_transactional: {
+        Args: { p_appointment_id: string; p_user_id: string }
+        Returns: {
+          error_code: string
+          ok: boolean
+        }[]
+      }
+      leave_group_transactional: {
         Args: { p_group_id: string; p_user_id: string }
         Returns: {
           error_code: string
@@ -955,6 +1024,14 @@ export type Database = {
           ok: boolean
         }[]
       }
+      set_user_profile_image_transactional: {
+        Args: { p_profile_image: string; p_user_id: string }
+        Returns: {
+          error_code: string
+          ok: boolean
+          previous_profile_image: string
+        }[]
+      }
       submit_place_review_transactional: {
         Args: {
           p_appointment_id: string
@@ -969,6 +1046,14 @@ export type Database = {
           mode: string
           ok: boolean
           place_id: string
+        }[]
+      }
+      update_appointment_status_transactional: {
+        Args: { p_appointment_id: string; p_status: string; p_user_id: string }
+        Returns: {
+          error_code: string
+          ok: boolean
+          status: string
         }[]
       }
       update_appointment_transactional: {

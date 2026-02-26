@@ -1,5 +1,6 @@
 'use server';
 
+import { actionError, actionSuccess } from '@/actions/_common/result';
 import { createSupabaseServerClient } from '@/libs/supabase/server';
 import { signupSchema } from '@/schemas/auth';
 
@@ -20,11 +21,10 @@ export async function signupAction(
 
   if (!parsed.success) {
     const firstError = parsed.error.issues[0];
-    return {
-      ok: false,
-      error: 'invalid-format',
-      message: firstError?.message || '입력값이 올바르지 않습니다.',
-    };
+    return actionError(
+      'invalid-format',
+      firstError?.message || '입력값이 올바르지 않습니다.',
+    );
   }
 
   const validatedData = parsed.data;
@@ -43,20 +43,14 @@ export async function signupAction(
     });
 
     if (error) {
-      return {
-        ok: false,
-        error: 'signup-failed',
-        message: error.message,
-      };
+      return actionError('signup-failed', error.message);
     }
   } catch (err) {
-    return {
-      ok: false,
-      error: 'server-error',
-      message:
-        err instanceof Error ? err.message : '회원가입 중 오류가 발생했습니다.',
-    };
+    return actionError(
+      'server-error',
+      err instanceof Error ? err.message : '회원가입 중 오류가 발생했습니다.',
+    );
   }
 
-  return { ok: true };
+  return actionSuccess();
 }

@@ -73,6 +73,7 @@ export default function AppointmentDetailClient({
     <div className={styles.page}>
       <PlainTopNav
         title="약속 상세"
+        onBack={() => router.back()}
         rightLabel="수정"
         rightAriaLabel="약속 수정"
         rightHidden={!appointment.isOwner}

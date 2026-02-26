@@ -77,7 +77,7 @@ describe('updateProfileAction', () => {
     });
   });
 
-  it('인증 사용자가 없으면 user-not-found를 반환해야 한다', async () => {
+  it('인증 사용자가 없으면 unauthorized를 반환해야 한다', async () => {
     mockSupabaseClient.auth.getUser.mockResolvedValue({
       data: { user: null },
       error: null,
@@ -90,8 +90,8 @@ describe('updateProfileAction', () => {
 
     expect(result).toEqual({
       ok: false,
-      error: 'user-not-found',
-      message: '로그인 정보를 확인할 수 없습니다.',
+      error: 'unauthorized',
+      message: '로그인이 필요합니다.',
     });
   });
 
@@ -113,7 +113,7 @@ describe('updateProfileAction', () => {
     });
   });
 
-  it('auth 메타데이터 업데이트 실패 시 update-failed를 반환해야 한다', async () => {
+  it('auth 메타데이터 업데이트 실패 시 metadata-sync-failed를 반환해야 한다', async () => {
     mockSupabaseClient.auth.updateUser.mockResolvedValue({
       error: { message: 'auth update failed' },
     });
@@ -125,8 +125,8 @@ describe('updateProfileAction', () => {
 
     expect(result).toEqual({
       ok: false,
-      error: 'update-failed',
-      message: '계정 정보 업데이트에 실패했습니다.',
+      error: 'metadata-sync-failed',
+      message: '프로필은 저장되었지만 계정 정보 동기화에 실패했습니다.',
     });
   });
 });

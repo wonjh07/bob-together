@@ -33,8 +33,7 @@ export type AuthErrorCode =
   | 'signup-failed'
   | 'login-failed'
   | 'logout-failed'
-  | 'forbidden-origin'
-  | 'user-not-found';
+  | 'forbidden-origin';
 
 // 데이터 검증 에러
 export type ValidationErrorCode =
@@ -68,5 +67,6 @@ export type AppointmentErrorCode =
   | 'invalid-time'
   | 'missing-place'
   | 'missing-group'
+  | 'appointment-not-found'
   | 'already-member'
   | 'invite-already-sent';

@@ -1,5 +1,119 @@
 # DECISIONS
 
+## 약속 멤버 목록 조회 권한을 그룹 멤버 기준으로 변경 (2026-02-26)
+- Decision: `get_appointment_members_with_count` 접근 권한을 "약속 멤버"가 아닌 "해당 약속의 그룹 멤버" 기준으로 변경한다.
+- Alternatives: 기존처럼 `appointment_members` 포함 사용자만 조회 허용
+- Reason: 서비스 정책상 약속 참여 여부와 무관하게 같은 그룹 구성원은 약속 멤버 목록을 확인할 수 있어야 하기 때문
+- Scope:
+  - `supabase/migrations/20260226039000_allow_group_members_get_appointment_members_rpc.sql`
+  - `src/actions/appointment/[appointmentId]/members/get.test.ts`
+
+## 약속 생성 액션 단일 RPC화 (2026-02-26)
+- Decision: `createAppointmentAction`의 다중 DB 호출(기본 그룹 조회 + 생성 RPC)을 단일 RPC 호출로 단순화한다.
+- Alternatives: 액션에서 `group_members` 선조회 후 RPC 호출 유지
+- Reason: 액션 책임을 입력 검증 + 인증 + 단일 RPC 매핑으로 제한하고, 기본 그룹 선택 규칙을 DB 함수에 고정해 일관성을 높이기 위함
+- Scope:
+  - `supabase/migrations/20260226038000_create_appointment_with_owner_member_default_group_rpc.sql`
+  - `src/actions/appointment/create.ts`
+  - `src/actions/appointment/create.test.ts`
+
+## 내 리뷰 삭제 액션 RPC 전환 (2026-02-26)
+- Decision: `deleteMyReviewAction`의 다중 쿼리(기존 리뷰 조회 + null 업데이트)를 단일 RPC(`delete_my_review_transactional`) 호출로 전환한다.
+- Alternatives: 액션 내 `user_review` 순차 조회/업데이트 유지
+- Reason: 리뷰 존재/내용 판정과 삭제 업데이트를 DB 함수로 고정해 액션 책임을 단순화하고 상태경합 가능성을 줄이기 위함
+- Scope:
+  - `supabase/migrations/20260226037000_delete_my_review_transaction_rpc.sql`
+  - `src/actions/appointment/review/delete.ts`
+  - `src/actions/appointment/review/delete.test.ts`
+
+## 약속 댓글 목록 조회 액션 RPC 전환 (2026-02-26)
+- Decision: `getAppointmentCommentsAction`의 다중 조회 쿼리(접근 확인 + 댓글 목록/count)를 단일 RPC(`get_appointment_comments_with_cursor`) 호출로 전환한다.
+- Alternatives: 액션 내 `appointments` + `appointment_comments` 순차 조회 유지
+- Reason: 키셋 커서/카운트/접근 검증 규칙을 DB 함수에 고정해 액션 책임을 단순화하고 조회 경로를 일관화하기 위함
+- Scope:
+  - `supabase/migrations/20260226036000_get_appointment_comments_with_cursor_rpc.sql`
+  - `src/actions/appointment/[appointmentId]/comments/list.ts`
+  - `src/actions/appointment/[appointmentId]/comments/list.test.ts`
+
+## 그룹 멤버 조회 액션 RPC 전환 (2026-02-26)
+- Decision: `getGroupMembersAction`의 다중 조회 쿼리(멤버십 접근 확인 + 멤버 목록/카운트)를 단일 RPC(`get_group_members_with_count`) 호출로 전환한다.
+- Alternatives: 액션 내 `group_members` 순차 조회 유지
+- Reason: 접근 검증과 멤버 집계를 DB 함수로 고정해 액션 책임을 단순화하고 조회 로직을 일관화하기 위함
+- Scope:
+  - `supabase/migrations/20260226035000_get_group_members_with_count_rpc.sql`
+  - `src/actions/group/getGroupMembersAction.ts`
+  - `src/actions/group/getGroupMembersAction.test.ts`
+
+## 약속 멤버 조회 액션 RPC 전환 (2026-02-26)
+- Decision: `getAppointmentMembersAction`의 다중 조회 쿼리(접근 확인 + 멤버 목록/카운트)를 단일 RPC(`get_appointment_members_with_count`) 호출로 전환한다.
+- Alternatives: 액션 내 `appointments`/`appointment_members` 순차 조회 유지
+- Reason: 접근 검증과 멤버 집계 로직을 DB 함수에 고정해 액션 책임을 단순화하고 조회 경로를 일관화하기 위함
+- Scope:
+  - `supabase/migrations/20260226034000_get_appointment_members_with_count_rpc.sql`
+  - `src/actions/appointment/[appointmentId]/members/get.ts`
+  - `src/actions/appointment/[appointmentId]/members/get.test.ts`
+
+## 약속 나가기 액션 RPC 전환 (2026-02-26)
+- Decision: `leaveAppointmentAction`의 다중 쿼리(약속 상태 조회 + 멤버 삭제)를 단일 RPC(`leave_appointment_transactional`) 호출로 전환한다.
+- Alternatives: 액션 내 `appointments` 조회 후 `appointment_members delete` 순차 쿼리 유지
+- Reason: 작성자/취소/종료 상태 검증과 멤버 삭제를 DB 함수로 원자화해 액션 책임을 단순화하고 상태경합을 줄이기 위함
+- Scope:
+  - `supabase/migrations/20260226033000_leave_appointment_transaction_rpc.sql`
+  - `src/actions/appointment/[appointmentId]/members/leave.ts`
+  - `src/actions/appointment/[appointmentId]/members/leave.test.ts`
+
+## 약속 상태 변경 액션 RPC 전환 (2026-02-26)
+- Decision: `updateAppointmentStatusAction`의 다중 쿼리(약속 조회 + 상태 update)를 단일 RPC(`update_appointment_status_transactional`) 호출로 전환한다.
+- Alternatives: 액션 내 `appointments` 조회/업데이트를 순차 쿼리로 유지
+- Reason: 작성자 권한/종료 여부/상태 갱신을 트랜잭션 함수로 고정해 액션 책임을 단순화하고 상태경합을 줄이기 위함
+- Scope:
+  - `supabase/migrations/20260226032000_update_appointment_status_transaction_rpc.sql`
+  - `src/actions/appointment/[appointmentId]/updateStatus.ts`
+  - `src/actions/appointment/[appointmentId]/updateStatus.test.ts`
+
+## 그룹 탈퇴 액션 RPC 전환 (2026-02-26)
+- Decision: `leaveGroupAction`의 다중 쿼리(멤버십 조회 + 삭제) 경로를 단일 RPC(`leave_group_transactional`) 호출로 전환한다.
+- Alternatives: 액션 내 `group_members` 조회/삭제를 순차 쿼리로 유지
+- Reason: 권한/역할 검증과 삭제를 DB 함수로 고정해 액션 로직을 단순화하고 상태경합 가능성을 줄이기 위함
+- Scope:
+  - `supabase/migrations/20260226031000_leave_group_transaction_rpc.sql`
+  - `src/actions/group/leaveGroupAction.ts`
+  - `src/actions/group/leaveGroupAction.test.ts`
+
+## 프로필 이미지 DB 갱신 RPC 전환 (2026-02-26)
+- Decision: 프로필 이미지 삭제/변경 액션의 DB 갱신 경로를 다중 테이블 쿼리(select + update)에서 액션당 단일 RPC로 전환한다.
+- Alternatives: 기존처럼 액션에서 `users` select/update를 직접 수행
+- Reason: 액션 책임을 인증/스토리지 처리 + 단일 RPC 호출로 단순화하고, DB 갱신 경로의 원자성과 규칙을 함수로 고정하기 위함
+- Scope:
+  - `supabase/migrations/20260226029000_clear_user_profile_image_transaction_rpc.sql`
+  - `supabase/migrations/20260226030000_set_user_profile_image_transaction_rpc.sql`
+  - `src/actions/user/deleteProfileImageAction.ts`
+  - `src/actions/user/uploadProfileImageAction.ts`
+
+## User 액션 인증 에러 코드 단일화 (2026-02-26)
+- Decision: user 도메인 액션의 인증 실패 코드는 `user-not-found` 대신 공용 가드의 `unauthorized`로 통일한다.
+- Alternatives: user 액션에서만 `user-not-found`를 별도 유지
+- Reason: 인증 실패 의미를 액션 도메인마다 다르게 표현할 필요가 없고, 공용 가드로 표준화 시 분기/테스트 복잡도를 줄일 수 있기 때문
+- Scope:
+  - `src/actions/user/getUserData.ts`
+  - `src/actions/user/updateProfileAction.ts`
+  - `src/actions/user/deleteProfileImageAction.ts`
+  - `src/actions/user/uploadProfileImageAction.ts`
+  - `src/types/result.ts`
+  - user action tests 3건
+
+## 그룹 액션 인증 가드 공통화 (2026-02-26)
+- Decision: 그룹 도메인 액션의 인증 확인 로직은 직접 `auth.getUser()`를 호출하지 않고 `requireUser()` 공용 가드를 사용한다.
+- Alternatives: 각 액션에서 `createSupabaseServerClient + auth.getUser` 중복 구현 유지
+- Reason: 인증 에러 처리 규칙을 한 곳으로 수렴해 코드 중복과 분기 드리프트를 줄이기 위함
+- Scope:
+  - `src/actions/group/getMyGroupsAction.ts`
+  - `src/actions/group/searchUsersAction.ts`
+  - `src/actions/group/getGroupMembersAction.ts`
+  - `src/actions/group/leaveGroupAction.ts`
+  - `src/actions/group/searchGroupsWithCountAction.ts`
+  - `src/actions/group/listMyGroupsWithStatsAction.ts`
+
 ## React Query 사용자 스코프 키 도입 (2026-02-26)
 - Decision: React Query 키에 `query scope`(예: `user:{userId}`)를 선택적으로 부여해 사용자 단위로 캐시를 분리한다.
 - Alternatives: 인증 이벤트에서 전역 `queryClient.clear()`에만 의존

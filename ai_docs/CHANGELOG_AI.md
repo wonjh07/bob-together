@@ -1,6 +1,191 @@
 # AI Changelog (Rolling)
 
 ## 2026-02-26
+- Completed action test coverage baseline:
+  - added missing test files:
+    - `src/actions/appointment/[appointmentId]/get.test.ts`
+    - `src/actions/appointment/search.test.ts`
+    - `src/actions/group/getMyGroupsAction.test.ts`
+    - `src/actions/group/listMyGroupsWithStatsAction.test.ts`
+    - `src/actions/group/searchGroupsAction.test.ts`
+    - `src/actions/group/searchGroupsWithCountAction.test.ts`
+  - verified no uncovered server action remains (`ACTION_FILES 47 / MISSING 0`)
+  - verified full action test run:
+    - `npx jest src/actions --runInBand`
+    - `47 passed, 47 total / 161 tests passed`
+  - verified static checks:
+    - `npm run type-check`
+    - `npm run lint`
+- Added invitation response regression tests for race-time business errors:
+  - new test file `src/actions/invitation/respond.test.ts`
+  - verifies explicit user-facing messages for:
+    - `forbidden-appointment-ended`
+    - `forbidden-appointment-canceled`
+  - verifies successful accepted response mapping
+- Simplified onboarding back button rendering:
+  - removed layout-level gate component usage from `src/app/(onboarding)/layout.tsx`
+  - rendered back button directly on `src/app/(onboarding)/signup/page.tsx`
+  - deleted unused `src/components/BackButtonGate.tsx`
+  - verified with `npm run type-check` and `npm run lint`
+- Optimized local font assets for build/cache performance:
+  - switched `next/font/local` source in `src/app/layout.tsx` from 7x `.woff` to 4x `.woff2` (400/500/600/700)
+  - removed unused legacy `.woff` files under `src/fonts`
+  - verified with `npm run type-check`, `npm run lint`, `npm run build`
+- Updated appointment member-list access policy to group-membership scope:
+  - `get_appointment_members_with_count` access check changed from `appointment_members` to `appointments.group_id + group_members`
+  - non-appointment participants in the same group can now view appointment member list
+  - added migration:
+    - `supabase/migrations/20260226039000_allow_group_members_get_appointment_members_rpc.sql`
+  - updated test:
+    - `src/actions/appointment/[appointmentId]/members/get.test.ts`
+- Completed remaining P1 profile sync error-contract:
+  - added `metadata-sync-failed` to profile error domain
+    - `src/actions/user/_shared.ts`
+  - user/profile actions now return explicit partial-success error on auth metadata sync failure:
+    - `src/actions/user/updateProfileAction.ts`
+    - `src/actions/user/uploadProfileImageAction.ts`
+    - `src/actions/user/deleteProfileImageAction.ts`
+  - aligned tests:
+    - `src/actions/user/updateProfileAction.test.ts`
+    - `src/actions/user/uploadProfileImageAction.test.ts`
+    - `src/actions/user/deleteProfileImageAction.test.ts`
+- P1 error-contract hardening for group/create flows:
+  - strengthened UUID validation in group actions:
+    - `src/actions/group/joinGroupAction.ts`
+    - `src/actions/group/leaveGroupAction.ts`
+    - `src/actions/group/getGroupMembersAction.ts`
+    - `src/actions/group/sendGroupInvitationAction.ts`
+    - `src/actions/group/getGroupByIdAction.ts`
+  - improved error mapping clarity:
+    - `sendGroupInvitationAction`: `invalid-format` message now maps to generic format error (no longer self-invite-only wording)
+    - `getGroupByIdAction`: DB error -> `server-error`, no-row -> `group-not-found`
+  - removed brittle message-string dependency in appointment creation:
+    - `src/actions/appointment/create.ts` now maps `P0001` directly to `missing-group` (without checking DB error message text)
+  - added/updated tests:
+    - `src/actions/group/joinGroupAction.test.ts`
+    - `src/actions/group/leaveGroupAction.test.ts`
+    - `src/actions/group/sendGroupInvitationAction.test.ts`
+    - `src/actions/group/getGroupMembersAction.test.ts`
+    - `src/actions/group/getGroupByIdAction.test.ts` (new)
+    - `src/actions/appointment/create.test.ts`
+- Hardened action error-contracts and runtime input validation (P0):
+  - added explicit error codes:
+    - `appointment-not-found` (appointment domain)
+    - `profile-not-found` (profile image domain)
+  - mapped RPC business errors to explicit codes in:
+    - `src/actions/appointment/[appointmentId]/update.ts`
+    - `src/actions/appointment/[appointmentId]/members/join.ts`
+    - `src/actions/appointment/[appointmentId]/members/leave.ts`
+    - `src/actions/appointment/[appointmentId]/members/invite.ts`
+    - `src/actions/user/uploadProfileImageAction.ts`
+    - `src/actions/user/deleteProfileImageAction.ts`
+  - added runtime schema validation for cursor/limit inputs in:
+    - `src/actions/appointment/list.ts`
+    - `src/actions/appointment/search.ts`
+    - `src/actions/group/listMyGroupsWithStatsAction.ts`
+    - `src/actions/group/searchGroupsWithCountAction.ts`
+  - fixed missing RPC `invalid-format` mapping in:
+    - `src/actions/group/getGroupMembersAction.ts`
+  - hardened place search exception handling:
+    - `src/actions/place.ts` now returns typed `server-error` on `fetch/json` throw paths
+  - added/updated tests:
+    - `src/actions/user/uploadProfileImageAction.test.ts`
+    - `src/actions/user/deleteProfileImageAction.test.ts`
+    - `src/actions/appointment/[appointmentId]/members/join.test.ts`
+    - `src/actions/appointment/[appointmentId]/members/leave.test.ts`
+    - `src/actions/appointment/[appointmentId]/members/invite.test.ts`
+    - `src/actions/appointment/list.test.ts`
+    - `src/actions/group/getGroupMembersAction.test.ts`
+    - `src/actions/place.test.ts`
+- Standardized action result construction to common helpers in auth/user/validation actions:
+  - switched manual `{ ok: ... }` returns to `actionError`/`actionSuccess`
+  - updated actions:
+    - `src/actions/user/getUserData.ts`
+    - `src/actions/user/updateProfileAction.ts`
+    - `src/actions/user/deleteProfileImageAction.ts`
+    - `src/actions/user/uploadProfileImageAction.ts`
+    - `src/actions/auth/loginAction.ts`
+    - `src/actions/auth/signupAction.ts`
+    - `src/actions/validation.ts`
+  - updated test expectation:
+    - `src/actions/user/deleteProfileImageAction.test.ts`
+- Expanded action result helper standardization to remaining auth/group actions with manual `{ ok: ... }` returns:
+  - switched manual returns to `actionError`/`actionSuccess` in:
+    - `src/actions/auth/logoutAction.ts`
+    - `src/actions/group/findGroupByNameAction.ts`
+    - `src/actions/group/getGroupByIdAction.ts`
+    - `src/actions/group/getMyGroupsAction.ts`
+    - `src/actions/group/listMyGroupsWithStatsAction.ts`
+    - `src/actions/group/searchGroupsAction.ts`
+    - `src/actions/group/searchGroupsWithCountAction.ts`
+    - `src/actions/group/searchUsersAction.ts`
+    - `src/actions/group/getGroupMembersAction.ts`
+    - `src/actions/group/leaveGroupAction.ts`
+  - validated with focused Jest suites + `npm run type-check` + `npm run lint`
+- Reduced `createAppointmentAction` DB calls to single RPC:
+  - added migration `supabase/migrations/20260226038000_create_appointment_with_owner_member_default_group_rpc.sql`
+  - moved fallback group resolution (`groupId` 미지정 시 최근 가입 그룹 선택) into `create_appointment_with_owner_member`
+  - `createAppointmentAction` now calls only RPC + mapping (removed `group_members` pre-query)
+  - updated test: `src/actions/appointment/create.test.ts`
+- Migrated `deleteMyReviewAction` to single transactional RPC:
+  - added migration `supabase/migrations/20260226037000_delete_my_review_transaction_rpc.sql`
+  - action now calls `delete_my_review_transactional` and maps `error_code`
+  - added test: `src/actions/appointment/review/delete.test.ts`
+- Migrated `getAppointmentCommentsAction` to single RPC:
+  - added migration `supabase/migrations/20260226036000_get_appointment_comments_with_cursor_rpc.sql`
+  - action now calls `get_appointment_comments_with_cursor` and maps RPC payload
+  - updated test: `src/actions/appointment/[appointmentId]/comments/list.test.ts`
+- Migrated `getGroupMembersAction` to single RPC:
+  - added migration `supabase/migrations/20260226035000_get_group_members_with_count_rpc.sql`
+  - action now calls `get_group_members_with_count` and maps RPC payload
+  - added test: `src/actions/group/getGroupMembersAction.test.ts`
+- Migrated `getAppointmentMembersAction` to single RPC:
+  - added migration `supabase/migrations/20260226034000_get_appointment_members_with_count_rpc.sql`
+  - action now calls `get_appointment_members_with_count` and maps RPC payload
+  - updated test: `src/actions/appointment/[appointmentId]/members/get.test.ts`
+- Migrated `leaveAppointmentAction` to single transactional RPC:
+  - added migration `supabase/migrations/20260226033000_leave_appointment_transaction_rpc.sql`
+  - action now calls `leave_appointment_transactional` and maps `error_code`
+  - updated test: `src/actions/appointment/[appointmentId]/members/leave.test.ts`
+- Migrated `updateAppointmentStatusAction` to single transactional RPC:
+  - added migration `supabase/migrations/20260226032000_update_appointment_status_transaction_rpc.sql`
+  - action now calls `update_appointment_status_transactional` and maps `error_code`
+  - updated test: `src/actions/appointment/[appointmentId]/updateStatus.test.ts`
+- Migrated `leaveGroupAction` to single transactional RPC:
+  - added migration `supabase/migrations/20260226031000_leave_group_transaction_rpc.sql`
+  - action now calls `leave_group_transactional` and maps `error_code`
+  - updated test: `src/actions/group/leaveGroupAction.test.ts`
+- Transactionalized user profile-image DB writes via RPC (1 migration per action):
+  - added migrations:
+    - `supabase/migrations/20260226029000_clear_user_profile_image_transaction_rpc.sql`
+    - `supabase/migrations/20260226030000_set_user_profile_image_transaction_rpc.sql`
+  - switched actions from `users select/update` chains to single RPC calls:
+    - `src/actions/user/deleteProfileImageAction.ts`
+    - `src/actions/user/uploadProfileImageAction.ts`
+  - updated tests for RPC mocking:
+    - `src/actions/user/deleteProfileImageAction.test.ts`
+    - `src/actions/user/uploadProfileImageAction.test.ts`
+- Unified user action auth failures to common guard error:
+  - migrated direct `auth.getUser()` checks to `requireUser()` in:
+    - `src/actions/user/getUserData.ts`
+    - `src/actions/user/updateProfileAction.ts`
+    - `src/actions/user/deleteProfileImageAction.ts`
+    - `src/actions/user/uploadProfileImageAction.ts`
+  - auth failure response is now consistently `error: 'unauthorized'` with `로그인이 필요합니다.`
+  - removed unused `user-not-found` from `AuthErrorCode` (`src/types/result.ts`)
+  - updated related tests:
+    - `src/actions/user/getUserData.test.ts`
+    - `src/actions/user/updateProfileAction.test.ts`
+    - `src/actions/user/deleteProfileImageAction.test.ts`
+- Standardized group action auth checks to common guard:
+  - migrated direct `supabase.auth.getUser()` checks to `requireUser()` in:
+    - `src/actions/group/getMyGroupsAction.ts`
+    - `src/actions/group/searchUsersAction.ts`
+    - `src/actions/group/getGroupMembersAction.ts`
+    - `src/actions/group/leaveGroupAction.ts`
+    - `src/actions/group/searchGroupsWithCountAction.ts`
+    - `src/actions/group/listMyGroupsWithStatsAction.ts`
+  - kept existing unauthorized contract (`error: 'unauthorized'`, message) unchanged
 - Introduced user-scoped React Query keys for auth-safe cache partitioning:
   - added query scope utilities/providers:
     - `src/libs/query/queryScope.ts`

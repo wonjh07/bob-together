@@ -62,6 +62,22 @@ describe('listAppointmentsAction', () => {
     consoleErrorSpy.mockRestore();
   });
 
+  it('cursor 형식이 올바르지 않으면 invalid-format을 반환한다', async () => {
+    const result = await listAppointmentsAction({
+      groupId,
+      cursor: {
+        startAt: 'invalid-date',
+        appointmentId: '20000000-0000-4000-8000-000000000299',
+      },
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: 'invalid-format',
+      message: '유효한 커서 정보가 아닙니다.',
+    });
+  });
+
   it('키셋 커서를 계산해 목록을 반환한다', async () => {
     const supabase = {
       rpc: jest.fn().mockResolvedValue({

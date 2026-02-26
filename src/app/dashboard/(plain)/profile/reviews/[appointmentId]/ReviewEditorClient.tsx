@@ -62,7 +62,7 @@ export default function ReviewEditorClient({
   if (!appointmentId) {
     return (
       <div className={styles.page}>
-        <PlainTopNav title="리뷰" rightHidden />
+        <PlainTopNav title="리뷰" onBack={() => router.back()} rightHidden />
         <div className={styles.statusBox}>리뷰 대상 약속이 없습니다.</div>
       </div>
     );
@@ -71,7 +71,7 @@ export default function ReviewEditorClient({
   if (reviewTargetQuery.isLoading) {
     return (
       <div className={styles.page}>
-        <PlainTopNav title="리뷰" rightHidden />
+        <PlainTopNav title="리뷰" onBack={() => router.back()} rightHidden />
         <div className={styles.statusBox}>리뷰 정보를 불러오는 중...</div>
       </div>
     );
@@ -80,7 +80,7 @@ export default function ReviewEditorClient({
   if (reviewTargetQuery.isError || !reviewTargetQuery.data) {
     return (
       <div className={styles.page}>
-        <PlainTopNav title="리뷰" rightHidden />
+        <PlainTopNav title="리뷰" onBack={() => router.back()} rightHidden />
         <div className={styles.statusBox}>
           {reviewTargetQuery.error instanceof Error
             ? reviewTargetQuery.error.message
@@ -131,7 +131,7 @@ export default function ReviewEditorClient({
 
   return (
     <div className={styles.page}>
-      <PlainTopNav title="리뷰" rightHidden />
+      <PlainTopNav title="리뷰" onBack={() => router.back()} rightHidden />
 
       <section className={styles.summarySection}>
         <p className={styles.date}>{formatDateDot(target.startAt)}</p>

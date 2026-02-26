@@ -11,24 +11,6 @@ jest.mock('@/actions/_common/guards', () => {
   };
 });
 
-function createAwaitableQuery<T extends Record<string, unknown>>(result: T) {
-  const query = {
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    is: jest.fn().mockReturnThis(),
-    or: jest.fn().mockReturnThis(),
-    order: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    maybeSingle: jest.fn().mockResolvedValue(result),
-    then: (
-      onFulfilled: (value: T) => unknown,
-      onRejected?: (reason: unknown) => unknown,
-    ) => Promise.resolve(result).then(onFulfilled, onRejected),
-  };
-
-  return query;
-}
-
 describe('getAppointmentCommentsAction', () => {
   const mockRequireUser = requireUser as jest.Mock;
   const userId = '20000000-0000-4000-8000-000000000001';
@@ -50,14 +32,12 @@ describe('getAppointmentCommentsAction', () => {
     });
   });
 
-  it('댓글 조회가 실패하면 server-error를 반환한다', async () => {
-    const commentsListQuery = createAwaitableQuery({
+  it('댓글 조회 RPC가 실패하면 server-error를 반환한다', async () => {
+    const rpc = jest.fn().mockResolvedValue({
       data: null,
       error: { message: 'failed' },
     });
-    const supabase = {
-      from: jest.fn().mockReturnValue(commentsListQuery),
-    };
+    const supabase = { rpc };
 
     mockRequireUser.mockResolvedValue({
       ok: true,
@@ -74,9 +54,14 @@ describe('getAppointmentCommentsAction', () => {
       limit: 2,
     });
 
-    expect(commentsListQuery.or).toHaveBeenCalledWith(
-      'created_at.lt.2026-02-25T10:10:00.000Z,and(created_at.eq.2026-02-25T10:10:00.000Z,comment_id.lt.20000000-0000-4000-8000-000000000199)',
-    );
+    expect(rpc).toHaveBeenCalledWith('get_appointment_comments_with_cursor', {
+      p_user_id: userId,
+      p_appointment_id: appointmentId,
+      p_limit: 2,
+      p_cursor_created_at: '2026-02-25T10:10:00.000Z',
+      p_cursor_comment_id: '20000000-0000-4000-8000-000000000199',
+      p_include_count: false,
+    });
     expect(result).toEqual({
       ok: false,
       error: 'server-error',
@@ -85,55 +70,46 @@ describe('getAppointmentCommentsAction', () => {
   });
 
   it('첫 페이지에서 count를 조회하고 키셋 nextCursor를 반환한다', async () => {
-    const appointmentQuery = createAwaitableQuery({
-      data: { appointment_id: appointmentId },
-      error: null,
-    });
-    const commentsListQuery = createAwaitableQuery({
+    const rpc = jest.fn().mockResolvedValue({
       data: [
         {
-          comment_id: '20000000-0000-4000-8000-000000000301',
-          content: '최신 댓글',
-          created_at: '2026-02-25T10:03:00.000Z',
-          user_id: userId,
-          users: {
-            name: '홍길동',
-            nickname: '길동',
-            profile_image: null,
-          },
-        },
-        {
-          comment_id: '20000000-0000-4000-8000-000000000302',
-          content: '이전 댓글',
-          created_at: '2026-02-25T10:02:00.000Z',
-          user_id: '20000000-0000-4000-8000-000000000999',
-          users: {
-            name: '김철수',
-            nickname: null,
-            profile_image: null,
-          },
-        },
-        {
-          comment_id: '20000000-0000-4000-8000-000000000303',
-          content: '더 이전 댓글',
-          created_at: '2026-02-25T10:01:00.000Z',
-          user_id: userId,
-          users: {
-            name: '홍길동',
-            nickname: '길동',
-            profile_image: null,
-          },
+          ok: true,
+          error_code: null,
+          comment_count: 12,
+          comments: [
+            {
+              comment_id: '20000000-0000-4000-8000-000000000301',
+              content: '최신 댓글',
+              created_at: '2026-02-25T10:03:00.000Z',
+              user_id: userId,
+              name: '홍길동',
+              nickname: '길동',
+              profile_image: null,
+            },
+            {
+              comment_id: '20000000-0000-4000-8000-000000000302',
+              content: '이전 댓글',
+              created_at: '2026-02-25T10:02:00.000Z',
+              user_id: '20000000-0000-4000-8000-000000000999',
+              name: '김철수',
+              nickname: null,
+              profile_image: null,
+            },
+            {
+              comment_id: '20000000-0000-4000-8000-000000000303',
+              content: '더 이전 댓글',
+              created_at: '2026-02-25T10:01:00.000Z',
+              user_id: userId,
+              name: '홍길동',
+              nickname: '길동',
+              profile_image: null,
+            },
+          ],
         },
       ],
       error: null,
-      count: 12,
     });
-    const supabase = {
-      from: jest
-        .fn()
-        .mockReturnValueOnce(appointmentQuery)
-        .mockReturnValueOnce(commentsListQuery),
-    };
+    const supabase = { rpc };
 
     mockRequireUser.mockResolvedValue({
       ok: true,
@@ -146,11 +122,14 @@ describe('getAppointmentCommentsAction', () => {
       limit: 2,
     });
 
-    expect(commentsListQuery.select).toHaveBeenCalledWith(
-      'comment_id, content, created_at, user_id, users(name, nickname, profile_image)',
-      { count: 'exact' },
-    );
-    expect(commentsListQuery.limit).toHaveBeenCalledWith(3);
+    expect(rpc).toHaveBeenCalledWith('get_appointment_comments_with_cursor', {
+      p_user_id: userId,
+      p_appointment_id: appointmentId,
+      p_limit: 2,
+      p_cursor_created_at: null,
+      p_cursor_comment_id: null,
+      p_include_count: true,
+    });
     expect(result).toEqual({
       ok: true,
       data: {
@@ -184,22 +163,19 @@ describe('getAppointmentCommentsAction', () => {
     });
   });
 
-  it('count가 누락되면 server-error를 반환한다', async () => {
-    const appointmentQuery = createAwaitableQuery({
-      data: { appointment_id: appointmentId },
+  it('첫 페이지에서 count가 누락되면 server-error를 반환한다', async () => {
+    const rpc = jest.fn().mockResolvedValue({
+      data: [
+        {
+          ok: true,
+          error_code: null,
+          comment_count: null,
+          comments: [],
+        },
+      ],
       error: null,
     });
-    const commentsListQuery = createAwaitableQuery({
-      data: [],
-      error: null,
-      count: null,
-    });
-    const supabase = {
-      from: jest
-        .fn()
-        .mockReturnValueOnce(appointmentQuery)
-        .mockReturnValueOnce(commentsListQuery),
-    };
+    const supabase = { rpc };
 
     mockRequireUser.mockResolvedValue({
       ok: true,
@@ -219,36 +195,37 @@ describe('getAppointmentCommentsAction', () => {
   });
 
   it('커서 페이지에서는 count 없이도 댓글을 반환한다', async () => {
-    const commentsListQuery = createAwaitableQuery({
+    const rpc = jest.fn().mockResolvedValue({
       data: [
         {
-          comment_id: '20000000-0000-4000-8000-000000000401',
-          content: '최신 댓글',
-          created_at: '2026-02-25T11:03:00.000Z',
-          user_id: userId,
-          users: {
-            name: '홍길동',
-            nickname: '길동',
-            profile_image: null,
-          },
-        },
-        {
-          comment_id: '20000000-0000-4000-8000-000000000402',
-          content: '이전 댓글',
-          created_at: '2026-02-25T11:02:00.000Z',
-          user_id: '20000000-0000-4000-8000-000000000999',
-          users: {
-            name: '김철수',
-            nickname: null,
-            profile_image: null,
-          },
+          ok: true,
+          error_code: null,
+          comment_count: 0,
+          comments: [
+            {
+              comment_id: '20000000-0000-4000-8000-000000000401',
+              content: '최신 댓글',
+              created_at: '2026-02-25T11:03:00.000Z',
+              user_id: userId,
+              name: '홍길동',
+              nickname: '길동',
+              profile_image: null,
+            },
+            {
+              comment_id: '20000000-0000-4000-8000-000000000402',
+              content: '이전 댓글',
+              created_at: '2026-02-25T11:02:00.000Z',
+              user_id: '20000000-0000-4000-8000-000000000999',
+              name: '김철수',
+              nickname: null,
+              profile_image: null,
+            },
+          ],
         },
       ],
       error: null,
     });
-    const supabase = {
-      from: jest.fn().mockReturnValue(commentsListQuery),
-    };
+    const supabase = { rpc };
 
     mockRequireUser.mockResolvedValue({
       ok: true,
@@ -265,10 +242,6 @@ describe('getAppointmentCommentsAction', () => {
       limit: 2,
     });
 
-    expect(commentsListQuery.select).toHaveBeenCalledWith(
-      'comment_id, content, created_at, user_id, users(name, nickname, profile_image)',
-      undefined,
-    );
     expect(result).toEqual({
       ok: true,
       data: {

@@ -1,5 +1,6 @@
 'use server';
 
+import { actionError, actionSuccess } from '@/actions/_common/result';
 import { createSupabaseServerClient } from '@/libs/supabase/server';
 import { groupNameSchema } from '@/schemas/group';
 
@@ -12,11 +13,10 @@ export async function findGroupByNameAction(
 
   if (!parsed.success) {
     const firstError = parsed.error.issues[0];
-    return {
-      ok: false,
-      error: 'invalid-format',
-      message: firstError?.message || '그룹명을 입력해주세요.',
-    };
+    return actionError(
+      'invalid-format',
+      firstError?.message || '그룹명을 입력해주세요.',
+    );
   }
 
   const supabase = createSupabaseServerClient();
@@ -29,31 +29,16 @@ export async function findGroupByNameAction(
     .limit(2);
 
   if (error) {
-    return {
-      ok: false,
-      error: 'server-error',
-      message: '그룹을 찾는 중 오류가 발생했습니다.',
-    };
+    return actionError('server-error', '그룹을 찾는 중 오류가 발생했습니다.');
   }
 
   if (!data || data.length === 0) {
-    return {
-      ok: false,
-      error: 'group-not-found',
-      message: '해당 그룹을 찾을 수 없습니다.',
-    };
+    return actionError('group-not-found', '해당 그룹을 찾을 수 없습니다.');
   }
 
   if (data.length > 1) {
-    return {
-      ok: false,
-      error: 'group-name-duplicated',
-      message: '동일한 그룹명이 여러 개 존재합니다.',
-    };
+    return actionError('group-name-duplicated', '동일한 그룹명이 여러 개 존재합니다.');
   }
 
-  return {
-    ok: true,
-    data: mapGroup(data[0]),
-  };
+  return actionSuccess(mapGroup(data[0]));
 }

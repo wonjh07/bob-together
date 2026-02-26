@@ -106,7 +106,7 @@ describe('getUserData', () => {
     });
   });
 
-  it('인증되지 않은 사용자는 user-not-found 에러를 반환해야 한다', async () => {
+  it('인증되지 않은 사용자는 unauthorized 에러를 반환해야 한다', async () => {
     mockSupabaseClient.auth.getUser.mockResolvedValue({
       data: { user: null },
       error: null,
@@ -116,12 +116,12 @@ describe('getUserData', () => {
 
     expect(result).toEqual({
       ok: false,
-      error: 'user-not-found',
-      message: '사용자 정보를 불러올 수 없습니다.',
+      error: 'unauthorized',
+      message: '로그인이 필요합니다.',
     });
   });
 
-  it('Supabase 에러 발생 시 에러를 반환해야 한다', async () => {
+  it('Supabase 인증 에러 발생 시 unauthorized를 반환해야 한다', async () => {
     mockSupabaseClient.auth.getUser.mockResolvedValue({
       data: { user: null },
       error: { message: 'Auth session missing' },
@@ -131,8 +131,8 @@ describe('getUserData', () => {
 
     expect(result).toEqual({
       ok: false,
-      error: 'user-not-found',
-      message: 'Auth session missing',
+      error: 'unauthorized',
+      message: '로그인이 필요합니다.',
     });
   });
 });

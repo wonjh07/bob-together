@@ -81,6 +81,28 @@ describe('sendAppointmentInvitationAction', () => {
     });
   });
 
+  it('약속을 찾을 수 없으면 appointment-not-found를 반환한다', async () => {
+    const rpc = jest.fn().mockResolvedValue({
+      data: [{ ok: false, error_code: 'appointment-not-found' }],
+      error: null,
+    });
+    const supabase = { rpc };
+
+    mockRequireUser.mockResolvedValue({
+      ok: true,
+      supabase,
+      user: { id: INVITER_ID },
+    });
+
+    const result = await sendAppointmentInvitationAction(APPOINTMENT_ID, INVITEE_ID);
+
+    expect(result).toEqual({
+      ok: false,
+      error: 'appointment-not-found',
+      message: '약속 정보를 찾을 수 없습니다.',
+    });
+  });
+
   it('이미 멤버인 사용자는 초대를 차단한다', async () => {
     const rpc = jest.fn().mockResolvedValue({
       data: [{ ok: false, error_code: 'already-member' }],

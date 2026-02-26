@@ -1,11 +1,14 @@
 import Link from 'next/link';
 
+import Moveback from '@/components/ui/BackButton';
+
 import { signupPage, title, buttonContainer } from './page.css';
 import SignupForm from './SignupForm';
 
 export default function SignupPage() {
   return (
     <div className={signupPage}>
+      <Moveback />
       <div className={title}>회원가입</div>
       <SignupForm />
       <div className={buttonContainer}>

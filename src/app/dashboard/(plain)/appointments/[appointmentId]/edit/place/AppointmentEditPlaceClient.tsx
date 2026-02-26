@@ -75,7 +75,11 @@ export default function AppointmentEditPlaceClient({
 
   return (
     <div className={styles.page}>
-      <PlainTopNav title="장소 검색" rightHidden />
+      <PlainTopNav
+        title="장소 검색"
+        onBack={() => router.back()}
+        rightHidden
+      />
       <div className={styles.content}>
         <div className={styles.locationRow}>
           <div className={styles.locationTitle}>현재 위치 사용</div>

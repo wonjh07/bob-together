@@ -12,6 +12,8 @@ export type GetUserDataResult = ActionResult<UserData, AuthErrorCode>;
 
 export type ProfileErrorCode =
   | AuthErrorCode
+  | 'profile-not-found'
+  | 'metadata-sync-failed'
   | 'invalid-file'
   | 'file-too-large'
   | 'upload-failed'

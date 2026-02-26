@@ -1,6 +1,9 @@
 'use server';
 
-import { createSupabaseServerClient } from '@/libs/supabase/server';
+import { z } from 'zod';
+
+import { parseOrFail, requireUser } from '@/actions/_common/guards';
+import { actionError, actionSuccess } from '@/actions/_common/result';
 
 import type {
   GroupManageCursor,
@@ -27,37 +30,45 @@ interface ListMyGroupsWithStatsRow {
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 30;
+const listMyGroupsWithStatsSchema = z.object({
+  cursor: z
+    .object({
+      joinedAt: z.string().datetime({
+        offset: true,
+        message: '유효한 커서 정보가 아닙니다.',
+      }),
+      groupId: z.string().uuid('유효한 커서 정보가 아닙니다.'),
+    })
+    .nullable()
+    .optional(),
+  limit: z.number().int().min(1).max(MAX_LIMIT).optional().default(DEFAULT_LIMIT),
+});
 
 export async function listMyGroupsWithStatsAction(
   params: ListMyGroupsWithStatsParams = {},
 ): Promise<ListMyGroupsWithStatsResult> {
-  const supabase = createSupabaseServerClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-
-  if (userError || !userData.user) {
-    return {
-      ok: false,
-      error: 'unauthorized',
-      message: '로그인이 필요합니다.',
-    };
+  const parsed = parseOrFail(listMyGroupsWithStatsSchema, params);
+  if (!parsed.ok) {
+    return parsed;
   }
 
-  const limit = Math.min(Math.max(params.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
-  const cursor = params.cursor ?? null;
+  const auth = await requireUser();
+  if (!auth.ok) {
+    return auth;
+  }
+  const { supabase, user } = auth;
+
+  const { limit, cursor } = parsed.data;
 
   const { data, error } = await supabase.rpc('list_my_groups_with_stats', {
-    p_user_id: userData.user.id,
+    p_user_id: user.id,
     p_limit: limit,
     p_cursor_joined_at: cursor?.joinedAt ?? undefined,
     p_cursor_group_id: cursor?.groupId ?? undefined,
   });
 
   if (error) {
-    return {
-      ok: false,
-      error: 'server-error',
-      message: '그룹 관리 목록을 불러오지 못했습니다.',
-    };
+    return actionError('server-error', '그룹 관리 목록을 불러오지 못했습니다.');
   }
 
   const rows = ((data as ListMyGroupsWithStatsRow[] | null) ?? []).filter(
@@ -88,11 +99,8 @@ export async function listMyGroupsWithStatsAction(
         }
       : null;
 
-  return {
-    ok: true,
-    data: {
-      groups,
-      nextCursor,
-    },
-  };
+  return actionSuccess({
+    groups,
+    nextCursor,
+  });
 }

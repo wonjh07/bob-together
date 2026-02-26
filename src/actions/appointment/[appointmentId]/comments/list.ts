@@ -31,6 +31,58 @@ const listAppointmentCommentsSchema = z.object({
 
 type ListAppointmentCommentsParams = z.infer<typeof listAppointmentCommentsSchema>;
 
+interface AppointmentCommentRow {
+  comment_id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  name: string | null;
+  nickname: string | null;
+  profile_image: string | null;
+}
+
+interface GetAppointmentCommentsRpcRow {
+  ok: boolean;
+  error_code: string | null;
+  comment_count: number | null;
+  comments: unknown;
+}
+
+function mapRpcComments(comments: unknown): AppointmentCommentRow[] {
+  if (!Array.isArray(comments)) {
+    return [];
+  }
+
+  return comments.flatMap((comment) => {
+    if (!comment || typeof comment !== 'object') {
+      return [];
+    }
+
+    const row = comment as AppointmentCommentRow;
+    if (
+      typeof row.comment_id !== 'string'
+      || typeof row.content !== 'string'
+      || typeof row.created_at !== 'string'
+      || typeof row.user_id !== 'string'
+    ) {
+      return [];
+    }
+
+    return [{
+      comment_id: row.comment_id,
+      content: row.content,
+      created_at: row.created_at,
+      user_id: row.user_id,
+      name: typeof row.name === 'string' ? row.name : null,
+      nickname: typeof row.nickname === 'string' ? row.nickname : null,
+      profile_image:
+        typeof row.profile_image === 'string'
+          ? row.profile_image
+          : null,
+    }];
+  });
+}
+
 export async function getAppointmentCommentsAction(
   params: ListAppointmentCommentsParams,
 ): Promise<GetAppointmentCommentsResult> {
@@ -48,65 +100,39 @@ export async function getAppointmentCommentsAction(
   const { appointmentId, cursor, limit = DEFAULT_LIMIT } = parsed.data;
   const userId = user.id;
   const isFirstPage = !cursor;
-
-  if (isFirstPage) {
-    const { data: appointmentData, error: appointmentError } = await supabase
-      .from('appointments')
-      .select('appointment_id')
-      .eq('appointment_id', appointmentId)
-      .maybeSingle();
-
-    if (appointmentError || !appointmentData) {
-      return actionError('forbidden', '댓글을 볼 권한이 없습니다.');
-    }
-  }
-
-  let query = supabase
-    .from('appointment_comments')
-    .select(
-      'comment_id, content, created_at, user_id, users(name, nickname, profile_image)',
-      isFirstPage ? { count: 'exact' } : undefined,
-    )
-    .eq('appointment_id', appointmentId)
-    .eq('is_deleted', false)
-    .is('deleted_at', null);
-
-  if (cursor) {
-    query = query.or(
-      `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},comment_id.lt.${cursor.commentId})`,
-    );
-  }
-
-  const { data, error, count } = await query
-    .order('created_at', { ascending: false })
-    .order('comment_id', { ascending: false })
-    .limit(limit + 1);
+  const listCommentsRpc = 'get_appointment_comments_with_cursor' as never;
+  const listCommentsRpcParams = {
+    p_user_id: userId,
+    p_appointment_id: appointmentId,
+    p_limit: limit,
+    p_cursor_created_at: cursor?.createdAt ?? null,
+    p_cursor_comment_id: cursor?.commentId ?? null,
+    p_include_count: isFirstPage,
+  } as never;
+  const { data, error } = await supabase.rpc(listCommentsRpc, listCommentsRpcParams);
 
   if (error) {
+    if (error.code === '42501') {
+      return actionError('forbidden', '댓글을 볼 권한이 없습니다.');
+    }
     return actionError('server-error', '댓글을 불러오지 못했습니다.');
   }
 
-  let commentCount = 0;
-  if (isFirstPage) {
-    if (typeof count !== 'number') {
-      return actionError('server-error', '댓글 수를 불러오지 못했습니다.');
+  const rpcRow = ((data as GetAppointmentCommentsRpcRow[] | null) ?? [])[0] ?? null;
+  if (!rpcRow) {
+    return actionError('server-error', '댓글을 불러오지 못했습니다.');
+  }
+  if (!rpcRow.ok) {
+    if (rpcRow.error_code === 'forbidden') {
+      return actionError('forbidden', '댓글을 볼 권한이 없습니다.');
     }
-    commentCount = count;
+    if (rpcRow.error_code === 'invalid-format') {
+      return actionError('invalid-format', '유효한 커서 정보가 아닙니다.');
+    }
+    return actionError('server-error', '댓글을 불러오지 못했습니다.');
   }
 
-  type AppointmentCommentRow = {
-    comment_id: string;
-    content: string;
-    created_at: string;
-    user_id: string;
-    users: {
-      name: string | null;
-      nickname: string | null;
-      profile_image: string | null;
-    } | null;
-  };
-
-  const rows = (data as AppointmentCommentRow[] | null) ?? [];
+  const rows = mapRpcComments(rpcRow.comments);
   const hasMore = rows.length > limit;
   const visibleRowsDesc = hasMore ? rows.slice(0, limit) : rows;
   const lastRow = visibleRowsDesc[visibleRowsDesc.length - 1] ?? null;
@@ -123,10 +149,18 @@ export async function getAppointmentCommentsAction(
     content: row.content,
     createdAt: row.created_at,
     userId: row.user_id,
-    name: row.users?.name ?? null,
-    nickname: row.users?.nickname ?? null,
-    profileImage: row.users?.profile_image ?? null,
+    name: row.name,
+    nickname: row.nickname,
+    profileImage: row.profile_image,
   }));
+
+  let commentCount = 0;
+  if (isFirstPage) {
+    if (typeof rpcRow.comment_count !== 'number') {
+      return actionError('server-error', '댓글 수를 불러오지 못했습니다.');
+    }
+    commentCount = rpcRow.comment_count;
+  }
 
   return actionSuccess({
     commentCount,

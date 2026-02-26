@@ -6,6 +6,9 @@ import { sendGroupInvitationAction } from './sendGroupInvitationAction';
 jest.mock('@/libs/supabase/server');
 
 describe('sendGroupInvitationAction', () => {
+  const GROUP_ID = '550e8400-e29b-41d4-a716-446655440000';
+  const INVITEE_ID = '550e8400-e29b-41d4-a716-446655440111';
+
   beforeEach(resetAllMocks);
 
   it('초대자가 멤버가 아니면 forbidden을 반환한다', async () => {
@@ -25,7 +28,7 @@ describe('sendGroupInvitationAction', () => {
       mockSupabaseClient,
     );
 
-    const result = await sendGroupInvitationAction('group-1', 'user-2');
+    const result = await sendGroupInvitationAction(GROUP_ID, INVITEE_ID);
 
     expect(result).toEqual({
       ok: false,
@@ -36,8 +39,8 @@ describe('sendGroupInvitationAction', () => {
       'send_group_invitation_transactional',
       expect.objectContaining({
         p_inviter_id: mockUser.id,
-        p_group_id: 'group-1',
-        p_invitee_id: 'user-2',
+        p_group_id: GROUP_ID,
+        p_invitee_id: INVITEE_ID,
       }),
     );
   });

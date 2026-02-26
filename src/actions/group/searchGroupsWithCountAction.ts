@@ -1,6 +1,9 @@
 'use server';
 
-import { createSupabaseServerClient } from '@/libs/supabase/server';
+import { z } from 'zod';
+
+import { parseOrFail, requireUser } from '@/actions/_common/guards';
+import { actionError, actionSuccess } from '@/actions/_common/result';
 import { groupSearchSchema } from '@/schemas/group';
 
 import type {
@@ -27,49 +30,43 @@ interface SearchGroupsWithCountRow {
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 30;
+const searchGroupsWithCountSchema = z.object({
+  query: groupSearchSchema,
+  cursor: z
+    .object({
+      name: z.string().min(1, '유효한 커서 정보가 아닙니다.'),
+      groupId: z.string().uuid('유효한 커서 정보가 아닙니다.'),
+    })
+    .nullable()
+    .optional(),
+  limit: z.number().int().min(1).max(MAX_LIMIT).optional().default(DEFAULT_LIMIT),
+});
 
 export async function searchGroupsWithCountAction(
   params: SearchGroupsWithCountParams,
 ): Promise<SearchGroupsWithCountResult> {
-  const parsed = groupSearchSchema.safeParse(params.query);
-
-  if (!parsed.success) {
-    const firstError = parsed.error.issues[0];
-    return {
-      ok: false,
-      error: 'invalid-format',
-      message: firstError?.message || '검색어를 입력해주세요.',
-    };
+  const parsed = parseOrFail(searchGroupsWithCountSchema, params);
+  if (!parsed.ok) {
+    return parsed;
   }
+  const { query, limit, cursor } = parsed.data;
 
-  const supabase = createSupabaseServerClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-
-  if (userError || !userData.user) {
-    return {
-      ok: false,
-      error: 'unauthorized',
-      message: '로그인이 필요합니다.',
-    };
+  const auth = await requireUser();
+  if (!auth.ok) {
+    return auth;
   }
-
-  const limit = Math.min(Math.max(params.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
-  const cursor = params.cursor ?? null;
+  const { supabase, user } = auth;
 
   const { data, error } = await supabase.rpc('search_groups_with_count', {
-    p_user_id: userData.user.id,
-    p_query: parsed.data,
+    p_user_id: user.id,
+    p_query: query,
     p_limit: limit,
     p_cursor_name: cursor?.name ?? undefined,
     p_cursor_group_id: cursor?.groupId ?? undefined,
   });
 
   if (error) {
-    return {
-      ok: false,
-      error: 'server-error',
-      message: '그룹 검색 중 오류가 발생했습니다.',
-    };
+    return actionError('server-error', '그룹 검색 중 오류가 발생했습니다.');
   }
 
   const rows = ((data as SearchGroupsWithCountRow[] | null) ?? []).filter(
@@ -97,11 +94,8 @@ export async function searchGroupsWithCountAction(
         }
       : null;
 
-  return {
-    ok: true,
-    data: {
-      groups,
-      nextCursor,
-    },
-  };
+  return actionSuccess({
+    groups,
+    nextCursor,
+  });
 }

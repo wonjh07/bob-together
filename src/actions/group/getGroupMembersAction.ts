@@ -1,6 +1,9 @@
 'use server';
 
-import { createSupabaseServerClient } from '@/libs/supabase/server';
+import { z } from 'zod';
+
+import { requireUser } from '@/actions/_common/guards';
+import { actionError, actionSuccess } from '@/actions/_common/result';
 
 import type {
   GetGroupMembersResult,
@@ -10,83 +13,109 @@ import type {
 interface GroupMemberRow {
   user_id: string;
   role: 'owner' | 'member';
-  users:
-    | {
-        name: string | null;
-        nickname: string | null;
-        profile_image: string | null;
-      }
-    | null;
+  name: string | null;
+  nickname: string | null;
+  profile_image: string | null;
+}
+
+interface GetGroupMembersRpcRow {
+  ok: boolean;
+  error_code: string | null;
+  member_count: number | null;
+  members: unknown;
+}
+
+function mapRpcMembers(members: unknown): GroupMemberItem[] {
+  if (!Array.isArray(members)) {
+    return [];
+  }
+
+  return members.flatMap((member) => {
+    if (!member || typeof member !== 'object') {
+      return [];
+    }
+
+    const row = member as GroupMemberRow;
+    if (
+      typeof row.user_id !== 'string'
+      || (row.role !== 'owner' && row.role !== 'member')
+    ) {
+      return [];
+    }
+
+    return [{
+      userId: row.user_id,
+      role: row.role,
+      name: typeof row.name === 'string' ? row.name : null,
+      nickname: typeof row.nickname === 'string' ? row.nickname : null,
+      profileImage:
+        typeof row.profile_image === 'string'
+          ? row.profile_image
+          : null,
+    }];
+  });
 }
 
 export async function getGroupMembersAction(
   groupId: string,
 ): Promise<GetGroupMembersResult> {
   if (!groupId) {
-    return {
-      ok: false,
-      error: 'invalid-format',
-      message: '그룹 정보가 필요합니다.',
-    };
+    return actionError('invalid-format', '그룹 정보가 필요합니다.');
+  }
+  if (!z.string().uuid().safeParse(groupId).success) {
+    return actionError('invalid-format', '유효한 그룹 ID가 아닙니다.');
   }
 
-  const supabase = createSupabaseServerClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-
-  if (userError || !userData.user) {
-    return {
-      ok: false,
-      error: 'unauthorized',
-      message: '로그인이 필요합니다.',
-    };
+  const auth = await requireUser();
+  if (!auth.ok) {
+    return auth;
   }
+  const { supabase, user } = auth;
 
-  const { data: membership, error: membershipError } = await supabase
-    .from('group_members')
-    .select('group_id')
-    .eq('group_id', groupId)
-    .eq('user_id', userData.user.id)
-    .maybeSingle();
-
-  if (membershipError || !membership) {
-    return {
-      ok: false,
-      error: 'forbidden',
-      message: '그룹을 찾을 수 없거나 접근 권한이 없습니다.',
-    };
-  }
-
-  const { data, count, error } = await supabase
-    .from('group_members')
-    .select('user_id, role, users(name, nickname, profile_image)', {
-      count: 'exact',
-    })
-    .eq('group_id', groupId)
-    .order('joined_at', { ascending: true });
+  const getGroupMembersRpc = 'get_group_members_with_count' as never;
+  const getGroupMembersParams = {
+    p_user_id: user.id,
+    p_group_id: groupId,
+  } as never;
+  const { data, error } = await supabase.rpc(
+    getGroupMembersRpc,
+    getGroupMembersParams,
+  );
 
   if (error) {
-    return {
-      ok: false,
-      error: 'server-error',
-      message: '그룹 멤버를 불러올 수 없습니다.',
-    };
+    if (error.code === '42501') {
+      return actionError(
+        'forbidden',
+        '그룹을 찾을 수 없거나 접근 권한이 없습니다.',
+      );
+    }
+    return actionError('server-error', '그룹 멤버를 불러올 수 없습니다.');
   }
 
-  const rows = (data as GroupMemberRow[] | null) ?? [];
-  const members: GroupMemberItem[] = rows.map((row) => ({
-    userId: row.user_id,
-    role: row.role,
-    name: row.users?.name ?? null,
-    nickname: row.users?.nickname ?? null,
-    profileImage: row.users?.profile_image ?? null,
-  }));
+  const row = ((data as GetGroupMembersRpcRow[] | null) ?? [])[0] ?? null;
+  if (!row) {
+    return actionError('server-error', '그룹 멤버를 불러올 수 없습니다.');
+  }
+  if (!row.ok) {
+    if (row.error_code === 'forbidden') {
+      return actionError(
+        'forbidden',
+        '그룹을 찾을 수 없거나 접근 권한이 없습니다.',
+      );
+    }
+    if (row.error_code === 'invalid-format') {
+      return actionError('invalid-format', '그룹 정보가 필요합니다.');
+    }
+    return actionError('server-error', '그룹 멤버를 불러올 수 없습니다.');
+  }
 
-  return {
-    ok: true,
-    data: {
-      memberCount: count ?? members.length,
-      members,
-      currentUserId: userData.user.id,
-    },
-  };
+  const members = mapRpcMembers(row.members);
+  const memberCount =
+    typeof row.member_count === 'number' ? row.member_count : members.length;
+
+  return actionSuccess({
+    memberCount,
+    members,
+    currentUserId: user.id,
+  });
 }

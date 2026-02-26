@@ -110,7 +110,7 @@ export async function updateAppointmentAction(params: {
   if (!row.ok) {
     switch (row.error_code) {
       case 'appointment-not-found':
-        return actionError('server-error', '약속 정보를 찾을 수 없습니다.');
+        return actionError('appointment-not-found', '약속 정보를 찾을 수 없습니다.');
       case 'forbidden':
         return actionError('forbidden', '약속 작성자만 수정할 수 있습니다.');
       case 'missing-place':

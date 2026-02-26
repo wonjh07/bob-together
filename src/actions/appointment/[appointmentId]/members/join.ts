@@ -59,7 +59,7 @@ export async function joinAppointmentAction(
       case 'forbidden':
         return actionError('forbidden', '약속 참여 권한이 없습니다.');
       case 'appointment-not-found':
-        return actionError('server-error', '약속 정보를 찾을 수 없습니다.');
+        return actionError('appointment-not-found', '약속 정보를 찾을 수 없습니다.');
       default:
         return actionError('server-error', '약속 참여 처리 중 오류가 발생했습니다.');
     }

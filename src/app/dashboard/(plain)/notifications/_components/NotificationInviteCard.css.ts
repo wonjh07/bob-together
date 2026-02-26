@@ -31,16 +31,15 @@ export const typeLabel = style({
   display: 'inline-flex',
   alignItems: 'center',
   gap: '6px',
-  fontSize: vars.fontSize.title,
+  fontSize: vars.fontSize.subText,
   fontWeight: vars.fontWeight.semibold,
   color: vars.color.text,
 });
 
 export const typeIcon = style({
-  width: '22px',
-  height: '22px',
+  width: '18px',
+  height: '18px',
   color: vars.color.text,
-  opacity: 0.9,
 });
 
 export const messageRow = style({
@@ -67,10 +66,9 @@ export const messageIcon = style({
 });
 
 export const message = style({
-  margin: 0,
-  fontSize: vars.fontSize.header,
-  lineHeight: 1.35,
+  fontSize: vars.fontSize.title,
   color: vars.color.text,
+  fontWeight: vars.fontWeight.medium,
   wordBreak: 'break-word',
 });
 
@@ -89,8 +87,8 @@ export const avatar = style({
 });
 
 export const metaText = style({
-  fontSize: vars.fontSize.title,
-  fontWeight: vars.fontWeight.medium,
+  fontSize: vars.fontSize.text,
+  fontWeight: vars.fontWeight.normal,
   color: vars.color.text,
 });
 

@@ -136,23 +136,17 @@ export async function searchPlacesAction(
 
   if (!parsed.success) {
     const firstError = parsed.error.issues[0];
-    return {
-      ok: false,
-      error: 'invalid-format',
-      message: firstError?.message || '검색어를 입력해주세요.',
-    };
+    return actionError(
+      'invalid-format',
+      firstError?.message || '검색어를 입력해주세요.',
+    );
   }
 
   const restApiKey = process.env.KAKAO_REST_API_KEY;
 
   if (!restApiKey) {
-    return {
-      ok: false,
-      error: 'missing-config',
-      message: '카카오 REST API 키가 필요합니다.',
-    };
+    return actionError('missing-config', '카카오 REST API 키가 필요합니다.');
   }
-
   const url = new URL('https://dapi.kakao.com/v2/local/search/keyword.json');
   const { query, latitude, longitude, radius } = parsed.data;
   url.searchParams.set('query', query);
@@ -164,47 +158,45 @@ export async function searchPlacesAction(
     url.searchParams.set('radius', String(radius ?? 5000));
   }
 
-  const response = await fetch(url.toString(), {
-    headers: {
-      Authorization: `KakaoAK ${restApiKey}`,
-    },
-    cache: 'no-store',
-  });
+  try {
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `KakaoAK ${restApiKey}`,
+      },
+      cache: 'no-store',
+    });
 
-  if (!response.ok) {
-    return {
-      ok: false,
-      error: 'provider-error',
-      message: '장소 검색에 실패했습니다.',
+    if (!response.ok) {
+      return actionError('provider-error', '장소 검색에 실패했습니다.');
+    }
+
+    const json = (await response.json()) as {
+      documents?: KakaoPlaceDocument[];
     };
-  }
 
-  const json = (await response.json()) as {
-    documents?: KakaoPlaceDocument[];
-  };
+    const normalizeText = (value?: string) =>
+      value?.replace(/\s+/g, ' ').trim() ?? '';
 
-  const normalizeText = (value?: string) =>
-    value?.replace(/\s+/g, ' ').trim() ?? '';
+    const places =
+      json.documents?.map((doc) => ({
+        kakaoId: doc.id,
+        name: normalizeText(doc.place_name),
+        address: normalizeText(doc.address_name),
+        roadAddress: normalizeText(doc.road_address_name) || null,
+        category: normalizeText(doc.category_name) || null,
+        phone: normalizeText(doc.phone) || null,
+        url: normalizeText(doc.place_url) || null,
+        latitude: Number(doc.y),
+        longitude: Number(doc.x),
+      })) ?? [];
 
-  const places =
-    json.documents?.map((doc) => ({
-      kakaoId: doc.id,
-      name: normalizeText(doc.place_name),
-      address: normalizeText(doc.address_name),
-      roadAddress: normalizeText(doc.road_address_name) || null,
-      category: normalizeText(doc.category_name) || null,
-      phone: normalizeText(doc.phone) || null,
-      url: normalizeText(doc.place_url) || null,
-      latitude: Number(doc.y),
-      longitude: Number(doc.x),
-    })) ?? [];
-
-  return {
-    ok: true,
-    data: {
+    return actionSuccess({
       places,
-    },
-  };
+    });
+  } catch (error) {
+    console.error('[searchPlacesAction] provider request failed', error);
+    return actionError('server-error', '장소 검색 중 오류가 발생했습니다.');
+  }
 }
 
 export async function getPlaceDetailAction(

@@ -40,12 +40,7 @@ export default function NotificationInviteCard({
   const isEnded = isAppointmentInvite
     ? isEndedAppointment(invitation.appointmentEndsAt)
     : false;
-  const respondedLabel =
-    invitation.status === 'accepted'
-      ? '초대 수락'
-      : invitation.status === 'rejected'
-        ? '초대 거절'
-        : null;
+  const canRespond = invitation.status === 'pending' && !isEnded;
   const targetTitle = isAppointmentInvite
     ? invitation.appointmentTitle || '약속'
     : invitation.groupName || '그룹';
@@ -100,18 +95,7 @@ export default function NotificationInviteCard({
         nameClassName={styles.metaText}
       />
 
-      {respondedLabel ? (
-        <p
-          className={`${styles.statusText} ${
-            invitation.status === 'accepted'
-              ? styles.acceptedStatus
-              : styles.rejectedStatus
-          }`}>
-          {respondedLabel}
-        </p>
-      ) : isEnded ? (
-        <p className={styles.endedText}>종료된 약속입니다</p>
-      ) : (
+      {canRespond ? (
         <div className={styles.actionRow}>
           <button
             type="button"
@@ -128,7 +112,7 @@ export default function NotificationInviteCard({
             거절하기
           </button>
         </div>
-      )}
+      ) : null}
     </article>
   );
 }
