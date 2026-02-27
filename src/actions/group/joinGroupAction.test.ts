@@ -38,4 +38,30 @@ describe('joinGroupAction', () => {
       }),
     );
   });
+
+  it('RPC가 user-not-found를 반환하면 unauthorized를 반환한다', async () => {
+    const rpc = jest.fn().mockResolvedValue({
+      data: [{ ok: false, error_code: 'user-not-found', group_id: null }],
+      error: null,
+    });
+
+    const mockSupabaseClient = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({ data: { user: mockUser } }),
+      },
+      rpc,
+    };
+
+    (createSupabaseServerClient as jest.Mock).mockReturnValue(
+      mockSupabaseClient,
+    );
+
+    const result = await joinGroupAction(GROUP_ID);
+
+    expect(result).toEqual({
+      ok: false,
+      error: 'unauthorized',
+      message: '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.',
+    });
+  });
 });

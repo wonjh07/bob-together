@@ -1,6 +1,29 @@
 # AI Changelog (Rolling)
 
 ## 2026-02-26
+- Fixed group create/join RPC ambiguity error (`SQLSTATE 42702`):
+  - cause: `RETURNS TABLE` output variable `group_id` conflicted with
+    `on conflict (group_id, user_id)` target in PL/pgSQL
+  - fix migrations:
+    - `supabase/migrations/20260226102000_fix_create_group_conflict_ambiguity.sql`
+    - `supabase/migrations/20260226103000_fix_join_group_conflict_ambiguity.sql`
+  - changed conflict target to:
+    - `on conflict on constraint group_members_pkey do nothing`
+- Hardened group create/join RPC diagnostics and error mapping:
+  - added migrations:
+    - `supabase/migrations/20260226100000_harden_create_group_transaction_rpc.sql`
+    - `supabase/migrations/20260226101000_harden_join_group_transaction_rpc.sql`
+  - RPC now returns explicit business codes for key DB failures:
+    - `user-not-found`
+    - `group-not-found`
+    - `invalid-format`
+    - fallback `server-error:<SQLSTATE>` for unknown DB exceptions
+  - group actions now map `user-not-found` to `unauthorized` with relogin guidance:
+    - `src/actions/group/createGroupAction.ts`
+    - `src/actions/group/joinGroupAction.ts`
+  - added regression tests for `user-not-found` mapping:
+    - `src/actions/group/createGroupAction.test.ts`
+    - `src/actions/group/joinGroupAction.test.ts`
 - Completed action test coverage baseline:
   - added missing test files:
     - `src/actions/appointment/[appointmentId]/get.test.ts`
