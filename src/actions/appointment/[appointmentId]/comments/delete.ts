@@ -67,5 +67,9 @@ export async function deleteAppointmentCommentAction(params: {
     return actionError('forbidden', '댓글 삭제 권한이 없습니다.');
   }
 
-  return actionSuccess({ commentId });
+  return actionSuccess({
+    appointmentId,
+    commentId,
+    commentCountDelta: -1,
+  });
 }

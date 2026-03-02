@@ -61,7 +61,7 @@ export default function GroupManageCard({
 
   return (
     <article className={styles.card}>
-      <div className={styles.ownerRow}>
+      <div className={styles.headRow}>
         <UserIdentityInline
           name={ownerDisplayName}
           avatarSrc={group.ownerProfileImage}
@@ -69,10 +69,6 @@ export default function GroupManageCard({
           size="sm"
           me={group.isOwner}
         />
-      </div>
-
-      <div className={styles.headRow}>
-        <h2 className={styles.groupName}>{group.groupName}</h2>
         <OverflowMenu
           isOpen={isMenuOpen}
           isDisabled={isLeaving}
@@ -82,6 +78,7 @@ export default function GroupManageCard({
           items={menuItems}
         />
       </div>
+      <h2 className={styles.groupName}>{group.groupName}</h2>
       <div className={styles.footerRow}>
         <span className={styles.dateText}>
           {label}: {dateText}

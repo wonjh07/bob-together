@@ -87,4 +87,42 @@ describe('deleteAppointmentCommentAction', () => {
       message: '댓글 삭제 중 오류가 발생했습니다.',
     });
   });
+
+  it('성공 시 통일된 mutation payload를 반환한다', async () => {
+    const appointmentId = '550e8400-e29b-41d4-a716-446655440000';
+    const commentId = '550e8400-e29b-41d4-a716-446655440001';
+    const deleteQuery = {
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      is: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: { comment_id: commentId },
+        error: null,
+      }),
+    };
+    const supabase = {
+      from: jest.fn().mockReturnValue(deleteQuery),
+    };
+
+    mockRequireUser.mockResolvedValue({
+      ok: true,
+      supabase,
+      user: { id: '550e8400-e29b-41d4-a716-446655440100' },
+    });
+
+    const result = await deleteAppointmentCommentAction({
+      appointmentId,
+      commentId,
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      data: {
+        appointmentId,
+        commentId,
+        commentCountDelta: -1,
+      },
+    });
+  });
 });

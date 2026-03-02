@@ -145,6 +145,7 @@ export interface AppointmentListItem {
 export interface AppointmentDetailItem {
   appointmentId: string;
   title: string;
+  groupName: string | null;
   status: 'pending' | 'canceled';
   startAt: string;
   endsAt: string;
@@ -287,21 +288,29 @@ export type GetAppointmentCommentsResult = ActionResult<
 
 export type CreateAppointmentCommentResult = ActionResult<
   {
+    appointmentId: string;
+    commentId: string;
     comment: AppointmentCommentItem;
+    commentCountDelta: 1;
   },
   AppointmentErrorCode
 >;
 
 export type UpdateAppointmentCommentResult = ActionResult<
   {
+    appointmentId: string;
+    commentId: string;
     comment: AppointmentCommentItem;
+    commentCountDelta: 0;
   },
   AppointmentErrorCode
 >;
 
 export type DeleteAppointmentCommentResult = ActionResult<
   {
+    appointmentId: string;
     commentId: string;
+    commentCountDelta: -1;
   },
   AppointmentErrorCode
 >;

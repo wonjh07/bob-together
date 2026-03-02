@@ -56,23 +56,16 @@ export const mapWrapper = style({
   border: `1px solid ${vars.color.stroke}`,
 });
 
-export const section = style({
-  border: `1px solid ${vars.color.stroke}`,
-  borderRadius: vars.radius.xlg,
-  padding: '12px',
-});
-
-export const memberRow = style({
+export const memberCardLink = style({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: '12px',
-});
-
-export const memberActions = style({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '8px',
+  border: `1px solid ${vars.color.stroke}`,
+  borderRadius: vars.radius.xlg,
+  padding: '16px',
+  textDecoration: 'none',
+  color: 'inherit',
 });
 
 export const memberTitle = style({
@@ -82,51 +75,11 @@ export const memberTitle = style({
   color: vars.color.black,
 });
 
-export const memberButton = style({
-  borderRadius: vars.radius.md,
-  backgroundColor: vars.color.text,
-  color: vars.color.background,
-  padding: '8px 16px',
+export const memberCardLinkText = style({
   fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,
-  cursor: 'pointer',
-  textDecoration: 'none',
+  color: vars.color.subText,
+  whiteSpace: 'nowrap',
+  wordBreak: 'keep-all',
+  flexShrink: 0,
 });
-
-export const actionButton = style({
-  width: '100%',
-  border: 'none',
-  borderRadius: vars.radius.lg,
-  padding: '12px 16px',
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.bold,
-  color: vars.color.background,
-  cursor: 'pointer',
-  selectors: {
-    '&:disabled': {
-      cursor: 'not-allowed',
-      opacity: 0.6,
-    },
-  },
-});
-
-export const inviteButton = style([
-  actionButton,
-  {
-    backgroundColor: vars.color.button,
-  },
-]);
-
-export const confirmButton = style([
-  actionButton,
-  {
-    backgroundColor: vars.color.success,
-  },
-]);
-
-export const cancelButton = style([
-  actionButton,
-  {
-    backgroundColor: vars.color.alert,
-  },
-]);

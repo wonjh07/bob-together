@@ -90,4 +90,63 @@ describe('updateAppointmentCommentAction', () => {
       message: '댓글 수정 중 오류가 발생했습니다.',
     });
   });
+
+  it('성공 시 통일된 mutation payload를 반환한다', async () => {
+    const appointmentId = '550e8400-e29b-41d4-a716-446655440000';
+    const commentId = '550e8400-e29b-41d4-a716-446655440001';
+    const userId = '550e8400-e29b-41d4-a716-446655440100';
+    const updateQuery = {
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      is: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: {
+          comment_id: commentId,
+          content: '수정 댓글',
+          created_at: '2026-03-02T10:00:00.000Z',
+          user_id: userId,
+          users: {
+            name: '홍길동',
+            nickname: '길동',
+            profile_image: null,
+          },
+        },
+        error: null,
+      }),
+    };
+    const supabase = {
+      from: jest.fn().mockReturnValue(updateQuery),
+    };
+
+    mockRequireUser.mockResolvedValue({
+      ok: true,
+      supabase,
+      user: { id: userId },
+    });
+
+    const result = await updateAppointmentCommentAction({
+      appointmentId,
+      commentId,
+      content: '수정 댓글',
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      data: {
+        appointmentId,
+        commentId,
+        comment: {
+          commentId,
+          content: '수정 댓글',
+          createdAt: '2026-03-02T10:00:00.000Z',
+          userId,
+          name: '홍길동',
+          nickname: '길동',
+          profileImage: null,
+        },
+        commentCountDelta: 0,
+      },
+    });
+  });
 });

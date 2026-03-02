@@ -93,11 +93,24 @@ describe('getAppointmentDetailAction', () => {
       review_count: 12,
     };
 
+    const appointmentGroupQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: {
+          groups: {
+            name: '점심팟',
+          },
+        },
+        error: null,
+      }),
+    };
     const supabase = {
       rpc: jest.fn().mockResolvedValue({
         data: [row],
         error: null,
       }),
+      from: jest.fn().mockReturnValue(appointmentGroupQuery),
     };
 
     mockRequireUser.mockResolvedValue({
@@ -118,6 +131,7 @@ describe('getAppointmentDetailAction', () => {
         appointment: {
           appointmentId,
           title: '점심 약속',
+          groupName: '점심팟',
           status: 'pending',
           startAt: '2026-02-26T12:00:00.000Z',
           endsAt: '2026-02-26T13:00:00.000Z',

@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { CreateAppointmentProvider } from '@/app/dashboard/(plain)/appointments/create/providers';
@@ -12,7 +12,6 @@ import { createMyGroupsQueryOptions } from '@/libs/query/groupQueries';
 import { useQueryScope } from '@/provider/query-scope-provider';
 import { getDefaultDateTimeValues } from '@/utils/dateTime';
 
-import { CompleteStep } from './_components/CompleteStep';
 import { ConfirmStep } from './_components/ConfirmStep';
 import { DateTimeStep } from './_components/DateTimeStep';
 import { GroupStep } from './_components/GroupStep';
@@ -23,7 +22,7 @@ import { appointmentCreateFormSchema } from './types';
 
 import type { CreateAppointmentForm } from './types';
 
-type Step = 'group' | 'title' | 'datetime' | 'place' | 'confirm' | 'complete';
+type Step = 'group' | 'title' | 'datetime' | 'place' | 'confirm';
 
 type MultiStepFormClientProps = {
   initialGroupId: string | null;
@@ -31,8 +30,8 @@ type MultiStepFormClientProps = {
 
 function MultiStepFormClientContent() {
   const [step, setStep] = useState<Step>('group');
-  const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const router = useRouter();
+  const confirmSubmitRef = useRef<(() => void) | null>(null);
   const { date, startTime, endTime } = getDefaultDateTimeValues();
 
   const methods = useForm<CreateAppointmentForm>({
@@ -96,19 +95,27 @@ function MultiStepFormClientContent() {
     }
   };
 
+  const bindConfirmSubmit = useCallback((submit: (() => void) | null) => {
+    confirmSubmitRef.current = submit;
+  }, []);
+
   return (
     <FormProvider {...methods}>
-      {step !== 'complete' ? (
-        <PlainTopNav
-          title="새 약속 만들기"
-          onBack={goBack}
-          rightLabel="다음"
-          onRightAction={() => {
-            void handleNavNext();
-          }}
-          rightHidden={step === 'confirm'}
-        />
-      ) : null}
+      <PlainTopNav
+        title="새 약속 만들기"
+        onBack={goBack}
+        rightLabel={step === 'confirm' ? '생성하기' : '다음'}
+        onRightAction={() => {
+          if (step === 'confirm') {
+            confirmSubmitRef.current?.();
+            return;
+          }
+          void handleNavNext();
+        }}
+        rightDisabled={
+          step === 'confirm' ? methods.formState.isSubmitting : false
+        }
+      />
       <div className={formContainer}>
         {step === 'group' && <GroupStep />}
 
@@ -120,14 +127,12 @@ function MultiStepFormClientContent() {
 
         {step === 'confirm' && (
           <ConfirmStep
+            onBindSubmit={bindConfirmSubmit}
             onCreated={(nextAppointmentId) => {
-              setAppointmentId(nextAppointmentId);
-              setStep('complete');
+              router.replace(`/dashboard/appointments/${nextAppointmentId}`);
             }}
           />
         )}
-
-        {step === 'complete' && <CompleteStep appointmentId={appointmentId} />}
       </div>
     </FormProvider>
   );

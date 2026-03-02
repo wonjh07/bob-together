@@ -1,10 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { createAppointmentAction } from '@/actions/appointment';
 import { useCreateAppointmentContext } from '@/app/dashboard/(plain)/appointments/create/providers';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
+import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
+import DateTimeMetaRow from '@/components/ui/DateTimeMetaRow';
+import IconLabel from '@/components/ui/IconLabel';
 import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import {
   invalidateAppointmentCollectionQueries,
@@ -16,9 +19,10 @@ import type { CreateAppointmentForm } from '../types';
 
 interface ConfirmStepProps {
   onCreated: (appointmentId: string) => void;
+  onBindSubmit?: (submit: (() => void) | null) => void;
 }
 
-export function ConfirmStep({ onCreated }: ConfirmStepProps) {
+export function ConfirmStep({ onCreated, onBindSubmit }: ConfirmStepProps) {
   const queryClient = useQueryClient();
   const { groups } = useCreateAppointmentContext();
   const { openRequestError } = useRequestErrorPresenter();
@@ -26,7 +30,7 @@ export function ConfirmStep({ onCreated }: ConfirmStepProps) {
     handleSubmit,
     setError,
     clearErrors,
-    formState: { isSubmitting, errors },
+    formState: { errors },
   } = useFormContext<CreateAppointmentForm>();
   const [groupId, title, date, startTime, endTime, place] = useWatch({
     name: ['groupId', 'title', 'date', 'startTime', 'endTime', 'place'],
@@ -38,6 +42,8 @@ export function ConfirmStep({ onCreated }: ConfirmStepProps) {
       groups.find((group) => group.groupId === groupId)?.name ?? '그룹 선택'
     );
   }, [groupId, groups]);
+  const startAt = `${date}T${startTime}:00`;
+  const endsAt = `${date}T${endTime}:00`;
 
   const handleCreate = handleSubmit(async (values) => {
     if (!values.groupId) {
@@ -84,9 +90,36 @@ export function ConfirmStep({ onCreated }: ConfirmStepProps) {
     onCreated(result.data.appointmentId);
   });
 
+  useEffect(() => {
+    if (!onBindSubmit) {
+      return;
+    }
+
+    onBindSubmit(() => {
+      void handleCreate();
+    });
+
+    return () => {
+      onBindSubmit(null);
+    };
+  }, [handleCreate, onBindSubmit]);
+
   return (
     <div className={styles.container}>
       <div className={styles.stepTitle}>약속 정보를 확인해주세요</div>
+      <div>
+        <h1 className={styles.appointmentTitle}>{title}</h1>
+        <DateTimeMetaRow startAt={startAt} endsAt={endsAt} />
+        <div className={styles.placeSection}>
+          <AppointmentPlaceMeta
+            placeName={place?.name ?? '장소 선택'}
+            rating={null}
+            reviewCount={0}
+            category={place?.category ?? null}
+            showReviewCountWhenZero={false}
+          />
+        </div>
+      </div>
       <div className={styles.mapWrapper}>
         {place && (
           <KakaoMapPreview
@@ -98,46 +131,18 @@ export function ConfirmStep({ onCreated }: ConfirmStepProps) {
           />
         )}
       </div>
-      <div className={styles.summaryCard}>
-        <div className={styles.summaryRow}>
-          <span>약속 제목:</span>
-          <span className={styles.summaryValue}>{title}</span>
-        </div>
-        <div className={styles.summaryRow}>
-          <span>약속 일자:</span>
-          <span className={styles.summaryValue}>{date}</span>
-        </div>
-        <div className={styles.summaryRow}>
-          <span>약속 시간:</span>
-          <span className={styles.summaryValue}>
-            {startTime} ~ {endTime}
-          </span>
-        </div>
-        <div className={styles.summaryRow}>
-          <span>그룹:</span>
-          <span className={styles.summaryValue}>{currentGroupName}</span>
-        </div>
-        <div className={styles.summaryRow}>
-          <span>장소:</span>
-          <span className={styles.summaryValue}>{place?.name ?? ''}</span>
-        </div>
-        <div className={styles.summaryRow}>
-          <span>주소:</span>
-          <span className={styles.summaryValue}>
-            {place?.roadAddress || place?.address || ''}
-          </span>
+      <div className={styles.section}>
+        <div className={styles.memberRow}>
+          <IconLabel
+            icon="group"
+            count={<span className={styles.memberTitle}>{currentGroupName}</span>}
+          />
         </div>
       </div>
 
       <div className={styles.helperText}>
         {errors.root?.message?.toString() ?? ''}
       </div>
-      <button
-        className={styles.primaryButton}
-        onClick={handleCreate}
-        disabled={isSubmitting}>
-        {isSubmitting ? '생성 중...' : '생성하기'}
-      </button>
     </div>
   );
 }

@@ -136,7 +136,6 @@ export async function getAppointmentCommentsAction(
   const hasMore = rows.length > limit;
   const visibleRowsDesc = hasMore ? rows.slice(0, limit) : rows;
   const lastRow = visibleRowsDesc[visibleRowsDesc.length - 1] ?? null;
-  const visibleRowsAsc = [...visibleRowsDesc].reverse();
   const nextCursor: AppointmentCommentsCursor | null = hasMore && lastRow
     ? {
         createdAt: lastRow.created_at,
@@ -144,7 +143,7 @@ export async function getAppointmentCommentsAction(
       }
     : null;
 
-  const comments: AppointmentCommentItem[] = visibleRowsAsc.map((row) => ({
+  const comments: AppointmentCommentItem[] = visibleRowsDesc.map((row) => ({
     commentId: row.comment_id,
     content: row.content,
     createdAt: row.created_at,

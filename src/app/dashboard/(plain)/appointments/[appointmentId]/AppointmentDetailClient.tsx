@@ -17,7 +17,6 @@ import { useQueryScope } from '@/provider/query-scope-provider';
 import { formatRelativeKorean } from '@/utils/dateFormat';
 
 import AppointmentCommentsSection from './_components/AppointmentCommentsSection';
-import AppointmentDetailActions from './_components/AppointmentDetailActions';
 import * as styles from './page.css';
 
 interface AppointmentDetailClientProps {
@@ -125,33 +124,21 @@ export default function AppointmentDetailClient({
           </div>
         </div>
 
-        <div className={styles.section}>
-          <div className={styles.memberRow}>
-            <IconLabel
-              icon="group"
-              count={
-                <span className={styles.memberTitle}>
-                  현재 인원 {appointment.memberCount}명
-                </span>
-              }
-            />
-            <div className={styles.memberActions}>
-              <AppointmentDetailActions
-                appointmentId={appointment.appointmentId}
-                appointmentTitle={appointment.title}
-                initialStatus={appointment.status}
-                endsAt={appointment.endsAt}
-                isOwner={appointment.isOwner}
-                initialIsMember={appointment.isMember}
-              />
-              <Link
-                href={`/dashboard/appointments/${appointment.appointmentId}/members`}
-                className={styles.memberButton}>
-                멤버보기
-              </Link>
-            </div>
-          </div>
-        </div>
+        <Link
+          href={`/dashboard/appointments/${appointment.appointmentId}/members`}
+          className={styles.memberCardLink}>
+          <IconLabel
+            icon="group"
+            count={
+              <span className={styles.memberTitle}>
+                {appointment.groupName ?? '그룹'}
+              </span>
+            }
+          />
+          <span className={styles.memberCardLinkText}>
+            현재 인원 {appointment.memberCount}명
+          </span>
+        </Link>
 
         <AppointmentCommentsSection appointmentId={appointment.appointmentId} />
       </div>

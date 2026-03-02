@@ -24,12 +24,6 @@ export const groupName = style({
   color: vars.color.black,
 });
 
-export const ownerRow = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
-});
-
 export const footerRow = style({
   display: 'flex',
   alignItems: 'center',

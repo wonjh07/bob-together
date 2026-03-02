@@ -35,6 +35,35 @@ interface AppointmentDetailRow {
   review_count: number;
 }
 
+function resolveGroupName(groups: unknown): string | null {
+  if (!groups) {
+    return null;
+  }
+
+  if (Array.isArray(groups)) {
+    const first = groups[0];
+    if (
+      first
+      && typeof first === 'object'
+      && 'name' in first
+      && typeof first.name === 'string'
+    ) {
+      return first.name;
+    }
+    return null;
+  }
+
+  if (
+    typeof groups === 'object'
+    && 'name' in groups
+    && typeof groups.name === 'string'
+  ) {
+    return groups.name;
+  }
+
+  return null;
+}
+
 export async function getAppointmentDetailAction(
   appointmentId: string,
 ): Promise<GetAppointmentDetailResult> {
@@ -63,9 +92,19 @@ export async function getAppointmentDetailAction(
     return actionError('forbidden', '약속을 찾을 수 없거나 접근 권한이 없습니다.');
   }
 
+  const { data: appointmentGroupData } = await supabase
+    .from('appointments')
+    .select('groups(name)')
+    .eq('appointment_id', parsed.data)
+    .maybeSingle();
+  const groupName = resolveGroupName(
+    (appointmentGroupData as { groups?: unknown } | null)?.groups ?? null,
+  );
+
   const appointment: AppointmentDetailItem = {
     appointmentId: row.appointment_id,
     title: row.title,
+    groupName,
     status: row.status === 'canceled' ? 'canceled' : 'pending',
     startAt: row.start_at,
     endsAt: row.ends_at,

@@ -582,3 +582,15 @@
 - Alternatives: 기본 `datetime()` 유지
 - Reason: Postgres timestamptz 문자열(`+00:00` 오프셋 포함)을 기본 `datetime()`가 거부해 `유효한 커서 정보가 아닙니다.` 오류가 발생하는 문제를 방지하기 위함
 - Scope: `src/actions/appointment/review/list.ts`, `src/actions/appointment/review/listMine.ts`, `src/actions/appointment/history/list.ts`, `src/actions/appointment/comment/listMine.ts`, `src/actions/appointment/[appointmentId]/comments/list.ts`, `src/actions/invitation/listReceived.ts`, `src/actions/place.ts`
+
+## 댓글 mutation 캐시 패치 우선 전략 (2026-03-02)
+- Decision: 약속 상세 댓글 작성/삭제 후 `appointmentKeys.listRoot()` 전체 invalidate를 제거하고, 댓글 목록/약속 목록 캐시를 `setQueryData`/`setQueriesData`로 부분 패치한다.
+- Alternatives: 기존처럼 댓글 mutation마다 루트 단위 invalidate로 전체 목록 재조회
+- Reason: 댓글 1건 변경이 전체 목록 쿼리 재요청으로 확산되는 비용을 줄이고, 화면 체감 반응성과 네트워크 효율을 동시에 개선하기 위함
+- Scope: `src/app/dashboard/(plain)/appointments/[appointmentId]/_components/useAppointmentCommentsController.ts`, `src/app/dashboard/(plain)/appointments/[appointmentId]/_components/commentCache.ts`
+
+## 댓글 정렬 책임 단일화 (2026-03-02)
+- Decision: 댓글 정렬 기준을 서버 액션(`desc`)으로 단일화하고, 클라이언트에서 페이지별 `reverse()`를 제거한다.
+- Alternatives: 서버(`asc`) + 클라이언트 `reverse()` 이중 변환 유지
+- Reason: 페이지당 배열 복제/역순 연산을 줄여 렌더 비용을 낮추고, 정렬 책임을 한 계층으로 고정해 유지보수 혼선을 줄이기 위함
+- Scope: `src/actions/appointment/[appointmentId]/comments/list.ts`, `src/app/dashboard/(plain)/appointments/[appointmentId]/_components/useAppointmentCommentsController.ts`, `src/actions/appointment/[appointmentId]/comments/list.test.ts`

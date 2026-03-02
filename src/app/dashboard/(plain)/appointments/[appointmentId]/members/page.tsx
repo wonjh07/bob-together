@@ -34,10 +34,21 @@ export default async function AppointmentMembersPage({
   }
 
   const data = result.data;
+  const isCurrentUserOwner = data.members.some(
+    (member) =>
+      member.userId === data.currentUserId
+      && member.role === 'owner',
+  );
+  const invitationHref = `/dashboard/appointments/invitation?appointmentId=${params.appointmentId}`;
 
   return (
     <div className={styles.page}>
-      <PlainTopNav title="약속 멤버" rightHidden />
+      <PlainTopNav
+        title="약속 멤버"
+        rightLabel="멤버 초대"
+        rightHref={invitationHref}
+        rightHidden={!isCurrentUserOwner}
+      />
 
       <div className={styles.content}>
         <div className={styles.caption}>

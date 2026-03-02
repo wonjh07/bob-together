@@ -101,5 +101,10 @@ export async function updateAppointmentCommentAction(params: {
     profileImage: row.users?.profile_image ?? null,
   };
 
-  return actionSuccess({ comment });
+  return actionSuccess({
+    appointmentId,
+    commentId: comment.commentId,
+    comment,
+    commentCountDelta: 0,
+  });
 }
