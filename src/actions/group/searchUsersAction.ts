@@ -29,7 +29,7 @@ export async function searchUsersAction(
 
   const { data, error } = await supabase
     .from('users')
-    .select('user_id, name, nickname')
+    .select('user_id, name, nickname, profile_image')
     .or(`nickname.ilike.%${normalizedQuery}%,name.ilike.%${normalizedQuery}%`)
     .neq('user_id', user.id)
     .limit(6);

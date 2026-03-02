@@ -2,7 +2,6 @@ import { style } from '@vanilla-extract/css';
 
 import {
   actionButtonBase,
-  actionButtonMuted,
   actionButtonPrimary,
   actionButtonSecondary,
   actionButtonSmall,
@@ -28,21 +27,6 @@ export const creatorMeta = style({
   display: 'inline-flex',
   alignItems: 'center',
   gap: '6px',
-  color: vars.color.text,
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.semibold,
-});
-
-export const creatorAvatar = style({
-  width: '36px',
-  height: '36px',
-  borderRadius: '999px',
-  border: `2px solid ${vars.color.stroke}`,
-  backgroundColor: vars.color.stroke,
-  objectFit: 'cover',
-});
-
-export const creatorName = style({
   color: vars.color.text,
   fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,
@@ -90,9 +74,4 @@ export const detailButton = style([
 export const reviewButton = style([
   buttonBase,
   actionButtonPrimary,
-]);
-
-export const reviewButtonDisabled = style([
-  buttonBase,
-  actionButtonMuted,
 ]);

@@ -27,12 +27,24 @@
 - After massive code changes, run `npm run type-check` and `npm run lint`, then report results (skip for `*.md`-only changes)
 - If a change involves structural/architectural decisions, record it in `ai_docs/DECISIONS.md`.
 
+### `-analyze` Command
+- Trigger: user inputs `-analyze`
+- Scope: analyze the page currently being viewed in VSCode (active `page.tsx`)
+- Output sections:
+  - 문제점: browser performance, React readability, maintainability
+  - 개선점: prioritized improvements with expected impact
+  - 실무 비교: current approach vs production-grade React/web patterns with trade-offs
+- Rules:
+  - analysis only (no code edits) unless user gives explicit follow-up approval
+  - include concrete file references whenever possible
+  - focus only on browser/React concerns (rendering, component structure, state flow, readability, maintainability)
+  - exclude DB/query efficiency analysis unless user explicitly requests it
+
 ---
 
 ## Context Management
 
 ### Ai docs
-- Update `ai_docs/CHANGELOG_AI.md` and relevant `ai_docs/*.md` files when making material changes
 - If new AI docs are added, register them in `ai_docs/INDEX.md`
 - Keep `ai_docs` concise, factual, and free of secrets/keys
 - Use short sections with clear headings and bullet points

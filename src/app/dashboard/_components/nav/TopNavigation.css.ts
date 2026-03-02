@@ -58,6 +58,10 @@ export const bellIcon = style({
   height: '28px',
 });
 
+export const bellIconActive = style({
+  color: vars.color.main,
+});
+
 export const menuButton = style({
   display: 'inline-flex',
   alignItems: 'center',

@@ -1,49 +1,33 @@
 import CalendarIcon from '@/components/icons/CalendarIcon';
 import ClockIcon from '@/components/icons/ClockIcon';
+import { formatDateDot, formatTimeRange24 } from '@/utils/dateFormat';
 
 import * as styles from './DateTimeMetaRow.css';
 
-function cx(...classNames: Array<string | undefined | false>) {
-  return classNames.filter(Boolean).join(' ');
-}
+const ICON_SIZE = 18;
 
 interface DateTimeMetaRowProps {
-  date: string;
-  timeRange: string;
+  startAt: string;
+  endsAt: string;
   direction?: 'row' | 'column';
-  rowClassName?: string;
-  itemClassName?: string;
-  iconClassName?: string;
-  dateIconSize?: number;
-  timeIconSize?: number;
 }
 
 export default function DateTimeMetaRow({
-  date,
-  timeRange,
+  startAt,
+  endsAt,
   direction = 'row',
-  rowClassName,
-  itemClassName,
-  iconClassName,
-  dateIconSize = 18,
-  timeIconSize = 18,
 }: DateTimeMetaRowProps) {
+  const date = formatDateDot(startAt);
+  const timeRange = formatTimeRange24(startAt, endsAt);
+
   return (
-    <div className={cx(styles.rowBase, styles.rowDirection[direction], rowClassName)}>
-      <div className={cx(styles.item, itemClassName)}>
-        <CalendarIcon
-          className={cx(styles.icon, iconClassName)}
-          width={dateIconSize}
-          height={dateIconSize}
-        />
+    <div className={`${styles.rowBase} ${styles.rowDirection[direction]}`}>
+      <div className={styles.item}>
+        <CalendarIcon className={styles.icon} size={ICON_SIZE} />
         <span>{date}</span>
       </div>
-      <div className={cx(styles.item, itemClassName)}>
-        <ClockIcon
-          className={cx(styles.icon, iconClassName)}
-          width={timeIconSize}
-          height={timeIconSize}
-        />
+      <div className={styles.item}>
+        <ClockIcon className={styles.icon} size={ICON_SIZE} />
         <span>{timeRange}</span>
       </div>
     </div>

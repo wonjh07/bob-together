@@ -12,6 +12,7 @@ interface PlaceRatingMetaProps {
   district?: string | null;
   category?: string | null;
   as?: 'div' | 'p';
+  showRating?: boolean;
   showReviewCountWhenZero?: boolean;
   rowClassName?: string;
   starClassName?: string;
@@ -24,6 +25,7 @@ export default function PlaceRatingMeta({
   district,
   category,
   as = 'div',
+  showRating = true,
   showReviewCountWhenZero = true,
   rowClassName,
   starClassName,
@@ -36,14 +38,19 @@ export default function PlaceRatingMeta({
 
   return (
     <Component className={cx(styles.row, rowClassName)}>
-      <StarIcon filled className={cx(styles.star, starClassName)} />
-      <span className={cx(styles.text, textClassName)}>
-        {ratingText}
-        {shouldShowCount ? ` (${reviewCount})` : ''}
-      </span>
+      {showRating ? (
+        <>
+          <StarIcon filled className={cx(styles.star, starClassName)} />
+          <span className={cx(styles.text, textClassName)}>
+            {ratingText}
+            {shouldShowCount ? ` (${reviewCount})` : ''}
+          </span>
+        </>
+      ) : null}
       {extraTags.map((tag, index) => (
         <span key={`${tag}-${index}`} className={cx(styles.text, textClassName)}>
-          · {tag}
+          {showRating || index > 0 ? '· ' : ''}
+          {tag}
         </span>
       ))}
     </Component>

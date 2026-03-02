@@ -35,6 +35,13 @@ export type ListReceivedInvitationsResult = ActionResult<
   InvitationErrorCode
 >;
 
+export type HasPendingInvitationsResult = ActionResult<
+  {
+    hasPendingInvitations: boolean;
+  },
+  InvitationErrorCode
+>;
+
 export type RespondToInvitationResult = ActionResult<
   {
     invitationId: string;

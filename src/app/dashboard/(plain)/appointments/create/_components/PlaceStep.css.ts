@@ -60,14 +60,7 @@ export const locationTitle = style({
   fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,
   color: vars.color.text,
-});
-
-export const locationHint = style({
-  fontSize: vars.fontSize.caption,
-  color: vars.color.subText,
-});
-
-export const locationError = style({
+});export const locationError = style({
   fontSize: vars.fontSize.caption,
   color: vars.color.alert,
   minHeight: '24px',
@@ -89,13 +82,7 @@ export const locationButton = style({
       cursor: 'not-allowed',
     },
   },
-});
-
-export const mapWrapper = style({
-  marginBottom: '16px',
-});
-
-export const results = style({
+});export const results = style({
   display: 'flex',
   flexDirection: 'column',
   gap: '10px',

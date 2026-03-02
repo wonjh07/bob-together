@@ -48,6 +48,7 @@ export interface UserSummary {
   userId: string;
   name?: string | null;
   nickname?: string | null;
+  profileImage?: string | null;
 }
 
 export type CreateGroupResult = ActionResult<GroupSummary, GroupErrorCode>;
@@ -91,8 +92,10 @@ export const mapUser = (user: {
   user_id: string;
   name?: string | null;
   nickname?: string | null;
+  profile_image?: string | null;
 }): UserSummary => ({
   userId: user.user_id,
   name: user.name ?? null,
   nickname: user.nickname ?? null,
+  profileImage: user.profile_image ?? null,
 });

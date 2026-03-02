@@ -11,4 +11,10 @@ export const icon = style({
   alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0,
+  lineHeight: 0,
+});
+
+export const count = style({
+  display: 'inline-flex',
+  alignItems: 'center',
 });

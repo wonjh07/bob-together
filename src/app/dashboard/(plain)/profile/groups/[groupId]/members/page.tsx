@@ -1,7 +1,7 @@
 import { getGroupMembersAction } from '@/actions/group';
-import GroupIcon from '@/components/icons/GroupIcon';
 import IconLabel from '@/components/ui/IconLabel';
 import PlainTopNav from '@/components/ui/PlainTopNav';
+import RequestErrorModal from '@/components/ui/RequestErrorModal';
 import UserIdentityInline from '@/components/ui/UserIdentityInline';
 
 import * as styles from './page.css';
@@ -27,11 +27,14 @@ export default async function GroupMembersPage({
           rightHref={`/dashboard/profile/groups/${params.groupId}/members/invitation`}
           rightAriaLabel="멤버 초대하기"
         />
-        <div className={styles.errorBox}>
-          {result.ok
-            ? '그룹 멤버 정보를 불러올 수 없습니다.'
-            : result.message || '그룹 멤버 정보를 불러올 수 없습니다.'}
-        </div>
+        <RequestErrorModal
+          isOpen
+          message={
+            result.ok
+              ? '그룹 멤버 정보를 불러올 수 없습니다.'
+              : result.message || '그룹 멤버 정보를 불러올 수 없습니다.'
+          }
+        />
       </div>
     );
   }
@@ -51,12 +54,9 @@ export default async function GroupMembersPage({
       <div className={styles.content}>
         <div className={styles.caption}>
           <span>멤버</span>
-          <IconLabel
-            as="span"
-            className={styles.captionCount}
-            icon={<GroupIcon className={styles.captionIcon} />}>
-            <span>{data.memberCount}</span>
-          </IconLabel>
+          <span className={styles.captionCount}>
+            <IconLabel as="span" icon="group" count={data.memberCount} />
+          </span>
         </div>
 
         <div className={styles.list}>
@@ -67,21 +67,16 @@ export default async function GroupMembersPage({
 
             return (
               <div key={member.userId} className={styles.card}>
-                <UserIdentityInline
-                  name={displayNickname}
-                  subtitle={displayName}
-                  avatarSrc={member.profileImage}
-                  avatarAlt="멤버 프로필 이미지"
-                  avatarSize="xl"
-                  me={member.userId === data.currentUserId}
-                  rowClassName={styles.cardInfo}
-                  avatarClassName={styles.avatar}
-                  textWrapClassName={styles.names}
-                  nameRowClassName={styles.nicknameRow}
-                  nameClassName={styles.nickname}
-                  meClassName={styles.meText}
-                  subtitleClassName={styles.name}
-                />
+                <div className={styles.cardInfo}>
+                  <UserIdentityInline
+                    name={displayNickname}
+                    subtitle={displayName}
+                    avatarSrc={member.profileImage}
+                    avatarAlt="멤버 프로필 이미지"
+                    size="lg"
+                    me={member.userId === data.currentUserId}
+                  />
+                </div>
                 <button
                   type="button"
                   className={styles.moreButton}

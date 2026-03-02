@@ -36,14 +36,7 @@ export const locationTitle = style({
   fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,
   color: vars.color.text,
-});
-
-export const locationError = style({
-  fontSize: vars.fontSize.caption,
-  color: vars.color.alert,
-});
-
-export const locationButton = style({
+});export const locationButton = style({
   border: 'none',
   borderRadius: vars.radius.sm,
   fontSize: vars.fontSize.subText,

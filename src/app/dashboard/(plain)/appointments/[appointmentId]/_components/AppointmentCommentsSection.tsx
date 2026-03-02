@@ -25,6 +25,8 @@ import {
 import CommentIcon from '@/components/icons/CommentIcon';
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon';
 import OverflowMenu from '@/components/ui/OverflowMenu';
+import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import {
   createAppointmentCommentsQueryOptions,
   type AppointmentCommentsPage,
@@ -58,19 +60,25 @@ export default function AppointmentCommentsSection({
   );
   const commentsQuery = useInfiniteQuery(queryOptions);
   const pages = commentsQuery.data?.pages ?? [];
-  const comments = pages
-    .slice()
-    .reverse()
-    .flatMap((page) => page.comments);
+  const comments = pages.flatMap((page) => page.comments.slice().reverse());
   const commentCount = pages[0]?.commentCount ?? comments.length;
   const currentUserId = pages[0]?.currentUserId ?? null;
   const hasMore = commentsQuery.hasNextPage ?? false;
   const isLoadingMore = commentsQuery.isFetchingNextPage;
+  const { loadMoreRef } = useInfiniteLoadMore({
+    fetchNextPage: commentsQuery.fetchNextPage,
+    hasNextPage: commentsQuery.hasNextPage,
+    isFetchingNextPage: commentsQuery.isFetchingNextPage,
+    isLoading: commentsQuery.isLoading,
+  });
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const {
+    openRequestError,
+  } = useRequestErrorPresenter();
   const [openedMenuId, setOpenedMenuId] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
@@ -116,8 +124,10 @@ export default function AppointmentCommentsSection({
       const message = !result.ok
         ? result.message || '댓글 작성에 실패했습니다.'
         : '댓글 작성에 실패했습니다.';
-      setErrorMessage(message);
-      toast.error(message);
+      openRequestError(message, {
+        err: result,
+        source: 'AppointmentCommentsSection.submitComment.result',
+      });
       return;
     }
 
@@ -211,7 +221,10 @@ export default function AppointmentCommentsSection({
       const message = !result.ok
         ? result.message || '댓글 수정에 실패했습니다.'
         : '댓글 수정에 실패했습니다.';
-      toast.error(message);
+      openRequestError(message, {
+        err: result,
+        source: 'AppointmentCommentsSection.submitEdit.result',
+      });
       return;
     }
 
@@ -271,7 +284,10 @@ export default function AppointmentCommentsSection({
       const message = !result.ok
         ? result.message || '댓글 삭제에 실패했습니다.'
         : '댓글 삭제에 실패했습니다.';
-      toast.error(message);
+      openRequestError(message, {
+        err: result,
+        source: 'AppointmentCommentsSection.handleDelete.result',
+      });
       return;
     }
 
@@ -326,14 +342,6 @@ export default function AppointmentCommentsSection({
     toast.success('댓글이 삭제되었습니다.');
   };
 
-  const handleLoadOlderComments = async () => {
-    if (!hasMore || isLoadingMore) {
-      return;
-    }
-
-    await commentsQuery.fetchNextPage();
-  };
-
   return (
     <div className={styles.section}>
       <div className={styles.header}>
@@ -366,15 +374,6 @@ export default function AppointmentCommentsSection({
 
       {comments.length > 0 ? (
         <div className={styles.list}>
-          {hasMore ? (
-            <button
-              type="button"
-              className={styles.loadMoreButton}
-              onClick={handleLoadOlderComments}
-              disabled={isLoadingMore}>
-              {isLoadingMore ? '불러오는 중...' : '이전 댓글 더보기'}
-            </button>
-          ) : null}
           {comments.map((comment) => {
             const displayName = comment.nickname || comment.name || '알 수 없음';
             const meta = [comment.name, formatRelativeKorean(comment.createdAt)]
@@ -458,10 +457,15 @@ export default function AppointmentCommentsSection({
               </div>
             );
           })}
+          {isLoadingMore ? (
+            <div className={styles.loadMoreStatus}>불러오는 중...</div>
+          ) : null}
+          {hasMore && !isLoadingMore ? (
+            <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
+          ) : null}
         </div>
       ) : (
         <p className={styles.empty}>아직 댓글이 없습니다.</p>
-      )}
-    </div>
+      )}    </div>
   );
 }

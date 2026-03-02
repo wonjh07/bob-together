@@ -49,28 +49,3 @@ export const badgeCreated = style([
     color: vars.color.main,
   },
 ]);
-
-export const inlineMeText = style({
-  color: vars.color.main,
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.bold,
-  flexShrink: 0,
-});
-
-export const inlineMeTextCompact = style([
-  inlineMeText,
-  {
-    fontSize: vars.fontSize.caption,
-    fontWeight: vars.fontWeight.medium,
-  },
-]);
-
-export const badgeToneAccepted = style({
-  backgroundColor: vars.color.mainSoft,
-  color: vars.color.main,
-});
-
-export const badgeToneMuted = style({
-  backgroundColor: vars.color.stroke,
-  color: vars.color.subText,
-});

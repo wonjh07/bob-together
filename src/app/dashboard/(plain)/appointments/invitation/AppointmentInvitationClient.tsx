@@ -13,12 +13,15 @@ import {
 } from '@/actions/appointment';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import SearchInput from '@/components/ui/SearchInput';
+import UserIdentityInline from '@/components/ui/UserIdentityInline';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import {
   createAppointmentInvitationStateQueryOptions,
   type AppointmentInvitationStateData,
 } from '@/libs/query/appointmentQueries';
 import { useQueryScope } from '@/provider/query-scope-provider';
 import { groupSearchFormSchema } from '@/schemas/group';
+import { canUseHistoryBack } from '@/utils/navigationBack';
 
 import {
   invitationPage,
@@ -30,8 +33,6 @@ import {
   results,
   resultItem,
   resultInfo,
-  resultName,
-  resultSub,
   inviteButton,
   invitedButton,
   helperText,
@@ -57,9 +58,11 @@ export default function AppointmentInvitationClient({
   const queryScope = useQueryScope();
   const [resultUsers, setResultUsers] = useState<AppointmentInviteeSummary[]>([]);
   const [isSearched, setIsSearched] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isInviting, setIsInviting] = useState<Record<string, boolean>>({});
+  const {
+    openRequestError,
+  } = useRequestErrorPresenter();
 
   const {
     control,
@@ -88,7 +91,9 @@ export default function AppointmentInvitationClient({
   const performSearch = useCallback(
     async (query: string) => {
       if (!appointmentId) {
-        setErrorMessage('약속 정보가 필요합니다.');
+        openRequestError('약속 정보가 필요합니다.', {
+          source: 'AppointmentInvitationClient.performSearch.noAppointmentId',
+        });
         return;
       }
 
@@ -100,7 +105,6 @@ export default function AppointmentInvitationClient({
       }
 
       setIsSearching(true);
-      setErrorMessage('');
       setIsSearched(false);
       const result = await searchAppointmentInvitableUsersAction({
         appointmentId,
@@ -109,19 +113,25 @@ export default function AppointmentInvitationClient({
       setIsSearching(false);
 
       if (!result.ok) {
-        setErrorMessage(result.message || '사용자 검색에 실패했습니다.');
+        openRequestError(result.message || '사용자 검색에 실패했습니다.', {
+          err: result,
+          source: 'AppointmentInvitationClient.performSearch.result',
+        });
         return;
       }
 
       if (!result.data) {
-        setErrorMessage('검색 결과를 불러올 수 없습니다.');
+        openRequestError('검색 결과를 불러올 수 없습니다.', {
+          err: result,
+          source: 'AppointmentInvitationClient.performSearch.noData',
+        });
         return;
       }
 
       setResultUsers(result.data.users);
       setIsSearched(true);
     },
-    [appointmentId],
+    [appointmentId, openRequestError],
   );
 
   const onSubmit = async (data: GroupSearchFormInput) => {
@@ -147,12 +157,13 @@ export default function AppointmentInvitationClient({
 
   const handleInvite = async (userId: string) => {
     if (!appointmentId) {
-      setErrorMessage('약속 정보가 필요합니다.');
+      openRequestError('약속 정보가 필요합니다.', {
+        source: 'AppointmentInvitationClient.handleInvite.noAppointmentId',
+      });
       return;
     }
 
     setIsInviting((prev) => ({ ...prev, [userId]: true }));
-    setErrorMessage('');
 
     const result = await sendAppointmentInvitationAction(appointmentId, userId);
 
@@ -179,7 +190,10 @@ export default function AppointmentInvitationClient({
         return;
       }
 
-      setErrorMessage(result.message || '초대에 실패했습니다.');
+      openRequestError(result.message || '초대에 실패했습니다.', {
+        err: result,
+        source: 'AppointmentInvitationClient.handleInvite.result',
+      });
       return;
     }
 
@@ -193,7 +207,11 @@ export default function AppointmentInvitationClient({
 
   const handleComplete = () => {
     toast.success('약속 초대를 완료했습니다.');
-    router.push(completeHref);
+    if (canUseHistoryBack()) {
+      router.back();
+      return;
+    }
+    router.replace(completeHref);
   };
 
   return (
@@ -227,7 +245,7 @@ export default function AppointmentInvitationClient({
             )}
           />
           <div className={helperText}>
-            {errors.query?.message || errorMessage}
+            {errors.query?.message || ''}
           </div>
         </form>
 
@@ -244,10 +262,13 @@ export default function AppointmentInvitationClient({
             return (
               <div className={resultItem} key={user.userId}>
                 <div className={resultInfo}>
-                  <div className={resultName}>
-                    {user.nickname || user.name || '알 수 없음'}
-                  </div>
-                  <div className={resultSub}>{secondaryText}</div>
+                  <UserIdentityInline
+                    name={user.nickname || user.name || '알 수 없음'}
+                    subtitle={secondaryText}
+                    avatarSrc={user.profileImage}
+                    avatarAlt="사용자 프로필 이미지"
+                    size="lg"
+                  />
                 </div>
                 <button
                   type="button"
@@ -271,7 +292,6 @@ export default function AppointmentInvitationClient({
             <div className={emptyResult}>검색 결과가 없습니다.</div>
           ) : null}
         </div>
-      </div>
-    </div>
+      </div>    </div>
   );
 }

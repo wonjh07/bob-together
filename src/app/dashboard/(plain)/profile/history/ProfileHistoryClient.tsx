@@ -51,6 +51,7 @@ export default function ProfileHistoryClient() {
           isError={isError}
           isEmpty={appointments.length === 0}
           error={error}
+          errorPresentation="modal"
           loadingVariant="spinner"
           loadingText="히스토리를 불러오는 중..."
           emptyText="종료된 약속이 없습니다."

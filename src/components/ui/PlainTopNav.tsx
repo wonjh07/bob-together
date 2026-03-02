@@ -1,6 +1,8 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+
+import { canUseHistoryBack } from '@/utils/navigationBack';
 
 import * as styles from './PlainTopNav.css';
 
@@ -30,7 +32,6 @@ export default function PlainTopNav({
   rightHidden = false,
 }: PlainTopNavProps) {
   const router = useRouter();
-  const pathname = usePathname();
 
   const handleBack = () => {
     if (onBack) {
@@ -38,27 +39,12 @@ export default function PlainTopNav({
       return;
     }
 
-    if (backHref) {
-      router.push(backHref);
-      return;
-    }
-
-    const normalizedPath = (pathname || '/').replace(/\/+$/, '') || '/';
-    if (normalizedPath === '/') {
+    if (canUseHistoryBack()) {
       router.back();
       return;
     }
 
-    const lastSlashIndex = normalizedPath.lastIndexOf('/');
-    const parentPath =
-      lastSlashIndex <= 0 ? '/' : normalizedPath.slice(0, lastSlashIndex);
-
-    if (!parentPath || parentPath === normalizedPath) {
-      router.back();
-      return;
-    }
-
-    router.push(parentPath);
+    router.replace(backHref || '/dashboard');
   };
 
   return (

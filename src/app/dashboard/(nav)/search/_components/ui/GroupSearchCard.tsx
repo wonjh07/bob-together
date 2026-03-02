@@ -1,4 +1,3 @@
-import GroupIcon from '@/components/icons/GroupIcon';
 import IconLabel from '@/components/ui/IconLabel';
 import UserIdentityInline from '@/components/ui/UserIdentityInline';
 
@@ -34,17 +33,10 @@ export default function GroupSearchCard({
             name={name}
             avatarSrc={ownerProfileImage}
             avatarAlt={`${name} 프로필`}
-            avatarSize="xs"
-            rowClassName={styles.ownerIdentity}
-            avatarClassName={styles.ownerAvatar}
-            nameClassName={styles.ownerName}
+            size="sm"
           />
-          <IconLabel
-            as="span"
-            className={styles.memberMeta}
-            icon={<GroupIcon width="16" height="16" />}>
-            {memberCount}명
-          </IconLabel>
+
+          <IconLabel as="span" icon="group" count={`${memberCount}명`} />
         </div>
       </div>
       <button

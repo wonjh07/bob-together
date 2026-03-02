@@ -5,6 +5,7 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { createAppointmentAction } from '@/actions/appointment';
 import { useCreateAppointmentContext } from '@/app/dashboard/(plain)/appointments/create/providers';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import {
   invalidateAppointmentCollectionQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
@@ -20,6 +21,7 @@ interface ConfirmStepProps {
 export function ConfirmStep({ onCreated }: ConfirmStepProps) {
   const queryClient = useQueryClient();
   const { groups } = useCreateAppointmentContext();
+  const { openRequestError } = useRequestErrorPresenter();
   const {
     handleSubmit,
     setError,
@@ -63,14 +65,18 @@ export function ConfirmStep({ onCreated }: ConfirmStepProps) {
     });
 
     if (!result.ok) {
-      setError('root', {
-        message: result.message || '약속 생성 중 오류가 발생했습니다.',
+      openRequestError(result.message || '약속 생성 중 오류가 발생했습니다.', {
+        err: result,
+        source: 'ConfirmStep.handleCreate.result',
       });
       return;
     }
 
     if (!result.data) {
-      setError('root', { message: '약속 정보를 확인할 수 없습니다.' });
+      openRequestError('약속 정보를 확인할 수 없습니다.', {
+        err: result,
+        source: 'ConfirmStep.handleCreate.noData',
+      });
       return;
     }
 

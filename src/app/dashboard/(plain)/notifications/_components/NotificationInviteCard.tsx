@@ -5,7 +5,6 @@ import Link from 'next/link';
 import CalendarIcon from '@/components/icons/CalendarIcon';
 import GroupIcon from '@/components/icons/GroupIcon';
 import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon';
-import IconLabel from '@/components/ui/IconLabel';
 import UserIdentityInline from '@/components/ui/UserIdentityInline';
 import { formatRelativeKorean } from '@/utils/dateFormat';
 
@@ -60,40 +59,35 @@ export default function NotificationInviteCard({
 
       {appointmentHref ? (
         <Link href={appointmentHref} className={styles.messageLink}>
-          <IconLabel
-            className={styles.messageRow}
-            icon={<CalendarIcon className={styles.messageIcon} />}>
+          <div className={styles.messageRow}>
+            <CalendarIcon className={styles.messageIcon} />
             <p className={styles.message}>
               <strong>{`“${targetTitle}”`}</strong> 약속에 초대받았어요.
             </p>
-          </IconLabel>
+          </div>
         </Link>
       ) : (
-        <IconLabel
-          className={styles.messageRow}
-          icon={
-            isAppointmentInvite ? (
-              <CalendarIcon className={styles.messageIcon} />
-            ) : (
-              <GroupIcon className={styles.messageIcon} />
-            )
-          }>
+        <div className={styles.messageRow}>
+          {isAppointmentInvite ? (
+            <CalendarIcon className={styles.messageIcon} />
+          ) : (
+            <GroupIcon className={styles.messageIcon} />
+          )}
           <p className={styles.message}>
             <strong>{`“${targetTitle}”`}</strong>{' '}
             {isAppointmentInvite ? '약속에 초대받았어요.' : '그룹에 초대받았어요.'}
           </p>
-        </IconLabel>
+        </div>
       )}
 
-      <UserIdentityInline
-        name={`${inviterDisplayName}${relativeText ? ` · ${relativeText}` : ''}`}
-        avatarSrc={invitation.inviterProfileImage}
-        avatarAlt={`${inviterDisplayName} 프로필`}
-        avatarSize="sm"
-        rowClassName={styles.metaRow}
-        avatarClassName={styles.avatar}
-        nameClassName={styles.metaText}
-      />
+      <div className={styles.metaRow}>
+        <UserIdentityInline
+          name={`${inviterDisplayName}${relativeText ? ` · ${relativeText}` : ''}`}
+          avatarSrc={invitation.inviterProfileImage}
+          avatarAlt={`${inviterDisplayName} 프로필`}
+          size="sm"
+        />
+      </div>
 
       {canRespond ? (
         <div className={styles.actionRow}>

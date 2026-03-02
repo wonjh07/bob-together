@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { joinGroupAction, searchGroupsWithCountAction } from '@/actions/group';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import SearchInput from '@/components/ui/SearchInput';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import { invalidateGroupMembershipQueries } from '@/libs/query/invalidateGroupQueries';
 import { groupSearchFormSchema } from '@/schemas/group';
 
@@ -20,9 +21,11 @@ import type { GroupSearchFormInput } from '@/schemas/group';
 export default function GroupFindClient() {
   const queryClient = useQueryClient();
   const [groups, setGroups] = useState<GroupSearchItem[]>([]);
-  const [errorMessage, setErrorMessage] = useState('');
   const [isSearched, setIsSearched] = useState(false);
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
+  const {
+    openRequestError,
+  } = useRequestErrorPresenter();
 
   const {
     control,
@@ -45,7 +48,6 @@ export default function GroupFindClient() {
       return;
     }
 
-    setErrorMessage('');
     setIsSearched(false);
 
     const result = await searchGroupsWithCountAction({
@@ -54,18 +56,24 @@ export default function GroupFindClient() {
     });
 
     if (!result.ok) {
-      setErrorMessage(result.message || '그룹 검색에 실패했습니다.');
+      openRequestError(result.message || '그룹 검색에 실패했습니다.', {
+        err: result,
+        source: 'GroupFindClient.performSearch.result',
+      });
       return;
     }
 
     if (!result.data) {
-      setErrorMessage('그룹 검색 결과를 불러오지 못했습니다.');
+      openRequestError('그룹 검색 결과를 불러오지 못했습니다.', {
+        err: result,
+        source: 'GroupFindClient.performSearch.noData',
+      });
       return;
     }
 
     setGroups(result.data.groups);
     setIsSearched(true);
-  }, []);
+  }, [openRequestError]);
 
   const onSubmit = async (data: GroupSearchFormInput) => {
     await performSearch(data.query);
@@ -75,7 +83,6 @@ export default function GroupFindClient() {
     if (joiningGroupId) return;
 
     setJoiningGroupId(groupId);
-    setErrorMessage('');
     const result = await joinGroupAction(groupId);
     setJoiningGroupId(null);
 
@@ -89,7 +96,10 @@ export default function GroupFindClient() {
         return;
       }
 
-      setErrorMessage(result.message || '그룹 가입에 실패했습니다.');
+      openRequestError(result.message || '그룹 가입에 실패했습니다.', {
+        err: result,
+        source: 'GroupFindClient.handleJoin.result',
+      });
       return;
     }
 
@@ -126,7 +136,7 @@ export default function GroupFindClient() {
             )}
           />
           <div className={styles.helperText}>
-            {errors.query?.message || errorMessage}
+            {errors.query?.message || ''}
           </div>
         </form>
 
@@ -163,7 +173,6 @@ export default function GroupFindClient() {
             <div className={styles.emptyResult}>검색 결과가 없습니다.</div>
           ) : null}
         </div>
-      </div>
-    </div>
+      </div>    </div>
   );
 }

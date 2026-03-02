@@ -90,7 +90,6 @@ export const planeIcon = style({
 });
 
 export const helperText = style({
-  margin: 0,
   minHeight: '16px',
   fontSize: vars.fontSize.caption,
   color: vars.color.alert,
@@ -102,20 +101,16 @@ export const list = style({
   gap: '18px',
 });
 
-export const loadMoreButton = style({
+export const loadMoreStatus = style({
   alignSelf: 'center',
-  border: 'none',
-  background: 'transparent',
   color: vars.color.subText,
   fontSize: vars.fontSize.subText,
   fontWeight: vars.fontWeight.semibold,
-  cursor: 'pointer',
-  selectors: {
-    '&:disabled': {
-      opacity: 0.6,
-      cursor: 'not-allowed',
-    },
-  },
+});
+
+export const loadMoreTrigger = style({
+  width: '100%',
+  height: '1px',
 });
 
 export const card = style({

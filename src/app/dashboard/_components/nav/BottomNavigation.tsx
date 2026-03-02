@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  AiOutlineCalendar,
-  AiOutlineHome,
-  AiOutlinePlusCircle,
-  AiOutlineSearch,
-  AiOutlineUser,
-} from 'react-icons/ai';
+
+import CalendarIcon from '@/components/icons/CalendarIcon';
+import HomeIcon from '@/components/icons/HomeIcon';
+import PlusCircleIcon from '@/components/icons/PlusCircleIcon';
+import SearchIcon from '@/components/icons/SearchIcon';
+import UserCircleIcon from '@/components/icons/UserCircleIcon';
 
 import * as styles from './BottomNavigation.css';
 
@@ -19,27 +18,27 @@ export function BottomNav() {
     {
       href: '/dashboard',
       label: '홈',
-      icon: <AiOutlineHome className={styles.navIcon} aria-hidden="true" />,
+      icon: <HomeIcon className={styles.navIcon} />,
     },
     {
       href: '/dashboard/appointments',
       label: '약속',
-      icon: <AiOutlineCalendar className={styles.navIcon} aria-hidden="true" />,
+      icon: <CalendarIcon className={styles.navIcon} />,
     },
     {
       href: '/dashboard/appointments/create',
       label: '새 약속',
-      icon: <AiOutlinePlusCircle className={styles.navIcon} aria-hidden="true" />,
+      icon: <PlusCircleIcon className={styles.navIcon} />,
     },
     {
       href: '/dashboard/search',
       label: '검색',
-      icon: <AiOutlineSearch className={styles.navIcon} aria-hidden="true" />,
+      icon: <SearchIcon className={styles.navIcon} />,
     },
     {
       href: '/dashboard/profile',
       label: '내 정보',
-      icon: <AiOutlineUser className={styles.navIcon} aria-hidden="true" />,
+      icon: <UserCircleIcon className={styles.navIcon} />,
     },
   ];
 

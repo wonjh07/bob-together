@@ -1,7 +1,5 @@
 import { style } from '@vanilla-extract/css';
 
-import { inlineMeText } from '@/styles/primitives/badge.css';
-import { centeredErrorBox } from '@/styles/primitives/feedback.css';
 import { vars } from '@/styles/theme.css';
 
 export const page = style({
@@ -32,12 +30,6 @@ export const captionCount = style({
   gap: '4px',
 });
 
-export const captionIcon = style({
-  width: '20px',
-  height: '20px',
-  color: vars.color.subText,
-});
-
 export const list = style({
   display: 'flex',
   flexDirection: 'column',
@@ -58,49 +50,6 @@ export const cardInfo = style({
   minWidth: 0,
 });
 
-export const avatar = style({
-  width: '56px',
-  height: '56px',
-  borderRadius: '999px',
-  border: `2px solid ${vars.color.stroke}`,
-  objectFit: 'cover',
-  backgroundColor: vars.color.stroke,
-});
-
-export const names = style({
-  display: 'flex',
-  flexDirection: 'column',
-  minWidth: 0,
-});
-
-export const nickname = style({
-  margin: 0,
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.bold,
-  color: vars.color.black,
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-});
-
-export const nicknameRow = style({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-  minWidth: 0,
-});
-
-export const meText = style([inlineMeText]);
-
-export const name = style({
-  margin: 0,
-  fontSize: vars.fontSize.subText,
-  color: vars.color.subText,
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-});
-
 export const moreButton = style({
   border: 'none',
   backgroundColor: 'transparent',
@@ -109,5 +58,3 @@ export const moreButton = style({
   lineHeight: 1,
   cursor: 'pointer',
 });
-
-export const errorBox = style([centeredErrorBox]);

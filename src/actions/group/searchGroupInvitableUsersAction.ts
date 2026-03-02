@@ -10,6 +10,7 @@ interface UserRow {
   user_id: string;
   name: string | null;
   nickname: string | null;
+  profile_image: string | null;
 }
 
 interface SearchGroupInvitableUsersRpcRow {

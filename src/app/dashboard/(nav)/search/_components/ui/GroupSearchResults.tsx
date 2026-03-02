@@ -12,6 +12,7 @@ import { joinGroupAction } from '@/actions/group';
 import InlineLoading from '@/components/ui/InlineLoading';
 import ListStateView from '@/components/ui/ListStateView';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import {
   createGroupSearchQueryOptions,
   type GroupSearchPage,
@@ -32,6 +33,9 @@ export default function GroupSearchResults({ query }: GroupSearchResultsProps) {
   const queryOptions = createGroupSearchQueryOptions(normalizedQuery, queryScope);
   const queryClient = useQueryClient();
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
+  const {
+    openRequestError,
+  } = useRequestErrorPresenter();
 
   const {
     data,
@@ -56,7 +60,10 @@ export default function GroupSearchResults({ query }: GroupSearchResultsProps) {
       try {
         const result = await joinGroupAction(groupId);
         if (!result.ok) {
-          toast.error(result.message || '그룹 가입에 실패했습니다.');
+          openRequestError(result.message || '그룹 가입에 실패했습니다.', {
+            err: result,
+            source: 'GroupSearchResults.handleJoinGroup.result',
+          });
           return;
         }
 
@@ -87,7 +94,7 @@ export default function GroupSearchResults({ query }: GroupSearchResultsProps) {
         setJoiningGroupId(null);
       }
     },
-    [joiningGroupId, queryClient, queryOptions.queryKey],
+    [joiningGroupId, openRequestError, queryClient, queryOptions.queryKey],
   );
 
   const { hasMore, loadMoreRef } = useInfiniteLoadMore({
@@ -109,6 +116,7 @@ export default function GroupSearchResults({ query }: GroupSearchResultsProps) {
         isError={isError}
         isEmpty={groups.length === 0}
         error={error}
+        errorPresentation="modal"
         loadingVariant="spinner"
         loadingText="검색 중..."
         emptyText="검색 결과가 없습니다."
@@ -119,21 +127,22 @@ export default function GroupSearchResults({ query }: GroupSearchResultsProps) {
   }
 
   return (
-    <div className={styles.list}>
-      {groups.map((group) => (
-        <GroupSearchCard
-          key={group.groupId}
-          {...group}
-          isJoining={joiningGroupId === group.groupId}
-          onJoin={handleJoinGroup}
-        />
-      ))}
-      {isFetchingNextPage ? (
-        <InlineLoading text="더 불러오는 중..." className={styles.status} />
-      ) : null}
-      {hasMore && !isFetchingNextPage && (
-        <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
-      )}
-    </div>
+    <>
+      <div className={styles.list}>
+        {groups.map((group) => (
+          <GroupSearchCard
+            key={group.groupId}
+            {...group}
+            isJoining={joiningGroupId === group.groupId}
+            onJoin={handleJoinGroup}
+          />
+        ))}
+        {isFetchingNextPage ? (
+          <InlineLoading text="더 불러오는 중..." className={styles.status} />
+        ) : null}
+        {hasMore && !isFetchingNextPage && (
+          <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
+        )}
+      </div>    </>
   );
 }

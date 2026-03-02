@@ -20,17 +20,15 @@ export default function PlaceReviewCard({ review }: PlaceReviewCardProps) {
   return (
     <article className={styles.card}>
       <div className={styles.headRow}>
-        <UserIdentityInline
-          name={displayName}
-          subtitle={subtitle}
-          avatarSrc={review.userProfileImage}
-          avatarAlt={`${displayName} 프로필`}
-          avatarSize="xl"
-          rowClassName={styles.userRow}
-          avatarClassName={styles.avatar}
-          nameClassName={styles.name}
-          subtitleClassName={styles.meta}
-        />
+        <div className={styles.userRow}>
+          <UserIdentityInline
+            name={displayName}
+            subtitle={subtitle}
+            avatarSrc={review.userProfileImage}
+            avatarAlt={`${displayName} 프로필`}
+            size="lg"
+          />
+        </div>
         <button
           type="button"
           className={styles.moreButton}

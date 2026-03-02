@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import Link from 'next/link';
 
 import SettingsIcon from '@/components/icons/SettingsIcon';
+import UserIdentityInline from '@/components/ui/UserIdentityInline';
 
 import * as styles from './ProfileSummary.css';
 
@@ -18,16 +18,12 @@ export function ProfileSummary({
 
   return (
     <div className={styles.container}>
-      <div className={styles.userInfo}>
-        <Image
-          src={profileSrc}
-          alt="프로필"
-          width={42}
-          height={42}
-          className={styles.avatar}
-        />
-        <div className={styles.nickname}>{nickname}</div>
-      </div>
+      <UserIdentityInline
+        name={nickname}
+        avatarSrc={profileSrc}
+        avatarAlt="멤버 프로필 이미지"
+        size="md"
+      />
       <Link
         href="/dashboard/profile/edit"
         className={styles.settingsButton}

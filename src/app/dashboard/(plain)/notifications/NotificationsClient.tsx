@@ -13,6 +13,7 @@ import InlineLoading from '@/components/ui/InlineLoading';
 import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import { invalidateAfterInvitationResponse } from '@/libs/query/invalidateInvitationQueries';
 import {
   createReceivedInvitationsQueryOptions,
@@ -30,6 +31,9 @@ export default function NotificationsClient() {
   const [processingInvitationId, setProcessingInvitationId] = useState<
     string | null
   >(null);
+  const {
+    openRequestError,
+  } = useRequestErrorPresenter();
 
   const {
     data,
@@ -88,12 +92,18 @@ export default function NotificationsClient() {
         });
 
         if (!result.ok) {
-          toast.error(result.message || '초대 처리에 실패했습니다.');
+          openRequestError(result.message || '초대 처리에 실패했습니다.', {
+            err: result,
+            source: 'NotificationsClient.handleRespond.result',
+          });
           return;
         }
 
         if (!result.data) {
-          toast.error('초대 처리에 실패했습니다.');
+          openRequestError('초대 처리에 실패했습니다.', {
+            err: result,
+            source: 'NotificationsClient.handleRespond.noData',
+          });
           return;
         }
 
@@ -113,7 +123,12 @@ export default function NotificationsClient() {
         setProcessingInvitationId(null);
       }
     },
-    [processingInvitationId, queryClient, updateInvitationStatusCache],
+    [
+      openRequestError,
+      processingInvitationId,
+      queryClient,
+      updateInvitationStatusCache,
+    ],
   );
 
   const hasState = isLoading || isError || invitations.length === 0;
@@ -128,6 +143,7 @@ export default function NotificationsClient() {
           isError={isError}
           isEmpty={invitations.length === 0}
           error={error}
+          errorPresentation="modal"
           loadingVariant="spinner"
           loadingText="알림을 불러오는 중..."
           emptyText="받은 초대가 없습니다."
@@ -153,7 +169,6 @@ export default function NotificationsClient() {
             <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
           ) : null}
         </div>
-      )}
-    </div>
+      )}    </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GroupDropdown } from '@/app/dashboard/_components/GroupsDropdown';
 import { createMyGroupsQueryOptions } from '@/libs/query/groupQueries';
@@ -18,13 +18,16 @@ export function DashboardHeader() {
     createMyGroupsQueryOptions(queryScope),
   );
 
-  const currentGroupName =
-    groups.find((group) => group.groupId === currentGroupId)?.name ??
-    '그룹 선택';
+  const currentGroupName = useMemo(
+    () =>
+      groups.find((group) => group.groupId === currentGroupId)?.name ??
+      '그룹 선택',
+    [currentGroupId, groups],
+  );
 
   return (
     <div className={styles.header}>
-      <div className={styles.headerTitle}>대시보드</div>
+      <h2 className={styles.headerTitle}>대시보드</h2>
       <GroupDropdown
         isOpen={isDropdownOpen}
         onOpenChange={setIsDropdownOpen}

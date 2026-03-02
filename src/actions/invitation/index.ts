@@ -1,4 +1,5 @@
 export type {
+  HasPendingInvitationsResult,
   InvitationCursor,
   InvitationListItem,
   ListReceivedInvitationsResult,
@@ -6,5 +7,6 @@ export type {
   InvitationErrorCode,
 } from './types';
 
+export { hasPendingInvitationsAction } from './hasPending';
 export { listReceivedInvitationsAction } from './listReceived';
 export { respondToInvitationAction } from './respond';

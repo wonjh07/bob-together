@@ -15,16 +15,17 @@ import ClockIcon from '@/components/icons/ClockIcon';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
 import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
 import PlainTopNav from '@/components/ui/PlainTopNav';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import { createAppointmentDetailQueryOptions } from '@/libs/query/appointmentQueries';
 import {
   invalidateAppointmentDetailAndCollectionQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
 import { useQueryScope } from '@/provider/query-scope-provider';
-import { extractDistrict } from '@/utils/address';
 import {
   getEffectiveAppointmentStatus,
   isAppointmentEndedByTime,
 } from '@/utils/appointmentStatus';
+import { canUseHistoryBack } from '@/utils/navigationBack';
 
 import * as styles from './page.css';
 
@@ -70,6 +71,9 @@ export default function AppointmentEditClient({
   const [endTime, setEndTime] = useState(initialEndTime);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const {
+    openRequestError,
+  } = useRequestErrorPresenter();
   const detailQuery = useQuery(
     createAppointmentDetailQueryOptions(appointmentId, queryScope),
   );
@@ -79,11 +83,6 @@ export default function AppointmentEditClient({
   const effectiveStatus = getEffectiveAppointmentStatus(currentStatus, currentEndsAt);
   const canCancel = effectiveStatus === 'pending' && !isEndedByTime;
   const canActivate = effectiveStatus === 'canceled' && !isEndedByTime;
-
-  const placeMetaDistrict = useMemo(
-    () => extractDistrict(initialPlace.address),
-    [initialPlace.address],
-  );
 
   const placeSearchLink = useMemo(() => {
     const params = new URLSearchParams({
@@ -138,7 +137,10 @@ export default function AppointmentEditClient({
     setIsSubmitting(false);
 
     if (!result.ok) {
-      setErrorMessage(result.message || '약속 수정에 실패했습니다.');
+      openRequestError(result.message || '약속 수정에 실패했습니다.', {
+        err: result,
+        source: 'AppointmentEditClient.handleComplete.result',
+      });
       return;
     }
 
@@ -147,6 +149,10 @@ export default function AppointmentEditClient({
       queryClient,
       appointmentId,
     );
+    if (canUseHistoryBack()) {
+      router.back();
+      return;
+    }
     router.replace(`/dashboard/appointments/${appointmentId}`);
   };
 
@@ -164,12 +170,18 @@ export default function AppointmentEditClient({
     setIsSubmitting(false);
 
     if (!result.ok) {
-      setErrorMessage(result.message || '약속 취소에 실패했습니다.');
+      openRequestError(result.message || '약속 취소에 실패했습니다.', {
+        err: result,
+        source: 'AppointmentEditClient.handleUpdateStatus.result',
+      });
       return;
     }
 
     if (!result.data) {
-      setErrorMessage('약속 취소에 실패했습니다.');
+      openRequestError('약속 취소에 실패했습니다.', {
+        err: result,
+        source: 'AppointmentEditClient.handleUpdateStatus.noData',
+      });
       return;
     }
 
@@ -182,6 +194,10 @@ export default function AppointmentEditClient({
       queryClient,
       appointmentId,
     );
+    if (canUseHistoryBack()) {
+      router.back();
+      return;
+    }
     router.replace(`/dashboard/appointments/${appointmentId}`);
   };
 
@@ -242,8 +258,6 @@ export default function AppointmentEditClient({
           <p className={styles.label}>약속 장소</p>
           <AppointmentPlaceMeta
             placeName={initialPlace.name}
-            placeNameAs="h2"
-            placeNameClassName={styles.placeName}
             placeHref={
               initialPlace.placeId
                 ? `/dashboard/places/${initialPlace.placeId}`
@@ -251,11 +265,8 @@ export default function AppointmentEditClient({
             }
             rating={initialPlace.reviewAverage}
             reviewCount={initialPlace.reviewCount}
-            district={placeMetaDistrict}
             category={initialPlace.category}
             showReviewCountWhenZero={false}
-            metaClassName={styles.placeMetaRow}
-            starClassName={styles.star}
           />
         </div>
 
@@ -294,7 +305,6 @@ export default function AppointmentEditClient({
         ) : null}
 
         <p className={styles.helperText}>{errorMessage}</p>
-      </div>
-    </div>
+      </div>    </div>
   );
 }

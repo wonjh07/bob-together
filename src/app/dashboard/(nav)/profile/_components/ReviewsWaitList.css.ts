@@ -71,15 +71,6 @@ export const scoreText = style({
   color: vars.color.subText,
 });
 
-export const infoRow = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '4px',
-  color: vars.color.subText,
-  fontSize: vars.fontSize.subText,
-  fontWeight: vars.fontWeight.medium,
-});
-
 export const writeButton = style({
   display: 'flex',
   alignItems: 'center',
@@ -95,6 +86,20 @@ export const writeButton = style({
   fontWeight: vars.fontWeight.bold,
   cursor: 'pointer',
   textDecoration: 'none',
+});
+
+export const retryButton = style({
+  marginLeft: '16px',
+  marginRight: '16px',
+  marginBottom: '16px',
+  border: `1px solid ${vars.color.stroke}`,
+  borderRadius: vars.radius.md,
+  backgroundColor: vars.color.background,
+  color: vars.color.text,
+  fontSize: vars.fontSize.subText,
+  fontWeight: vars.fontWeight.semibold,
+  padding: '8px 12px',
+  cursor: 'pointer',
 });
 
 export const loadMoreTrigger = style({

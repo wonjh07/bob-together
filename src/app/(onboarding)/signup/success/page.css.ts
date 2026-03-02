@@ -38,18 +38,3 @@ export const message = style({
 export const buttonContainer = style({
   marginTop: '16px',
 });
-
-export const button = style({
-  width: '100%',
-  padding: '12px',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  border: 'none',
-  borderRadius: '8px',
-  background: vars.color.main,
-  color: 'white',
-  cursor: 'pointer',
-  textDecoration: 'none',
-  display: 'block',
-  textAlign: 'center',
-});

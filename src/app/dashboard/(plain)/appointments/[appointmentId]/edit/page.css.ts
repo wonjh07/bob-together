@@ -1,6 +1,5 @@
 import { style } from '@vanilla-extract/css';
 
-import { centeredErrorBox } from '@/styles/primitives/feedback.css';
 import { vars } from '@/styles/theme.css';
 
 export const page = style({
@@ -27,24 +26,6 @@ export const label = style({
   fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,
   color: vars.color.subText,
-});
-
-export const title = style({
-  margin: 0,
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.bold,
-  color: vars.color.black,
-  lineHeight: 1.2,
-});
-
-export const dateTimeRow = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '16px',
-  color: vars.color.text,
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.semibold,
-  flexWrap: 'wrap',
 });
 
 export const dateTimeItem = style({
@@ -169,5 +150,3 @@ export const helperText = style({
   fontSize: vars.fontSize.caption,
   color: vars.color.alert,
 });
-
-export const errorBox = style([centeredErrorBox]);

@@ -4,7 +4,6 @@ import Link from 'next/link';
 
 import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
 import UserIdentityInline from '@/components/ui/UserIdentityInline';
-import { extractDistrict } from '@/utils/address';
 import { formatDateDot } from '@/utils/dateFormat';
 
 import * as styles from './HistoryAppointmentCard.css';
@@ -20,37 +19,28 @@ export default function HistoryAppointmentCard({
 }: HistoryAppointmentCardProps) {
   const creatorLabel =
     appointment.creatorNickname || appointment.creatorName || '알 수 없음';
-  const district = extractDistrict(appointment.place.address);
 
   return (
     <article className={styles.card}>
       <div className={styles.cardHead}>
         <p className={styles.date}>{formatDateDot(appointment.startAt)}</p>
-        <UserIdentityInline
-          name={creatorLabel}
-          avatarSrc={appointment.creatorProfileImage}
-          avatarAlt={`${creatorLabel} 프로필`}
-          avatarSize="md"
-          rowClassName={styles.creatorMeta}
-          avatarClassName={styles.creatorAvatar}
-          nameClassName={styles.creatorName}
-        />
+        <div className={styles.creatorMeta}>
+          <UserIdentityInline
+            name={creatorLabel}
+            avatarSrc={appointment.creatorProfileImage}
+            avatarAlt={`${creatorLabel} 프로필`}
+            size="sm"
+          />
+        </div>
       </div>
 
       <AppointmentPlaceMeta
         title={appointment.title}
-        titleAs="h2"
-        titleClassName={styles.title}
         placeName={appointment.place.name}
-        placeNameAs="p"
-        placeNameClassName={styles.placeName}
         placeHref={`/dashboard/places/${appointment.place.placeId}`}
         rating={appointment.place.reviewAverage}
         reviewCount={appointment.place.reviewCount}
-        district={district}
         category={appointment.place.category}
-        metaClassName={styles.placeMeta}
-        starClassName={styles.star}
       />
 
       <div className={styles.buttonRow}>

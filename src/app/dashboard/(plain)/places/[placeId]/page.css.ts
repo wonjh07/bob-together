@@ -70,18 +70,6 @@ export const reviewHeader = style({
   padding: '0 16px',
 });
 
-export const reviewIcon = style({
-  width: '18px',
-  height: '18px',
-  color: vars.color.subText,
-});
-
-export const reviewTitle = style({
-  fontSize: vars.fontSize.text,
-  color: vars.color.subText,
-  fontWeight: vars.fontWeight.semibold,
-});
-
 export const reviewList = style({
   display: 'flex',
   flexDirection: 'column',

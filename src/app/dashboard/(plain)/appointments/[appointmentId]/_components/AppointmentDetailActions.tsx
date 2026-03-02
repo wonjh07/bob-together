@@ -9,6 +9,7 @@ import {
   joinAppointmentAction,
   leaveAppointmentAction,
 } from '@/actions/appointment';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import {
   invalidateAppointmentDetailAndCollectionQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
@@ -39,6 +40,7 @@ export default function AppointmentDetailActions({
   const queryClient = useQueryClient();
   const [isMember, setIsMember] = useState(initialIsMember);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { openRequestError } = useRequestErrorPresenter();
   const effectiveStatus = getEffectiveAppointmentStatus(initialStatus, endsAt);
   const isEnded = effectiveStatus === 'ended';
   const isCanceled = effectiveStatus === 'canceled';
@@ -61,7 +63,10 @@ export default function AppointmentDetailActions({
     try {
       const result = await joinAppointmentAction(appointmentId);
       if (!result.ok) {
-        toast.error(result.message || '약속 참여에 실패했습니다.');
+        openRequestError(result.message || '약속 참여에 실패했습니다.', {
+          err: result,
+          source: 'AppointmentDetailActions.handleJoin.result',
+        });
         return;
       }
 
@@ -83,7 +88,10 @@ export default function AppointmentDetailActions({
     try {
       const result = await leaveAppointmentAction(appointmentId);
       if (!result.ok) {
-        toast.error(result.message || '약속 나가기에 실패했습니다.');
+        openRequestError(result.message || '약속 나가기에 실패했습니다.', {
+          err: result,
+          source: 'AppointmentDetailActions.handleLeave.result',
+        });
         return;
       }
 

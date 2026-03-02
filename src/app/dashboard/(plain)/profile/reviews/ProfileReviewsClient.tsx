@@ -13,6 +13,7 @@ import InlineLoading from '@/components/ui/InlineLoading';
 import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import {
   createMyReviewsQueryOptions,
   type MyReviewPage,
@@ -35,6 +36,7 @@ export default function ProfileReviewsClient() {
   const [deletingAppointmentId, setDeletingAppointmentId] = useState<
     string | null
   >(null);
+  const { openRequestError } = useRequestErrorPresenter();
 
   const {
     data,
@@ -76,7 +78,10 @@ export default function ProfileReviewsClient() {
       try {
         const result = await deleteMyReviewAction({ appointmentId });
         if (!result.ok) {
-          toast.error(result.message || '리뷰 삭제에 실패했습니다.');
+          openRequestError(result.message || '리뷰 삭제에 실패했습니다.', {
+            err: result,
+            source: 'ProfileReviewsClient.handleDeleteReview.result',
+          });
           return;
         }
 
@@ -107,7 +112,7 @@ export default function ProfileReviewsClient() {
         setDeletingAppointmentId(null);
       }
     },
-    [deletingAppointmentId, queryClient, queryOptions.queryKey],
+    [deletingAppointmentId, openRequestError, queryClient, queryOptions.queryKey],
   );
   const hasState = isLoading || isError || reviews.length === 0;
 
@@ -121,6 +126,7 @@ export default function ProfileReviewsClient() {
           isError={isError}
           isEmpty={reviews.length === 0}
           error={error}
+          errorPresentation="modal"
           loadingVariant="spinner"
           loadingText="리뷰를 불러오는 중..."
           emptyText="작성한 리뷰가 없습니다."

@@ -2,10 +2,10 @@ import '@/styles/reset.css';
 import '@/styles/globals.css';
 
 import localFont from 'next/font/local';
-import { Toaster } from 'react-hot-toast';
 
 import Providers from '@/app/providers';
 import { KakaoMapPreload } from '@/components/kakao/KakaoMapPreload';
+import AppToaster from '@/components/ui/AppToaster';
 import { getServerQueryScope } from '@/libs/query/getServerQueryScope';
 
 import type { Metadata } from 'next';
@@ -40,16 +40,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${pretendard.variable} ${themeClass}`}>
       <body>
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#363636',
-              color: '#fff',
-            },
-          }}
-        />
+        <AppToaster />
         <KakaoMapPreload />
         <Providers initialQueryScope={queryScope}>
           <div className={appShell}>

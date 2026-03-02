@@ -1,12 +1,13 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import SearchInput from '@/components/ui/SearchInput';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
 import { usePlaceSearch } from '@/hooks/usePlaceSearch';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 
 import * as styles from './page.css';
 
@@ -21,7 +22,10 @@ export default function AppointmentEditPlaceClient({
 }: AppointmentEditPlaceClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [errorMessage, setErrorMessage] = useState('');
+  const {
+    openRequestError,
+    closeRequestError,
+  } = useRequestErrorPresenter();
 
   const { currentLocation, isLocating, locationError, requestLocation } =
     useCurrentLocation();
@@ -34,7 +38,8 @@ export default function AppointmentEditPlaceClient({
     handlePlaceSearchSubmit,
   } = usePlaceSearch({
     currentLocation,
-    setErrorMessage,
+    onRequestError: openRequestError,
+    onRequestClear: closeRequestError,
   });
 
   useEffect(() => {
@@ -92,7 +97,7 @@ export default function AppointmentEditPlaceClient({
           </button>
         </div>
         <div className={styles.helperText}>
-          {locationError || errorMessage || ''}
+          {locationError || ''}
         </div>
 
         <form className={styles.searchForm} onSubmit={handlePlaceSearchSubmit}>
@@ -129,7 +134,6 @@ export default function AppointmentEditPlaceClient({
             <div className={styles.emptyResult}>검색 결과가 없습니다.</div>
           ) : null}
         </div>
-      </div>
-    </div>
+      </div>    </div>
   );
 }

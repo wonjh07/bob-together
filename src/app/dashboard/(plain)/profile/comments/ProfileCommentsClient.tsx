@@ -13,6 +13,7 @@ import InlineLoading from '@/components/ui/InlineLoading';
 import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import {
   createMyCommentsQueryOptions,
   type MyCommentsPage,
@@ -33,6 +34,7 @@ export default function ProfileCommentsClient() {
     null,
   );
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+  const { openRequestError } = useRequestErrorPresenter();
 
   const {
     data,
@@ -75,7 +77,10 @@ export default function ProfileCommentsClient() {
           commentId,
         });
         if (!result.ok) {
-          toast.error(result.message || '댓글 삭제에 실패했습니다.');
+          openRequestError(result.message || '댓글 삭제에 실패했습니다.', {
+            err: result,
+            source: 'ProfileCommentsClient.handleDeleteComment.result',
+          });
           return;
         }
 
@@ -103,7 +108,7 @@ export default function ProfileCommentsClient() {
         setDeletingCommentId(null);
       }
     },
-    [deletingCommentId, queryClient, queryOptions.queryKey],
+    [deletingCommentId, openRequestError, queryClient, queryOptions.queryKey],
   );
   const hasState = isLoading || isError || comments.length === 0;
 
@@ -117,6 +122,7 @@ export default function ProfileCommentsClient() {
           isError={isError}
           isEmpty={comments.length === 0}
           error={error}
+          errorPresentation="modal"
           loadingVariant="spinner"
           loadingText="댓글을 불러오는 중..."
           emptyText="작성한 댓글이 없습니다."

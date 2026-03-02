@@ -8,15 +8,16 @@ import {
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
-import { AiOutlineUsergroupAdd } from 'react-icons/ai';
 
 import { leaveGroupAction } from '@/actions/group';
+import GroupAddIcon from '@/components/icons/GroupAddIcon';
 import SearchIcon from '@/components/icons/SearchIcon';
 import ChipToggleGroup from '@/components/ui/ChipToggleGroup';
 import InlineLoading from '@/components/ui/InlineLoading';
 import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import {
   createGroupManageQueryOptions,
   type GroupManagePage,
@@ -44,6 +45,9 @@ export default function ProfileGroupsClient() {
     null,
   );
   const [leavingGroupId, setLeavingGroupId] = useState<string | null>(null);
+  const {
+    openRequestError,
+  } = useRequestErrorPresenter();
 
   const {
     data,
@@ -87,7 +91,10 @@ export default function ProfileGroupsClient() {
       try {
         const result = await leaveGroupAction(groupId);
         if (!result.ok) {
-          toast.error(result.message || '그룹 탈퇴에 실패했습니다.');
+          openRequestError(result.message || '그룹 탈퇴에 실패했습니다.', {
+            err: result,
+            source: 'ProfileGroupsClient.handleLeaveGroup.result',
+          });
           return;
         }
 
@@ -113,7 +120,7 @@ export default function ProfileGroupsClient() {
         setLeavingGroupId(null);
       }
     },
-    [leavingGroupId, queryClient, queryOptions.queryKey],
+    [leavingGroupId, openRequestError, queryClient, queryOptions.queryKey],
   );
 
   const emptyTextByTab =
@@ -129,9 +136,7 @@ export default function ProfileGroupsClient() {
           options={GROUP_TAB_OPTIONS}
           value={activeTab}
           onChange={setActiveTab}
-          containerClassName={styles.filterContainer}
-          buttonClassName={styles.chipButton}
-          activeButtonClassName={styles.chipButtonActive}
+          layout="scroll"
         />
         <div className={styles.filterActions}>
           <button
@@ -148,7 +153,7 @@ export default function ProfileGroupsClient() {
             aria-label="새 그룹"
             title="새 그룹"
             onClick={() => router.push('/dashboard/profile/groups/create')}>
-            <AiOutlineUsergroupAdd aria-hidden="true" size={18} />
+            <GroupAddIcon size={18} />
           </button>
         </div>
       </div>
@@ -159,6 +164,7 @@ export default function ProfileGroupsClient() {
           isError={isError}
           isEmpty={false}
           error={error}
+          errorPresentation="modal"
           loadingVariant="spinner"
           loadingText="그룹 정보를 불러오는 중..."
           emptyText={emptyTextByTab}
@@ -199,7 +205,6 @@ export default function ProfileGroupsClient() {
             <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
           ) : null}
         </div>
-      )}
-    </div>
+      )}    </div>
   );
 }

@@ -1,7 +1,5 @@
 import { style } from '@vanilla-extract/css';
 
-import { inlineMeText } from '@/styles/primitives/badge.css';
-import { centeredErrorBox } from '@/styles/primitives/feedback.css';
 import { vars } from '@/styles/theme.css';
 
 export const page = style({
@@ -18,76 +16,14 @@ export const content = style({
   gap: '16px',
 });
 
-export const section = style({
-  border: `1px solid ${vars.color.stroke}`,
-  borderRadius: vars.radius.xlg,
-  padding: '16px',
-});
-
-export const authorRow = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '12px',
-  marginBottom: '14px',
-});
-
-export const authorAvatar = style({
-  width: '56px',
-  height: '56px',
-  borderRadius: '999px',
-  border: `2px solid ${vars.color.stroke}`,
-  objectFit: 'cover',
-  backgroundColor: vars.color.stroke,
-});
-
-export const authorNameLine = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.bold,
-  color: vars.color.black,
-});
-
-export const meText = style([inlineMeText, { fontSize: 'inherit' }]);
-
-export const authorMeta = style({
-  marginTop: '4px',
-  fontSize: vars.fontSize.subText,
-  color: vars.color.subText,
-});
-
 export const appointmentTitle = style({
-  margin: 0,
   fontSize: vars.fontSize.instruction,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.black,
-});
-
-export const dateTimeRow = style({
-  display: 'flex',
-  alignItems: 'center',
-  flexWrap: 'wrap',
-  gap: '12px',
-  color: vars.color.subText,
-  fontSize: vars.fontSize.subText,
-  fontWeight: vars.fontWeight.medium,
-});
-
-export const dateTimeItem = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '4px',
-});
-
-export const dateTimeIcon = style({
-  width: '22px',
-  height: '22px',
-  color: vars.color.main,
+  margin: '4px 0',
 });
 
 export const placeName = style({
-  margin: 0,
   fontSize: vars.fontSize.title,
   fontWeight: vars.fontWeight.bold,
   color: vars.color.text,
@@ -120,6 +56,12 @@ export const mapWrapper = style({
   border: `1px solid ${vars.color.stroke}`,
 });
 
+export const section = style({
+  border: `1px solid ${vars.color.stroke}`,
+  borderRadius: vars.radius.xlg,
+  padding: '12px',
+});
+
 export const memberRow = style({
   display: 'flex',
   alignItems: 'center',
@@ -127,22 +69,16 @@ export const memberRow = style({
   gap: '12px',
 });
 
-export const memberInfo = style({
-  display: 'flex',
+export const memberActions = style({
+  display: 'inline-flex',
   alignItems: 'center',
   gap: '8px',
-});
-
-export const memberIcon = style({
-  width: '24px',
-  height: '24px',
-  color: vars.color.black,
 });
 
 export const memberTitle = style({
   margin: 0,
   fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.bold,
+  fontWeight: vars.fontWeight.semibold,
   color: vars.color.black,
 });
 
@@ -150,7 +86,7 @@ export const memberButton = style({
   borderRadius: vars.radius.md,
   backgroundColor: vars.color.text,
   color: vars.color.background,
-  padding: '8px 12px',
+  padding: '8px 16px',
   fontSize: vars.fontSize.text,
   fontWeight: vars.fontWeight.semibold,
   cursor: 'pointer',
@@ -181,12 +117,6 @@ export const inviteButton = style([
   },
 ]);
 
-export const actionRow = style({
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr',
-  gap: '14px',
-});
-
 export const confirmButton = style([
   actionButton,
   {
@@ -200,12 +130,3 @@ export const cancelButton = style([
     backgroundColor: vars.color.alert,
   },
 ]);
-
-export const activateButton = style([
-  actionButton,
-  {
-    backgroundColor: vars.color.button,
-  },
-]);
-
-export const errorBox = style([centeredErrorBox]);

@@ -1,16 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import SearchInput from '@/components/ui/SearchInput';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
 import { usePlaceSearch } from '@/hooks/usePlaceSearch';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 
 import * as styles from './PlaceStep.css';
 
 import type { CreateAppointmentForm } from '../types';
 
 export function PlaceStep() {
-  const [errorMessage, setErrorMessage] = useState('');
+  const {
+    openRequestError,
+    closeRequestError,
+  } = useRequestErrorPresenter();
   const {
     setValue,
     clearErrors,
@@ -30,7 +34,8 @@ export function PlaceStep() {
     handlePlaceSearchSubmit,
   } = usePlaceSearch({
     currentLocation,
-    setErrorMessage,
+    onRequestError: openRequestError,
+    onRequestClear: closeRequestError,
   });
 
   const hasLocation = Boolean(currentLocation);
@@ -81,7 +86,7 @@ export function PlaceStep() {
         </form>
       </div>
       <div className={styles.helperText}>
-        {errorMessage || errors.place?.message?.toString() || ''}
+        {errors.place?.message?.toString() || ''}
       </div>
       {/* {selectedPlace && (
         <div className={styles.mapWrapper}>
@@ -118,7 +123,6 @@ export function PlaceStep() {
         {isPlaceSearched && placeResults.length === 0 && (
           <div className={styles.emptyResult}>검색 결과가 없습니다.</div>
         )}
-      </div>
-    </div>
+      </div>    </div>
   );
 }

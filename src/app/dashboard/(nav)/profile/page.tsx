@@ -21,9 +21,9 @@ export default async function ProfilePage() {
           profileImage={user?.profileImage ?? null}
         />
         <ProfileQuickLinks />
+        <ProfileReviewHeader />
+        <ReviewsWaitList />
       </div>
-      <ProfileReviewHeader />
-      <ReviewsWaitList />
     </div>
   );
 }

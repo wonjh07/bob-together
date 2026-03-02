@@ -6,6 +6,17 @@
 - Fix:
 - Lesson:
 
+## 프로필 이미지 업로드 시 `이미지 업로드 중 오류가 발생했습니다.` 발생
+- Context: 로컬 DB 전환 후 프로필 이미지 업로드가 즉시 실패하고, UI에는 공통 업로드 실패 메시지만 표시됨
+- Cause: `storage.buckets`에 `profile-images` 버킷 row가 없어서 Storage upload API가 실패함 (스키마/정책은 있어도 버킷 데이터가 누락된 상태)
+- Fix:
+  - 버킷 보장 마이그레이션 추가:
+    - `supabase/migrations/20260301101000_ensure_profile_images_bucket.sql`
+    - `insert ... on conflict`로 `profile-images` 버킷 upsert
+  - 개발 환경에서는 업로드 에러 상세가 메시지에 포함되도록:
+    - `src/actions/user/uploadProfileImageAction.ts` (`withDevErrorDetails`)
+- Lesson: Supabase Storage는 테이블/정책 스키마만으로 충분하지 않고, 실제 버킷 row 존재 여부까지 환경 부트스트랩 체크리스트에 포함해야 한다
+
 ## 새로고침 시 무한스크롤 리스트가 비어 보이는 문제
 - Context: 대시보드를 제외한 무한스크롤 리스트(히스토리/리뷰/댓글/알림/약속댓글 등)에서 새로고침 직후 데이터가 사라진 것처럼 보임
 - Cause: `Providers`에서 Supabase auth 이벤트 `SIGNED_IN` 발생 시마다 `queryClient.clear()`를 실행해, 초기 세션 복원 흐름에서도 React Query 캐시가 비워졌음

@@ -20,6 +20,7 @@ interface AppointmentListRow {
   creator_id: string;
   creator_name: string | null;
   creator_nickname: string | null;
+  creator_profile_image: string | null;
   place_id: string;
   place_name: string;
   place_address: string;
@@ -120,6 +121,7 @@ export async function listAppointmentsAction(
       creatorId: row.creator_id,
       creatorName: row.creator_name,
       creatorNickname: row.creator_nickname,
+      creatorProfileImage: row.creator_profile_image,
       place: {
         placeId: row.place_id,
         name: row.place_name || '장소 미정',

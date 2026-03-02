@@ -40,8 +40,3 @@ export const actionButtonSecondary = style({
   backgroundColor: vars.color.text,
   color: vars.color.background,
 });
-
-export const actionButtonMuted = style({
-  backgroundColor: vars.color.muted,
-  color: vars.color.subText,
-});

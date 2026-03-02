@@ -8,12 +8,14 @@ import type { PlaceSummary } from '@/actions/place';
 
 type UsePlaceSearchArgs = {
   currentLocation: { latitude: number; longitude: number } | null;
-  setErrorMessage: (message: string) => void;
+  onRequestError?: (message: string) => void;
+  onRequestClear?: () => void;
 };
 
 export function usePlaceSearch({
   currentLocation,
-  setErrorMessage,
+  onRequestError,
+  onRequestClear,
 }: UsePlaceSearchArgs) {
   const [placeQuery, setPlaceQuery] = useState('');
   const [placeResults, setPlaceResults] = useState<PlaceSummary[]>([]);
@@ -37,22 +39,22 @@ export function usePlaceSearch({
         radius: currentLocation ? 5000 : undefined,
       });
       if (!result.ok) {
-        setErrorMessage(result.message || '장소 검색에 실패했습니다.');
+        onRequestError?.(result.message || '장소 검색에 실패했습니다.');
         return;
       }
 
       if (!result.data) {
-        setErrorMessage('검색 결과를 불러올 수 없습니다.');
+        onRequestError?.('검색 결과를 불러올 수 없습니다.');
         return;
       }
 
       setPlaceResults(result.data.places);
     },
-    [currentLocation, setErrorMessage],
+    [currentLocation, onRequestError],
   );
 
   const handlePlaceSearch = async () => {
-    setErrorMessage('');
+    onRequestClear?.();
     await runPlaceSearch(placeQuery);
   };
 

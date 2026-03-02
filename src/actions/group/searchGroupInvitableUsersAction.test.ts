@@ -68,8 +68,18 @@ describe('searchGroupInvitableUsersAction', () => {
           ok: true,
           error_code: null,
           users: [
-            { user_id: 'user-3', name: '대기', nickname: 'pending' },
-            { user_id: 'user-4', name: '가능', nickname: 'available' },
+            {
+              user_id: 'user-3',
+              name: '대기',
+              nickname: 'pending',
+              profile_image: 'https://example.com/user-3.png',
+            },
+            {
+              user_id: 'user-4',
+              name: '가능',
+              nickname: 'available',
+              profile_image: null,
+            },
           ],
           pending_invitee_ids: ['user-3'],
         },
@@ -105,8 +115,18 @@ describe('searchGroupInvitableUsersAction', () => {
       ok: true,
       data: {
         users: [
-          { userId: 'user-3', name: '대기', nickname: 'pending' },
-          { userId: 'user-4', name: '가능', nickname: 'available' },
+          {
+            userId: 'user-3',
+            name: '대기',
+            nickname: 'pending',
+            profileImage: 'https://example.com/user-3.png',
+          },
+          {
+            userId: 'user-4',
+            name: '가능',
+            nickname: 'available',
+            profileImage: null,
+          },
         ],
         pendingInviteeIds: ['user-3'],
       },

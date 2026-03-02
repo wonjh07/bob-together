@@ -4,7 +4,6 @@ import {
   actionButtonBase,
   actionButtonPrimary,
 } from '@/styles/primitives/actionButton.css';
-import * as chip from '@/styles/primitives/chip.css';
 import {
   plainLoadMoreTrigger,
   plainList,
@@ -29,18 +28,6 @@ export const filterBox = style({
   padding: '14px 16px',
   borderBottom: `1px solid ${vars.color.stroke}`,
 });
-
-export const filterContainer = style([
-  chip.chipContainer,
-  {
-    flex: '1 1 auto',
-    minWidth: 0,
-    flexWrap: 'nowrap',
-    overflowX: 'auto',
-  },
-]);
-export const chipButton = style([chip.chipButton]);
-export const chipButtonActive = style([chip.chipButtonActive]);
 
 export const filterActions = style({
   display: 'inline-flex',

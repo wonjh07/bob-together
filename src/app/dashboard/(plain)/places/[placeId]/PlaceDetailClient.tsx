@@ -2,8 +2,8 @@
 
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
 
-import ReviewIcon from '@/components/icons/ReviewIcon';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
 import IconLabel from '@/components/ui/IconLabel';
 import InlineLoading from '@/components/ui/InlineLoading';
@@ -11,6 +11,7 @@ import ListStateView from '@/components/ui/ListStateView';
 import PlaceRatingMeta from '@/components/ui/PlaceRatingMeta';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import {
   createPlaceDetailQueryOptions,
   createPlaceReviewsQueryOptions,
@@ -29,10 +30,30 @@ interface PlaceDetailClientProps {
 export default function PlaceDetailClient({ placeId }: PlaceDetailClientProps) {
   const router = useRouter();
   const queryScope = useQueryScope();
+  const {
+    syncRequestError,
+  } = useRequestErrorPresenter({
+    source: 'PlaceDetailClient.detailQuery.error',
+    fallbackMessage: '장소 정보를 불러오지 못했습니다.',
+  });
   const detailQuery = useQuery(createPlaceDetailQueryOptions(placeId, queryScope));
   const reviewsQuery = useInfiniteQuery(
     createPlaceReviewsQueryOptions(placeId, queryScope),
   );
+  const detailErrorMessage = useMemo(() => {
+    if (!detailQuery.isError) return '';
+    return detailQuery.error instanceof Error
+      ? detailQuery.error.message
+      : '장소 정보를 불러오지 못했습니다.';
+  }, [detailQuery.error, detailQuery.isError]);
+
+  useEffect(() => {
+    syncRequestError({
+      isError: Boolean(detailErrorMessage),
+      err: detailQuery.error,
+      message: detailErrorMessage,
+    });
+  }, [detailErrorMessage, detailQuery.error, syncRequestError]);
 
   const reviews =
     reviewsQuery.data?.pages.flatMap(
@@ -57,13 +78,7 @@ export default function PlaceDetailClient({ placeId }: PlaceDetailClientProps) {
   if (detailQuery.isError || !detailQuery.data) {
     return (
       <div className={styles.page}>
-        <PlainTopNav title="장소 정보" rightHidden onBack={() => router.back()} />
-        <div className={styles.statusBox}>
-          {detailQuery.error instanceof Error
-            ? detailQuery.error.message
-            : '장소 정보를 불러오지 못했습니다.'}
-        </div>
-      </div>
+        <PlainTopNav title="장소 정보" rightHidden onBack={() => router.back()} />      </div>
     );
   }
 
@@ -103,12 +118,9 @@ export default function PlaceDetailClient({ placeId }: PlaceDetailClientProps) {
       </div>
 
       <section className={styles.reviewSection}>
-        <IconLabel
-          as="p"
-          className={styles.reviewHeader}
-          icon={<ReviewIcon className={styles.reviewIcon} />}>
-          <span className={styles.reviewTitle}>리뷰 {place.reviewCount}</span>
-        </IconLabel>
+        <p className={styles.reviewHeader}>
+          <IconLabel as="span" icon="review" count={`리뷰 ${place.reviewCount}`} />
+        </p>
 
         {hasState ? (
           <ListStateView
@@ -116,6 +128,7 @@ export default function PlaceDetailClient({ placeId }: PlaceDetailClientProps) {
             isError={reviewsQuery.isError}
             isEmpty={reviews.length === 0}
             error={reviewsQuery.error}
+            errorPresentation="modal"
             loadingVariant="spinner"
             loadingText="리뷰를 불러오는 중..."
             emptyText="등록된 리뷰가 없습니다."

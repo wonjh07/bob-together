@@ -10,6 +10,7 @@ import {
 } from '@/libs/query/queryScope';
 import { createSupabaseBrowserClient } from '@/libs/supabase/client';
 import { QueryScopeProvider } from '@/provider/query-scope-provider';
+import { RequestErrorProvider } from '@/provider/request-error-provider';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -43,7 +44,9 @@ export default function Providers({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <QueryScopeProvider scope={queryScope}>{children}</QueryScopeProvider>
+      <QueryScopeProvider scope={queryScope}>
+        <RequestErrorProvider>{children}</RequestErrorProvider>
+      </QueryScopeProvider>
     </QueryClientProvider>
   );
 }

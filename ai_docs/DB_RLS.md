@@ -39,6 +39,29 @@
 - `supabase/migrations/20260215200000_invitations_select_group_member_policy.sql`
   - Adds `invitations_select_group_member` policy.
   - Allows group members to read invitation rows in their groups.
+- `supabase/migrations/20260227011000_secure_user_scoped_read_rpcs.sql`
+  - Hardens `security definer` read RPCs by binding caller context:
+    - `where p_user_id = auth.uid()`
+  - Updates 8 user-scoped RPCs:
+    - `get_appointment_detail_with_count`
+    - `list_appointments_with_stats`
+    - `list_appointments_with_stats_cursor`
+    - `list_my_groups_with_stats`
+    - `list_reviewable_appointments_with_stats`
+    - `list_reviewable_appointments_with_stats_cursor`
+    - `search_appointments_with_count`
+    - `search_groups_with_count`
+  - Revokes execute from `anon` and grants execute to `authenticated`, `service_role`.
+- `supabase/migrations/20260227012000_enable_rls_auto_event_trigger.sql`
+  - Creates event trigger `rls_auto_enable_on_ddl`.
+  - Hooks `ddl_command_end` to `public.rls_auto_enable()`.
+  - New tables created in `public` schema now auto-run `ENABLE ROW LEVEL SECURITY`.
+- `supabase/migrations/20260227013000_revoke_anon_function_execute.sql`
+  - Revokes direct `anon` execute from application/internal RPCs.
+  - Keeps `anon` execution only for `check_email_exists(text)` (pre-auth validation).
+- `supabase/migrations/20260227013100_revoke_public_function_execute.sql`
+  - Revokes `PUBLIC` execute on app/internal functions.
+  - Prevents implicit execution by all roles through shared `PUBLIC` ACL.
 
 ## Policies (summary)
 - `groups_select_authenticated`: authenticated can select all groups.
@@ -76,3 +99,9 @@
 - If 403 errors occur, verify RLS policies and grants for the table.
 - Search count RPCs are `security definer`; they must stay minimal and only return bounded, filtered fields.
 - `check_email_exists` RPC returns boolean only and is intended for pre-login email duplication checks.
+- User-scoped read RPCs should always enforce `p_user_id = auth.uid()` to prevent cross-user reads via forged parameters.
+- Keep event trigger `rls_auto_enable_on_ddl` active so newly added `public` tables cannot miss RLS enablement.
+- Function execution policy:
+  - `anon`: only explicitly needed pre-auth RPC (currently `check_email_exists`)
+  - `authenticated`/`service_role`: explicit grant per function
+  - `PUBLIC` execute should be revoked for application functions

@@ -4,8 +4,6 @@ import {
   plainCard,
   plainCardBody,
   plainCardHeadRow,
-  plainCardMeta,
-  plainCardTitle,
 } from '@/styles/primitives/plainCard.css';
 import { vars } from '@/styles/theme.css';
 
@@ -17,17 +15,6 @@ export const userRow = style({
   flex: 1,
   minWidth: 0,
 });
-
-export const avatar = style({
-  borderRadius: '999px',
-  border: `2px solid ${vars.color.stroke}`,
-  objectFit: 'cover',
-  backgroundColor: vars.color.stroke,
-});
-
-export const name = style([plainCardTitle, { fontSize: vars.fontSize.title }]);
-
-export const meta = style([plainCardMeta]);
 
 export const moreButton = style({
   border: 'none',

@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { BsThreeDotsVertical } from 'react-icons/bs';
 
+import MoreVerticalIcon from '@/components/icons/MoreVerticalIcon';
 import DropdownMenu from '@/components/ui/DropdownMenu';
 
 import * as styles from './OverflowMenu.css';
@@ -47,7 +47,7 @@ export default function OverflowMenu({
           onClick={toggle}
           aria-label={ariaLabel}
           disabled={isDisabled}>
-          <BsThreeDotsVertical className={styles.triggerIcon} aria-hidden="true" />
+          <MoreVerticalIcon className={styles.triggerIcon} />
         </button>
       )}>
       {items.map((item) => {

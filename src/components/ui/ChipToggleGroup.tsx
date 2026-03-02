@@ -1,4 +1,4 @@
-import * as chipStyles from '@/styles/primitives/chip.css';
+import * as styles from './ChipToggleGroup.css';
 
 interface ChipToggleOption<T extends string> {
   value: T;
@@ -10,13 +10,7 @@ interface ChipToggleGroupProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
   disabled?: boolean;
-  containerClassName?: string;
-  buttonClassName?: string;
-  activeButtonClassName?: string;
-}
-
-function cx(...classNames: Array<string | undefined>) {
-  return classNames.filter(Boolean).join(' ');
+  layout?: 'wrap' | 'scroll';
 }
 
 export default function ChipToggleGroup<T extends string>({
@@ -24,22 +18,15 @@ export default function ChipToggleGroup<T extends string>({
   value,
   onChange,
   disabled = false,
-  containerClassName,
-  buttonClassName,
-  activeButtonClassName,
+  layout = 'wrap',
 }: ChipToggleGroupProps<T>) {
   return (
-    <div className={cx(chipStyles.chipContainer, containerClassName)}>
+    <div className={styles.container[layout]}>
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
-          className={cx(
-            chipStyles.chipButton,
-            buttonClassName,
-            value === option.value ? chipStyles.chipButtonActive : undefined,
-            value === option.value ? activeButtonClassName : undefined,
-          )}
+          className={styles.button[value === option.value ? 'active' : 'inactive']}
           onClick={() => onChange(option.value)}
           disabled={disabled}>
           {option.label}

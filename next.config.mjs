@@ -2,16 +2,17 @@ import { createVanillaExtractPlugin } from '@vanilla-extract/next-plugin';
 
 const withVanillaExtract = createVanillaExtractPlugin();
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : null;
+const supabaseUrlObject = supabaseUrl ? new URL(supabaseUrl) : null;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    remotePatterns: supabaseHostname
+    remotePatterns: supabaseUrlObject
       ? [
           {
-            protocol: 'https',
-            hostname: supabaseHostname,
+            protocol: supabaseUrlObject.protocol.replace(':', ''),
+            hostname: supabaseUrlObject.hostname,
+            port: supabaseUrlObject.port || '',
             pathname: '/storage/v1/object/public/**',
           },
         ]

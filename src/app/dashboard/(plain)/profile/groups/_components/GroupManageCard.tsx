@@ -1,6 +1,5 @@
 'use client';
 
-import GroupIcon from '@/components/icons/GroupIcon';
 import IconLabel from '@/components/ui/IconLabel';
 import OverflowMenu from '@/components/ui/OverflowMenu';
 import UserIdentityInline from '@/components/ui/UserIdentityInline';
@@ -62,6 +61,16 @@ export default function GroupManageCard({
 
   return (
     <article className={styles.card}>
+      <div className={styles.ownerRow}>
+        <UserIdentityInline
+          name={ownerDisplayName}
+          avatarSrc={group.ownerProfileImage}
+          avatarAlt={`${ownerDisplayName} 프로필`}
+          size="sm"
+          me={group.isOwner}
+        />
+      </div>
+
       <div className={styles.headRow}>
         <h2 className={styles.groupName}>{group.groupName}</h2>
         <OverflowMenu
@@ -73,30 +82,13 @@ export default function GroupManageCard({
           items={menuItems}
         />
       </div>
-
-      <UserIdentityInline
-        name={ownerDisplayName}
-        avatarSrc={group.ownerProfileImage}
-        avatarAlt={`${ownerDisplayName} 프로필`}
-        avatarSize="lg"
-        me={group.isOwner}
-        rowClassName={styles.ownerRow}
-        avatarClassName={styles.avatar}
-        nameRowClassName={styles.ownerNameRow}
-        nameClassName={styles.ownerName}
-        meClassName={styles.meText}
-      />
-
       <div className={styles.footerRow}>
         <span className={styles.dateText}>
           {label}: {dateText}
         </span>
-        <IconLabel
-          as="span"
-          className={styles.memberMeta}
-          icon={<GroupIcon width="20" height="20" />}>
-          <span>{group.memberCount}</span>
-        </IconLabel>
+        <span className={styles.memberMeta}>
+          <IconLabel as="span" icon="group" count={group.memberCount} />
+        </span>
       </div>
     </article>
   );

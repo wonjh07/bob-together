@@ -1,6 +1,5 @@
 import { style } from '@vanilla-extract/css';
 
-import { inlineMeText } from '@/styles/primitives/badge.css';
 import { vars } from '@/styles/theme.css';
 
 export const card = style({
@@ -31,29 +30,6 @@ export const ownerRow = style({
   gap: '8px',
 });
 
-export const avatar = style({
-  width: '42px',
-  height: '42px',
-  borderRadius: '999px',
-  border: `2px solid ${vars.color.stroke}`,
-  objectFit: 'cover',
-  backgroundColor: vars.color.stroke,
-});
-
-export const ownerNameRow = style({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '6px',
-});
-
-export const ownerName = style({
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.bold,
-  color: vars.color.text,
-});
-
-export const meText = style([inlineMeText]);
-
 export const footerRow = style({
   display: 'flex',
   alignItems: 'center',
@@ -61,7 +37,7 @@ export const footerRow = style({
 });
 
 export const dateText = style({
-  fontSize: vars.fontSize.text,
+  fontSize: vars.fontSize.subText,
   color: vars.color.text,
 });
 
@@ -69,7 +45,7 @@ export const memberMeta = style({
   display: 'inline-flex',
   alignItems: 'flex-end',
   gap: '4px',
-  fontSize: vars.fontSize.text,
+  fontSize: vars.fontSize.subText,
   fontWeight: vars.fontWeight.medium,
   color: vars.color.text,
 });

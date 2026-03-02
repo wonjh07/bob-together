@@ -7,13 +7,3 @@ export const dashboardContainer = style({
   minHeight: '100%',
   backgroundColor: vars.color.background,
 });
-
-export const loadingContainer = style({
-  width: '100%',
-  height: '200px',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  fontSize: vars.fontSize.text,
-  color: vars.color.text,
-});

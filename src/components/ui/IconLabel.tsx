@@ -1,32 +1,43 @@
+import CalendarIcon from '@/components/icons/CalendarIcon';
+import CommentIcon from '@/components/icons/CommentIcon';
+import GroupIcon from '@/components/icons/GroupIcon';
+import ReviewIcon from '@/components/icons/ReviewIcon';
+
 import * as styles from './IconLabel.css';
 
 import type { ReactNode } from 'react';
 
-function cx(...classNames: Array<string | undefined | false>) {
-  return classNames.filter(Boolean).join(' ');
-}
+const ICON_SIZE = 18;
+
+const ICON_MAP = {
+  calendar: CalendarIcon,
+  comment: CommentIcon,
+  group: GroupIcon,
+  review: ReviewIcon,
+} as const;
+
+type IconLabelIcon = keyof typeof ICON_MAP;
 
 interface IconLabelProps {
-  icon: ReactNode;
-  children: ReactNode;
+  icon: IconLabelIcon;
+  count: ReactNode;
   as?: 'div' | 'span' | 'p';
-  className?: string;
-  iconClassName?: string;
 }
 
 export default function IconLabel({
   icon,
-  children,
+  count,
   as = 'div',
-  className,
-  iconClassName,
 }: IconLabelProps) {
   const Component = as;
+  const IconComponent = ICON_MAP[icon];
 
   return (
-    <Component className={cx(styles.row, className)}>
-      <span className={cx(styles.icon, iconClassName)}>{icon}</span>
-      {children}
+    <Component className={styles.row}>
+      <span className={styles.icon}>
+        <IconComponent size={ICON_SIZE} />
+      </span>
+      <span className={styles.count}>{count}</span>
     </Component>
   );
 }

@@ -9,13 +9,14 @@ import { submitPlaceReviewAction } from '@/actions/appointment';
 import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import StarRatingInput from '@/components/ui/StarRatingInput';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import { createAppointmentReviewTargetQueryOptions } from '@/libs/query/appointmentQueries';
 import {
   invalidateReviewMutationQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
 import { useQueryScope } from '@/provider/query-scope-provider';
-import { extractDistrict } from '@/utils/address';
 import { formatDateDot } from '@/utils/dateFormat';
+import { canUseHistoryBack } from '@/utils/navigationBack';
 
 import * as styles from './page.css';
 
@@ -31,6 +32,13 @@ export default function ReviewEditorClient({
   const queryScope = useQueryScope();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const initializedAppointmentIdRef = useRef<string | null>(null);
+  const {
+    openRequestError,
+    syncRequestError,
+  } = useRequestErrorPresenter({
+    source: 'ReviewEditorClient.reviewTargetQuery.error',
+    fallbackMessage: '리뷰 정보를 불러오지 못했습니다.',
+  });
 
   const reviewTargetQuery = useQuery({
     ...createAppointmentReviewTargetQueryOptions(appointmentId, queryScope),
@@ -59,6 +67,17 @@ export default function ReviewEditorClient({
     element.style.height = `${element.scrollHeight}px`;
   }, [content]);
 
+  useEffect(() => {
+    syncRequestError({
+      isError: reviewTargetQuery.isError,
+      err: reviewTargetQuery.error,
+      message:
+        reviewTargetQuery.error instanceof Error
+          ? reviewTargetQuery.error.message
+          : '리뷰 정보를 불러오지 못했습니다.',
+    });
+  }, [reviewTargetQuery.error, reviewTargetQuery.isError, syncRequestError]);
+
   if (!appointmentId) {
     return (
       <div className={styles.page}>
@@ -80,19 +99,12 @@ export default function ReviewEditorClient({
   if (reviewTargetQuery.isError || !reviewTargetQuery.data) {
     return (
       <div className={styles.page}>
-        <PlainTopNav title="리뷰" onBack={() => router.back()} rightHidden />
-        <div className={styles.statusBox}>
-          {reviewTargetQuery.error instanceof Error
-            ? reviewTargetQuery.error.message
-            : '리뷰 정보를 불러오지 못했습니다.'}
-        </div>
-      </div>
+        <PlainTopNav title="리뷰" onBack={() => router.back()} rightHidden />      </div>
     );
   }
 
   const target = reviewTargetQuery.data.target;
   const isEditMode = target.hasReviewed;
-  const district = extractDistrict(target.place.address);
   const trimmedContent = content.trim();
   const canSubmit =
     score >= 1 &&
@@ -112,7 +124,10 @@ export default function ReviewEditorClient({
     setIsSubmitting(false);
 
     if (!result.ok) {
-      toast.error(result.message || '리뷰 등록에 실패했습니다.');
+      openRequestError(result.message || '리뷰 등록에 실패했습니다.', {
+        err: result,
+        source: 'ReviewEditorClient.handleSubmitReview.result',
+      });
       return;
     }
 
@@ -126,7 +141,11 @@ export default function ReviewEditorClient({
         ? '리뷰가 수정되었습니다.'
         : '리뷰가 등록되었습니다.',
     );
-    router.push('/dashboard/profile/reviews');
+    if (canUseHistoryBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/dashboard/profile/reviews');
   };
 
   return (
@@ -137,15 +156,10 @@ export default function ReviewEditorClient({
         <p className={styles.date}>{formatDateDot(target.startAt)}</p>
         <AppointmentPlaceMeta
           placeName={target.place.name}
-          placeNameAs="h2"
-          placeNameClassName={styles.placeName}
           placeHref={`/dashboard/places/${target.place.placeId}`}
           rating={target.place.reviewAverage}
           reviewCount={target.place.reviewCount}
-          district={district}
           category={target.place.category}
-          metaClassName={styles.placeMeta}
-          starClassName={styles.star}
         />
       </section>
 

@@ -1,5 +1,74 @@
 # DECISIONS
 
+## 요청 에러 표시 훅을 Presenter 계층으로 통일 (2026-03-01)
+- Decision: 화면 컴포넌트는 `useRequestErrorModal` 직접 의존 대신 `useRequestErrorPresenter`를 기본 사용한다.
+- Alternatives: 화면별로 `openRequestError/closeRequestError`를 직접 제어
+- Reason: 요청 에러 표시 책임(표시/닫기/소유권)을 훅으로 모아 컴포넌트 가독성과 유지보수성을 높이기 위함
+- Scope:
+  - 공통 훅:
+    - `src/hooks/useRequestErrorPresenter.ts` (호환 시그니처 `openRequestError/closeRequestError` + `syncRequestError` 제공)
+    - `src/hooks/useRequestErrorModal.ts` (`RequestErrorOpenOptions` export)
+  - 앱 전역 전환:
+    - `src/app/**`의 서비스 컴포넌트에서 `useRequestErrorPresenter` 사용으로 치환
+  - 동기화형 조회 에러 정리:
+    - `PlaceDetailClient`
+    - `AppointmentDetailClient`
+    - `ReviewEditorClient`
+    - `ReviewsWaitList`
+
+## 요청 실패 UI를 공통 모달로 일원화 (2026-02-27)
+- Decision: 폼 입력 검증 에러를 제외한 요청 실패 메시지는 인라인 텍스트 대신 공통 모달(`RequestErrorModal`)로 표시한다.
+- Alternatives: 화면별 `helperText`, `errorMessage`, `errorBox` 인라인 노출 유지
+- Reason: 요청 실패 메시지의 시각적 우선순위를 높이고, 화면마다 다른 에러 표현으로 인한 UX 편차를 줄이기 위함
+- Scope:
+  - 공통 UI/훅:
+    - `src/components/ui/RequestErrorModal.tsx`
+    - `src/components/ui/RequestErrorModal.css.ts`
+    - `src/hooks/useRequestErrorModal.ts`
+    - `src/components/ui/ListStateView.tsx` (`errorPresentation` 모달 모드 추가)
+  - 1차 전환 화면:
+    - 그룹 생성/검색
+    - 그룹 멤버 초대 / 약속 멤버 초대
+    - 약속 수정
+    - 약속 댓글 요청 실패
+    - 약속 생성/수정의 장소 검색 요청 실패
+  - 2차 전환 화면 (조회/리스트 요청 실패):
+    - 알림 목록, 그룹/댓글/리뷰/히스토리/작성 가능한 리뷰 목록
+    - 검색 결과(약속/그룹), 장소 상세 리뷰 목록
+    - 약속 상세/장소 상세/리뷰 에디터 조회 실패
+
+## 함수 실행 권한 화이트리스트화 (2026-02-27)
+- Decision: 앱 함수 실행 권한을 `anon`/`PUBLIC` 기본 허용에서 명시적 화이트리스트로 전환한다.
+- Alternatives: 기존처럼 `GRANT ... TO anon` + `PUBLIC` 실행 권한 유지
+- Reason: `SECURITY DEFINER` 함수는 내부 가드가 있어도 호출면 자체를 줄여야 오용/설정 누락 리스크를 낮출 수 있기 때문
+- Scope:
+  - `supabase/migrations/20260227013000_revoke_anon_function_execute.sql`
+  - `supabase/migrations/20260227013100_revoke_public_function_execute.sql`
+  - `anon`은 `check_email_exists(text)`만 유지
+
+## RLS 자동 활성화 이벤트 트리거 연결 (2026-02-27)
+- Decision: `public.rls_auto_enable()`를 `ddl_command_end` 이벤트 트리거(`rls_auto_enable_on_ddl`)에 연결한다.
+- Alternatives: 새 테이블 추가 시마다 수동으로 `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` 수행
+- Reason: 신규 테이블 누락으로 인한 RLS 미적용 보안 리스크를 운영 절차가 아닌 DB 레벨 자동화로 줄이기 위함
+- Scope:
+  - `supabase/migrations/20260227012000_enable_rls_auto_event_trigger.sql`
+
+## 사용자 스코프 SECURITY DEFINER 읽기 RPC 하드닝 (2026-02-27)
+- Decision: 사용자 식별자(`p_user_id`)를 받는 `SECURITY DEFINER` 읽기 RPC에 `p_user_id = auth.uid()` 바인딩을 강제하고, `anon` 실행 권한을 제거한다.
+- Alternatives: 기존처럼 액션 레벨 인증/파라미터 검증에 의존
+- Reason: DB 함수 자체에서 호출자 컨텍스트를 강제해야 파라미터 위조/오용 가능성을 구조적으로 차단할 수 있기 때문
+- Scope:
+  - `supabase/migrations/20260227011000_secure_user_scoped_read_rpcs.sql`
+  - 대상 RPC:
+    - `get_appointment_detail_with_count`
+    - `list_appointments_with_stats`
+    - `list_appointments_with_stats_cursor`
+    - `list_my_groups_with_stats`
+    - `list_reviewable_appointments_with_stats`
+    - `list_reviewable_appointments_with_stats_cursor`
+    - `search_appointments_with_count`
+    - `search_groups_with_count`
+
 ## 약속 멤버 목록 조회 권한을 그룹 멤버 기준으로 변경 (2026-02-26)
 - Decision: `get_appointment_members_with_count` 접근 권한을 "약속 멤버"가 아닌 "해당 약속의 그룹 멤버" 기준으로 변경한다.
 - Alternatives: 기존처럼 `appointment_members` 포함 사용자만 조회 허용

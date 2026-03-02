@@ -6,18 +6,24 @@ import { useEffect, useRef } from 'react';
 
 import DateTimeMetaRow from '@/components/ui/DateTimeMetaRow';
 import PlaceRatingMeta from '@/components/ui/PlaceRatingMeta';
+import { useHorizontalInfiniteObserver } from '@/hooks/useHorizontalInfiniteObserver';
+import { useHorizontalWheelScroll } from '@/hooks/useHorizontalWheelScroll';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import {
   createReviewableAppointmentsQueryOptions,
   type ReviewableAppointmentsPage,
 } from '@/libs/query/appointmentQueries';
 import { useQueryScope } from '@/provider/query-scope-provider';
-import { formatDateDot, formatTimeRange24 } from '@/utils/dateFormat';
 
 import * as styles from './ReviewsWaitList.css';
 
 export function ReviewsWaitList() {
   const queryScope = useQueryScope();
   const queryOptions = createReviewableAppointmentsQueryOptions(queryScope);
+  const { syncRequestError } = useRequestErrorPresenter({
+    source: 'ReviewsWaitList.query.error',
+    fallbackMessage: '작성 가능한 리뷰를 불러오지 못했습니다.',
+  });
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -29,72 +35,39 @@ export function ReviewsWaitList() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch,
   } = useInfiniteQuery({
     ...queryOptions,
   });
 
   const items =
-    data?.pages.flatMap((page: ReviewableAppointmentsPage) => page.appointments) ??
-    [];
+    data?.pages.flatMap(
+      (page: ReviewableAppointmentsPage) => page.appointments,
+    ) ?? [];
 
   useEffect(() => {
-    const root = scrollContainerRef.current;
-    const target = sentinelRef.current;
-    if (!root || !target || !hasNextPage || isFetchingNextPage) return;
+    syncRequestError({ isError, err: error });
+  }, [error, isError, syncRequestError]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (!entry?.isIntersecting) return;
-        void fetchNextPage();
-      },
-      {
-        root,
-        threshold: 0.1,
-        rootMargin: '0px 160px 0px 0px',
-      },
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [
-    fetchNextPage,
+  useHorizontalInfiniteObserver({
+    rootRef: scrollContainerRef,
+    targetRef: sentinelRef,
     hasNextPage,
     isFetchingNextPage,
-    items.length,
-    scrollContainerRef,
-  ]);
+    fetchNextPage,
+    observeKey: items.length,
+  });
 
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) {
-      return;
-    }
-
-    const handleWheel = (event: WheelEvent) => {
-      if (container.scrollWidth <= container.clientWidth) {
-        return;
-      }
-
-      // Trackpad horizontal gesture should keep native behavior.
-      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
-        return;
-      }
-
-      event.preventDefault();
-      container.scrollLeft += event.deltaY;
-    };
-
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => {
-      container.removeEventListener('wheel', handleWheel);
-    };
-  }, [items.length]);
+  useHorizontalWheelScroll({
+    containerRef: scrollContainerRef,
+  });
 
   if (isLoading) {
     return (
       <section className={styles.container}>
-        <div className={styles.emptyState}>작성 가능한 리뷰를 불러오는 중...</div>
+        <div className={styles.emptyState}>
+          작성 가능한 리뷰를 불러오는 중...
+        </div>
       </section>
     );
   }
@@ -103,10 +76,16 @@ export function ReviewsWaitList() {
     return (
       <section className={styles.container}>
         <div className={styles.emptyState}>
-          {error instanceof Error
-            ? error.message
-            : '작성 가능한 리뷰를 불러오지 못했습니다.'}
+          작성 가능한 리뷰를 불러오지 못했습니다.
         </div>
+        <button
+          type="button"
+          className={styles.retryButton}
+          onClick={() => {
+            void refetch();
+          }}>
+          다시 시도
+        </button>
       </section>
     );
   }
@@ -121,9 +100,7 @@ export function ReviewsWaitList() {
 
   return (
     <section className={styles.container}>
-      <div
-        ref={scrollContainerRef}
-        className={styles.scrollRow}>
+      <div ref={scrollContainerRef} className={styles.scrollRow}>
         {items.map((review) => {
           return (
             <article key={review.appointmentId} className={styles.card}>
@@ -137,12 +114,9 @@ export function ReviewsWaitList() {
                 textClassName={styles.scoreText}
               />
               <DateTimeMetaRow
-                date={formatDateDot(review.startAt)}
-                timeRange={formatTimeRange24(review.startAt, review.endsAt)}
+                startAt={review.startAt}
+                endsAt={review.endsAt}
                 direction="column"
-                itemClassName={styles.infoRow}
-                dateIconSize={18}
-                timeIconSize={18}
               />
               <Link
                 href={`/dashboard/profile/reviews/${review.appointmentId}`}

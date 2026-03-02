@@ -3,12 +3,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
 import { createGroupAction } from '@/actions/group';
 import PlainTopNav from '@/components/ui/PlainTopNav';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import { invalidateGroupMembershipQueries } from '@/libs/query/invalidateGroupQueries';
 import { groupFormSchema } from '@/schemas/group';
 
@@ -19,7 +19,9 @@ import type { GroupFormInput } from '@/schemas/group';
 export default function GroupCreateClient() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [errorMessage, setErrorMessage] = useState('');
+  const {
+    openRequestError,
+  } = useRequestErrorPresenter();
 
   const {
     register,
@@ -31,22 +33,27 @@ export default function GroupCreateClient() {
   });
 
   const onSubmit = async (data: GroupFormInput) => {
-    setErrorMessage('');
     const result = await createGroupAction(data.groupName);
 
     if (!result.ok) {
-      setErrorMessage(result.message || '그룹 생성에 실패했습니다.');
+      openRequestError(result.message || '그룹 생성에 실패했습니다.', {
+        err: result,
+        source: 'GroupCreateClient.onSubmit.result',
+      });
       return;
     }
 
     if (!result.data) {
-      setErrorMessage('그룹 정보를 확인할 수 없습니다.');
+      openRequestError('그룹 정보를 확인할 수 없습니다.', {
+        err: result,
+        source: 'GroupCreateClient.onSubmit.noData',
+      });
       return;
     }
 
     await invalidateGroupMembershipQueries(queryClient);
     toast.success('그룹을 생성했습니다.');
-    router.push(`/dashboard/profile/groups/${result.data.groupId}/members`);
+    router.replace(`/dashboard/profile/groups/${result.data.groupId}/members`);
   };
 
   return (
@@ -63,7 +70,7 @@ export default function GroupCreateClient() {
             <input
               id="group-name"
               className={styles.input}
-              placeholder="그룹명을 입력하세요"
+              placeholder="그룹명"
               disabled={isSubmitting}
               {...register('groupName')}
             />
@@ -75,10 +82,9 @@ export default function GroupCreateClient() {
             </button>
           </div>
           <div className={styles.helperText}>
-            {errors.groupName?.message || errorMessage}
+            {errors.groupName?.message || ''}
           </div>
         </form>
-      </div>
-    </div>
+      </div>    </div>
   );
 }

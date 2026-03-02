@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css';
+import { style, styleVariants } from '@vanilla-extract/css';
 
 import * as dropdown from '@/styles/primitives/dropdown.css';
 import { vars } from '@/styles/theme.css';
@@ -7,15 +7,39 @@ export const groupDropdown = style({
   position: 'relative',
 });
 
-export const groupButton = style([dropdown.triggerGhost]);
-
-export const groupButtonActive = style({
-  color: vars.color.main,
+export const groupButtonLabel = style({
+  maxWidth: '140px',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 });
 
-export const chevronIcon = style([dropdown.chevron]);
+const groupButtonBase = style([
+  dropdown.triggerGhost,
+]);
 
-export const chevronIconOpen = style([dropdown.chevronOpen]);
+export const groupButton = styleVariants({
+  closed: [groupButtonBase],
+  open: [
+    groupButtonBase,
+    {
+      color: vars.color.main,
+    },
+  ],
+});
+
+const chevronIconBase = style([
+  dropdown.chevron,
+]);
+export const chevronIcon = styleVariants({
+  closed: [chevronIconBase],
+  open: [
+    chevronIconBase,
+    {
+      transform: 'rotate(180deg)',
+    },
+  ],
+});
 
 export const dropdownMenu = style([
   dropdown.menuSurface,
@@ -28,20 +52,31 @@ export const dropdownMenu = style([
   },
 ]);
 
-export const dropdownItem = style([
+const dropdownItemBase = style([
   dropdown.menuItemButton,
   {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: '8px',
   },
 ]);
-
-export const dropdownItemActive = style([dropdown.menuItemSelected]);
+export const dropdownItem = styleVariants({
+  default: [dropdownItemBase],
+  selected: [
+    dropdownItemBase,
+    {
+      backgroundColor: vars.color.mainSoft,
+      color: vars.color.main,
+      fontWeight: vars.fontWeight.semibold,
+    },
+  ],
+});
+export const dropdownItemLabel = style({
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+});
 
 export const dropdownEmpty = style([dropdown.menuEmptyText]);
-
-export const dropdownMeta = style({
-  fontSize: vars.fontSize.caption,
-  color: vars.color.subText,
-});

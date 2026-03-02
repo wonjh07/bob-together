@@ -16,6 +16,21 @@ import { GroupProvider } from '@/provider/group-provider';
 
 import * as styles from './page.css';
 
+function resolveInitialGroupId(
+  groups: Array<{ groupId: string }>,
+  selectedGroupId: string | null,
+) {
+  if (!selectedGroupId) {
+    return groups[0]?.groupId ?? null;
+  }
+
+  if (groups.some((group) => group.groupId === selectedGroupId)) {
+    return selectedGroupId;
+  }
+
+  return groups[0]?.groupId ?? null;
+}
+
 export default async function DashboardPage() {
   const groupResult = await getMyGroupsAction();
   const groups =
@@ -26,17 +41,17 @@ export default async function DashboardPage() {
   }
 
   const selectedGroupId = await getSelectedGroupCookie();
-  const initialGroupId =
-    selectedGroupId && groups.some((group) => group.groupId === selectedGroupId)
-      ? selectedGroupId
-      : groups.length > 0
-        ? groups[0].groupId
-        : null;
+  const initialGroupId = resolveInitialGroupId(groups, selectedGroupId);
 
   const queryClient = new QueryClient();
   const queryScope = await getServerQueryScope();
+  const myGroupsQueryOptions = createMyGroupsQueryOptions(queryScope);
 
-  await queryClient.prefetchQuery(createMyGroupsQueryOptions(queryScope));
+  if (groupResult.ok && groupResult.data) {
+    queryClient.setQueryData(myGroupsQueryOptions.queryKey, groups);
+  } else {
+    await queryClient.prefetchQuery(myGroupsQueryOptions);
+  }
 
   if (initialGroupId) {
     await queryClient.prefetchInfiniteQuery(
@@ -46,12 +61,12 @@ export default async function DashboardPage() {
 
   return (
     <GroupProvider initialGroupId={initialGroupId}>
-      <div className={styles.dashboardContainer}>
-        <DashboardHeader />
-        <HydrationBoundary state={dehydrate(queryClient)}>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <div className={styles.dashboardContainer}>
+          <DashboardHeader />
           <AppointmentList />
-        </HydrationBoundary>
-      </div>
+        </div>
+      </HydrationBoundary>
     </GroupProvider>
   );
 }

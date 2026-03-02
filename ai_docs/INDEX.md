@@ -14,4 +14,3 @@
 - DESIGN_SCAN.md: UI scan notes and component mapping from design images.
 - DATA_STATE_STRATEGY.md: Data fetching + state strategy and guardrails.
 - CACHE_OWNERSHIP.md: Server/Client cache ownership map and invalidation rules.
-- CHANGELOG_AI.md: AI-driven changes summary (rolling).

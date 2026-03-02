@@ -27,15 +27,7 @@ export const form = style({
   display: 'flex',
   flexDirection: 'column',
   gap: '12px',
-});
-
-export const label = style({
-  fontSize: vars.fontSize.caption,
-  fontWeight: vars.fontWeight.semibold,
-  color: vars.color.subText,
-});
-
-export const row = style({
+});export const row = style({
   display: 'flex',
   alignItems: 'center',
   gap: '12px',

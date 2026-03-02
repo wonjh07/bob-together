@@ -6,16 +6,7 @@ export const inputWrapper = style({
   display: 'flex',
   flexDirection: 'column',
   gap: '4px',
-});
-
-export const inputLabel = style({
-  fontSize: vars.fontSize.caption,
-  fontWeight: vars.fontWeight.semibold,
-  color: vars.color.text,
-  marginBottom: '8px',
-});
-
-export const inputField = style({
+});export const inputField = style({
   width: '100%',
   padding: '12px',
   fontSize: vars.fontSize.text,

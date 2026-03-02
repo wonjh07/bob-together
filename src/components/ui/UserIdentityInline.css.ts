@@ -1,13 +1,17 @@
 import { style, styleVariants } from '@vanilla-extract/css';
 
-import { inlineMeText } from '@/styles/primitives/badge.css';
 import { vars } from '@/styles/theme.css';
 
 export const row = style({
   display: 'inline-flex',
   alignItems: 'center',
-  gap: '8px',
   minWidth: 0,
+});
+
+export const rowSize = styleVariants({
+  sm: { gap: '6px' },
+  md: { gap: '8px' },
+  lg: { gap: '12px' },
 });
 
 export const avatar = style({
@@ -19,17 +23,21 @@ export const avatar = style({
 });
 
 export const avatarSize = styleVariants({
-  xs: { width: '28px', height: '28px' },
   sm: { width: '30px', height: '30px' },
-  md: { width: '36px', height: '36px' },
-  lg: { width: '42px', height: '42px' },
-  xl: { width: '56px', height: '56px' },
+  md: { width: '42px', height: '42px' },
+  lg: { width: '56px', height: '56px' },
 });
 
 export const textWrap = style({
   display: 'flex',
   flexDirection: 'column',
   minWidth: 0,
+});
+
+export const textWrapSize = styleVariants({
+  sm: { gap: '0px' },
+  md: { gap: '2px' },
+  lg: { gap: '2px' },
 });
 
 export const nameRow = style({
@@ -40,22 +48,53 @@ export const nameRow = style({
 });
 
 export const name = style({
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.semibold,
   color: vars.color.text,
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
 });
 
-export const meText = style([inlineMeText]);
+export const nameSize = styleVariants({
+  sm: {
+    fontSize: vars.fontSize.subText,
+    fontWeight: vars.fontWeight.semibold,
+  },
+  md: {
+    fontSize: vars.fontSize.text,
+    fontWeight: vars.fontWeight.semibold,
+  },
+  lg: {
+    fontSize: vars.fontSize.text,
+    fontWeight: vars.fontWeight.semibold,
+  },
+});
+
+export const meText = style({
+  color: vars.color.main,
+  fontSize: vars.fontSize.subText,
+  fontWeight: vars.fontWeight.bold,
+  flexShrink: 0,
+});
 
 export const subtitle = style({
   margin: 0,
-  fontSize: vars.fontSize.subText,
-  fontWeight: vars.fontWeight.medium,
   color: vars.color.subText,
   whiteSpace: 'nowrap',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
+});
+
+export const subtitleSize = styleVariants({
+  sm: {
+    fontSize: vars.fontSize.caption,
+    fontWeight: vars.fontWeight.medium,
+  },
+  md: {
+    fontSize: vars.fontSize.subText,
+    fontWeight: vars.fontWeight.medium,
+  },
+  lg: {
+    fontSize: vars.fontSize.subText,
+    fontWeight: vars.fontWeight.medium,
+  },
 });

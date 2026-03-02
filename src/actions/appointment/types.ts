@@ -129,6 +129,7 @@ export interface AppointmentListItem {
   creatorId: string;
   creatorName: string | null;
   creatorNickname: string | null;
+  creatorProfileImage: string | null;
   place: {
     placeId: string;
     name: string;
@@ -179,6 +180,7 @@ export interface AppointmentInviteeSummary {
   userId: string;
   name: string | null;
   nickname: string | null;
+  profileImage: string | null;
 }
 
 export interface AppointmentCommentItem {

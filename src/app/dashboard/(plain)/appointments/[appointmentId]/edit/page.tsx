@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { getAppointmentDetailAction } from '@/actions/appointment';
 import PlainTopNav from '@/components/ui/PlainTopNav';
+import RequestErrorModal from '@/components/ui/RequestErrorModal';
 
 import AppointmentEditClient from './AppointmentEditClient';
 import * as styles from './page.css';
@@ -55,11 +56,14 @@ export default async function AppointmentEditPage({
     return (
       <div className={styles.page}>
         <PlainTopNav title="약속 수정" rightHidden />
-        <div className={styles.errorBox}>
-          {result.ok
-            ? '약속 정보를 불러올 수 없습니다.'
-            : result.message || '약속 정보를 불러올 수 없습니다.'}
-        </div>
+        <RequestErrorModal
+          isOpen
+          message={
+            result.ok
+              ? '약속 정보를 불러올 수 없습니다.'
+              : result.message || '약속 정보를 불러올 수 없습니다.'
+          }
+        />
       </div>
     );
   }

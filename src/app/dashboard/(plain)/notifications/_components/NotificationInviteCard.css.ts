@@ -6,11 +6,6 @@ import {
   actionButtonPrimary,
   actionButtonSecondary,
 } from '@/styles/primitives/actionButton.css';
-import {
-  badgeToneAccepted,
-  badgeToneMuted,
-} from '@/styles/primitives/badge.css';
-import { feedbackPanelText } from '@/styles/primitives/feedback.css';
 import { vars } from '@/styles/theme.css';
 
 export const card = style({
@@ -78,20 +73,6 @@ export const metaRow = style({
   gap: '6px',
 });
 
-export const avatar = style({
-  width: '30px',
-  height: '30px',
-  borderRadius: '9999px',
-  border: `1px solid ${vars.color.stroke}`,
-  objectFit: 'cover',
-});
-
-export const metaText = style({
-  fontSize: vars.fontSize.text,
-  fontWeight: vars.fontWeight.normal,
-  color: vars.color.text,
-});
-
 export const actionRow = style({
   display: 'flex',
   gap: '12px',
@@ -119,11 +100,3 @@ export const rejectButton = style([
   invitationActionButtonBase,
   actionButtonSecondary,
 ]);
-
-export const statusText = style([feedbackPanelText]);
-
-export const acceptedStatus = style([badgeToneAccepted]);
-
-export const rejectedStatus = style([badgeToneMuted]);
-
-export const endedText = style([feedbackPanelText, badgeToneMuted]);

@@ -20,6 +20,7 @@ interface InviteeCandidateRow {
   user_id: string;
   name: string | null;
   nickname: string | null;
+  profile_image: string | null;
 }
 
 interface SearchAppointmentInviteesRpcRow {
@@ -90,6 +91,7 @@ export async function searchAppointmentInvitableUsersAction(params: {
         userId: row.user_id,
         name: row.name ?? null,
         nickname: row.nickname ?? null,
+        profileImage: row.profile_image ?? null,
       }),
     );
 

@@ -7,11 +7,19 @@ export const list = style({
   flexDirection: 'column',
 });
 
-export const status = style({
+export const statusMessage = style({
   padding: '20px 16px',
   textAlign: 'center',
   fontSize: vars.fontSize.text,
   color: vars.color.subText,
+});
+
+export const stateBox = style({
+  padding: '20px 16px',
+});
+
+export const statusInline = style({
+  padding: '16px',
 });
 
 export const loadMoreTrigger = style({

@@ -18,8 +18,10 @@ import TrashIcon from '@/components/icons/TrashIcon';
 import FormError from '@/components/ui/FormError';
 import { Input } from '@/components/ui/FormInput';
 import PlainTopNav from '@/components/ui/PlainTopNav';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import { nameSchema, nicknameSchema, passwordSchema } from '@/schemas/auth';
 import { convertToJpegUnderLimit } from '@/utils/convertToJpegUnderLimit';
+import { canUseHistoryBack } from '@/utils/navigationBack';
 
 import * as styles from './ProfileEditClient.css';
 
@@ -75,6 +77,7 @@ export default function ProfileEditClient({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [isImageMarkedForDelete, setIsImageMarkedForDelete] = useState(false);
+  const { openRequestError } = useRequestErrorPresenter();
   const {
     register,
     handleSubmit,
@@ -152,8 +155,9 @@ export default function ProfileEditClient({
     });
 
     if (!result.ok) {
-      setError('root', {
-        message: result.message || '프로필 저장에 실패했습니다.',
+      openRequestError(result.message || '프로필 저장에 실패했습니다.', {
+        err: result,
+        source: 'ProfileEditClient.onSubmit.updateProfile.result',
       });
       return;
     }
@@ -172,7 +176,10 @@ export default function ProfileEditClient({
               ? '프로필 정보는 저장되었지만 이미지 업로드에 실패했습니다.'
               : uploadResult.message ||
                 '프로필 정보는 저장되었지만 이미지 업로드에 실패했습니다.';
-            setError('root', { message });
+            openRequestError(message, {
+              err: uploadResult,
+              source: 'ProfileEditClient.onSubmit.uploadProfileImage.result',
+            });
             return;
           }
 
@@ -187,11 +194,14 @@ export default function ProfileEditClient({
         if (isImageMarkedForDelete) {
           const deleteResult = await deleteProfileImageAction();
           if (!deleteResult.ok) {
-            setError('root', {
-              message:
-                deleteResult.message ||
+            openRequestError(
+              deleteResult.message ||
                 '프로필 정보는 저장되었지만 이미지 삭제에 실패했습니다.',
-            });
+              {
+                err: deleteResult,
+                source: 'ProfileEditClient.onSubmit.deleteProfileImage.result',
+              },
+            );
             return;
           }
 
@@ -204,7 +214,11 @@ export default function ProfileEditClient({
     }
 
     toast.success('프로필이 저장되었습니다.');
-    router.push('/dashboard/profile');
+    if (canUseHistoryBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/dashboard/profile');
   });
 
   const displayProfileImage = isImageMarkedForDelete

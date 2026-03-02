@@ -1,5 +1,6 @@
 'use server';
 
+import { withDevErrorDetails } from '@/actions/_common/devError';
 import { requireUser } from '@/actions/_common/guards';
 import { actionError, actionSuccess } from '@/actions/_common/result';
 
@@ -44,7 +45,10 @@ export async function uploadProfileImageAction(
     });
 
   if (uploadError) {
-    return actionError('upload-failed', '이미지 업로드 중 오류가 발생했습니다.');
+    return actionError(
+      'upload-failed',
+      withDevErrorDetails('이미지 업로드 중 오류가 발생했습니다.', uploadError),
+    );
   }
 
   const {

@@ -1,7 +1,6 @@
 'use client';
 
 import CalendarIcon from '@/components/icons/CalendarIcon';
-import IconLabel from '@/components/ui/IconLabel';
 import OverflowMenu from '@/components/ui/OverflowMenu';
 import { formatDateDot } from '@/utils/dateFormat';
 
@@ -29,11 +28,10 @@ export default function MyCommentCard({
   return (
     <article className={styles.card}>
       <div className={styles.headerRow}>
-        <IconLabel
-          className={styles.titleRow}
-          icon={<CalendarIcon className={styles.calendarIcon} />}>
+        <div className={styles.titleRow}>
+          <CalendarIcon className={styles.calendarIcon} />
           <h2 className={styles.title}>{comment.appointmentTitle}</h2>
-        </IconLabel>
+        </div>
 
         <OverflowMenu
           isOpen={isMenuOpen}

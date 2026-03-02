@@ -8,7 +8,7 @@
 - Default to `createSupabaseServerClient` + RLS.
 - Use `createSupabaseAdminClient` only for explicit exceptions.
 - Treat every DB change as migration-first.
-- Keep action changes synchronized with docs (`ACTIONS`, `DB_RLS`, `CHANGELOG_AI`).
+- Keep action changes synchronized with docs (`ACTIONS`, `DB_RLS`).
 
 ## Client Choice Rules
 - Auth-context CRUD: server client.

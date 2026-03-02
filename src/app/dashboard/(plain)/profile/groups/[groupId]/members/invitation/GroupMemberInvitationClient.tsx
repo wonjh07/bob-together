@@ -11,6 +11,8 @@ import {
 } from '@/actions/group';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import SearchInput from '@/components/ui/SearchInput';
+import UserIdentityInline from '@/components/ui/UserIdentityInline';
+import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
 import { groupSearchFormSchema } from '@/schemas/group';
 
 import {
@@ -22,8 +24,6 @@ import {
   results,
   resultItem,
   resultInfo,
-  resultName,
-  resultSub,
   inviteButton,
   invitedButton,
   helperText,
@@ -44,9 +44,11 @@ export default function GroupMemberInvitationClient({
   const [isSearched, setIsSearched] = useState(false);
   const [invitedIds, setInvitedIds] = useState<string[]>([]);
   const [memberIds, setMemberIds] = useState<string[]>([]);
-  const [errorMessage, setErrorMessage] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isInviting, setIsInviting] = useState<Record<string, boolean>>({});
+  const {
+    openRequestError,
+  } = useRequestErrorPresenter();
 
   const {
     control,
@@ -63,7 +65,9 @@ export default function GroupMemberInvitationClient({
   const performSearch = useCallback(
     async (query: string) => {
       if (!groupId) {
-        setErrorMessage('그룹 정보가 필요합니다.');
+        openRequestError('그룹 정보가 필요합니다.', {
+          source: 'GroupMemberInvitationClient.performSearch.noGroupId',
+        });
         return;
       }
 
@@ -75,18 +79,23 @@ export default function GroupMemberInvitationClient({
       }
 
       setIsSearching(true);
-      setErrorMessage('');
       setIsSearched(false);
       const result = await searchGroupInvitableUsersAction(groupId, trimmedQuery);
       setIsSearching(false);
 
       if (!result.ok) {
-        setErrorMessage(result.message || '사용자 검색에 실패했습니다.');
+        openRequestError(result.message || '사용자 검색에 실패했습니다.', {
+          err: result,
+          source: 'GroupMemberInvitationClient.performSearch.result',
+        });
         return;
       }
 
       if (!result.data) {
-        setErrorMessage('검색 결과를 불러올 수 없습니다.');
+        openRequestError('검색 결과를 불러올 수 없습니다.', {
+          err: result,
+          source: 'GroupMemberInvitationClient.performSearch.noData',
+        });
         return;
       }
 
@@ -97,7 +106,7 @@ export default function GroupMemberInvitationClient({
         Array.from(new Set([...prev, ...pendingInviteeIds])),
       );
     },
-    [groupId],
+    [groupId, openRequestError],
   );
 
   const onSubmit = async (data: GroupSearchFormInput) => {
@@ -106,12 +115,13 @@ export default function GroupMemberInvitationClient({
 
   const handleInvite = async (userId: string) => {
     if (!groupId) {
-      setErrorMessage('그룹 정보가 필요합니다.');
+      openRequestError('그룹 정보가 필요합니다.', {
+        source: 'GroupMemberInvitationClient.handleInvite.noGroupId',
+      });
       return;
     }
 
     setIsInviting((prev) => ({ ...prev, [userId]: true }));
-    setErrorMessage('');
 
     const result = await sendGroupInvitationAction(groupId, userId);
 
@@ -132,7 +142,10 @@ export default function GroupMemberInvitationClient({
         return;
       }
 
-      setErrorMessage(result.message || '초대에 실패했습니다.');
+      openRequestError(result.message || '초대에 실패했습니다.', {
+        err: result,
+        source: 'GroupMemberInvitationClient.handleInvite.result',
+      });
       return;
     }
 
@@ -164,7 +177,7 @@ export default function GroupMemberInvitationClient({
             )}
           />
           <div className={helperText}>
-            {errors.query?.message || errorMessage}
+            {errors.query?.message || ''}
           </div>
         </form>
 
@@ -182,10 +195,13 @@ export default function GroupMemberInvitationClient({
             return (
               <div className={resultItem} key={user.userId}>
                 <div className={resultInfo}>
-                  <div className={resultName}>
-                    {user.nickname || user.name || '알 수 없음'}
-                  </div>
-                  <div className={resultSub}>{secondaryText}</div>
+                  <UserIdentityInline
+                    name={user.nickname || user.name || '알 수 없음'}
+                    subtitle={secondaryText}
+                    avatarSrc={user.profileImage}
+                    avatarAlt="사용자 프로필 이미지"
+                    size="lg"
+                  />
                 </div>
                 <button
                   type="button"
@@ -209,7 +225,6 @@ export default function GroupMemberInvitationClient({
             <div className={emptyResult}>검색 결과가 없습니다.</div>
           ) : null}
         </div>
-      </div>
-    </div>
+      </div>    </div>
   );
 }

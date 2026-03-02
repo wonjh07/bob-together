@@ -64,6 +64,7 @@ export default function ProfileReviewWaitListClient() {
           isError={isError}
           isEmpty={isEmpty}
           error={error}
+          errorPresentation="modal"
           loadingVariant="spinner"
           loadingText="작성 가능한 리뷰를 불러오는 중..."
           emptyText="작성 가능한 리뷰가 없습니다."
@@ -84,16 +85,10 @@ export default function ProfileReviewWaitListClient() {
 
               <AppointmentPlaceMeta
                 title={appointment.title}
-                titleAs="h2"
-                titleClassName={cardStyles.title}
                 placeName={appointment.placeName}
-                placeNameAs="p"
-                placeNameClassName={cardStyles.placeName}
                 placeHref={`/dashboard/places/${appointment.placeId}`}
                 rating={appointment.reviewAverage}
                 reviewCount={appointment.reviewCount}
-                metaClassName={cardStyles.placeMeta}
-                starClassName={cardStyles.star}
                 showReviewCountWhenZero={false}
               />
 
