@@ -10,19 +10,26 @@ type GroupMembersPageProps = {
   params: {
     groupId: string;
   };
+  searchParams?: {
+    from?: string;
+  };
 };
 
 export default async function GroupMembersPage({
   params,
+  searchParams,
 }: GroupMembersPageProps) {
   const result = await getGroupMembersAction(params.groupId);
+  const fromOnboarding = searchParams?.from === 'onboarding';
+  const backHref = fromOnboarding ? '/dashboard' : '/dashboard/profile/groups';
 
   if (!result.ok || !result.data) {
     return (
       <div className={styles.page}>
         <PlainTopNav
           title="그룹 멤버"
-          backHref="/dashboard/profile/groups"
+          backHref={backHref}
+          backBehavior={fromOnboarding ? 'href' : 'auto'}
           rightLabel="멤버 초대"
           rightHref={`/dashboard/profile/groups/${params.groupId}/members/invitation`}
           rightAriaLabel="멤버 초대하기"
@@ -45,7 +52,8 @@ export default async function GroupMembersPage({
     <div className={styles.page}>
       <PlainTopNav
         title="그룹 멤버"
-        backHref="/dashboard/profile/groups"
+        backHref={backHref}
+        backBehavior={fromOnboarding ? 'href' : 'auto'}
         rightLabel="멤버 초대"
         rightHref={`/dashboard/profile/groups/${params.groupId}/members/invitation`}
         rightAriaLabel="멤버 초대하기"

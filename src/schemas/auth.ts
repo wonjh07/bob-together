@@ -72,7 +72,48 @@ export const signupSchema = z
   });
 
 /**
+ * 이메일 찾기 스키마
+ */
+export const emailFindSchema = z.object({
+  name: nameSchema,
+  nickname: nicknameSchema,
+});
+
+/**
+ * 비밀번호 재설정 - 사용자 검증 스키마
+ */
+export const resetPasswordIdentitySchema = z.object({
+  email: emailSchema,
+  name: nameSchema,
+});
+
+/**
+ * 비밀번호 재설정 - 비밀번호 입력 스키마
+ */
+export const resetPasswordUpdateSchema = z
+  .object({
+    newPassword: passwordSchema,
+    passwordConfirm: z.string().min(1, '비밀번호 확인을 입력해주세요.'),
+  })
+  .refine((data) => data.newPassword === data.passwordConfirm, {
+    message: '비밀번호가 일치하지 않습니다.',
+    path: ['passwordConfirm'],
+  });
+
+/**
+ * 비밀번호 재설정 스키마
+ */
+export const resetPasswordSchema =
+  resetPasswordIdentitySchema.and(resetPasswordUpdateSchema);
+
+/**
  * 타입 추론
  */
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;
+export type EmailFindInput = z.infer<typeof emailFindSchema>;
+export type ResetPasswordIdentityInput = z.infer<
+  typeof resetPasswordIdentitySchema
+>;
+export type ResetPasswordUpdateInput = z.infer<typeof resetPasswordUpdateSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

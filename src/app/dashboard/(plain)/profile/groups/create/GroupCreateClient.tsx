@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
@@ -18,6 +18,7 @@ import type { GroupFormInput } from '@/schemas/group';
 
 export default function GroupCreateClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const {
     openRequestError,
@@ -53,7 +54,11 @@ export default function GroupCreateClient() {
 
     await invalidateGroupMembershipQueries(queryClient);
     toast.success('그룹을 생성했습니다.');
-    router.replace(`/dashboard/profile/groups/${result.data.groupId}/members`);
+    const fromOnboarding = searchParams.get('from') === 'onboarding';
+    const memberPath = fromOnboarding
+      ? `/dashboard/profile/groups/${result.data.groupId}/members?from=onboarding`
+      : `/dashboard/profile/groups/${result.data.groupId}/members`;
+    router.replace(memberPath);
   };
 
   return (

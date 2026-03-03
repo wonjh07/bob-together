@@ -30,11 +30,13 @@ export default async function GroupEntryPage() {
         <div className={styles.buttonStack}>
           <Link
             href="/dashboard/profile/groups/find"
+            replace
             className={`${styles.buttonBase} ${styles.primaryButton} ${styles.linkButton}`}>
             그룹 가입하기
           </Link>
           <Link
-            href="/dashboard/profile/groups/create"
+            href="/dashboard/profile/groups/create?from=onboarding"
+            replace
             className={`${styles.buttonBase} ${styles.secondaryButton} ${styles.linkButton}`}>
             그룹 생성하기
           </Link>

@@ -5,11 +5,13 @@ import { useEffect, type RefObject } from 'react';
 interface UseHorizontalWheelScrollOptions {
   containerRef: RefObject<HTMLElement | null>;
   enabled?: boolean;
+  observeKey?: unknown;
 }
 
 export function useHorizontalWheelScroll({
   containerRef,
   enabled = true,
+  observeKey,
 }: UseHorizontalWheelScrollOptions) {
   useEffect(() => {
     if (!enabled) return;
@@ -31,5 +33,5 @@ export function useHorizontalWheelScroll({
     return () => {
       container.removeEventListener('wheel', handleWheel);
     };
-  }, [containerRef, enabled]);
+  }, [containerRef, enabled, observeKey]);
 }

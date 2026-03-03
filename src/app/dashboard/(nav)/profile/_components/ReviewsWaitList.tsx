@@ -60,6 +60,7 @@ export function ReviewsWaitList() {
 
   useHorizontalWheelScroll({
     containerRef: scrollContainerRef,
+    observeKey: items.length,
   });
 
   if (isLoading) {

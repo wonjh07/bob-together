@@ -2,8 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
-import toast from 'react-hot-toast';
 
 import BellIcon from '@/components/icons/BellIcon';
 import { createHasPendingInvitationsQueryOptions } from '@/libs/query/invitationQueries';
@@ -21,8 +19,6 @@ import {
 } from './TopNavigation.css';
 import { ProfileDropdown } from './ui/ProfileDrop';
 
-const PENDING_INVITATION_TOAST_ID = 'pending-invitation-alert';
-
 function extractUserIdFromScope(scope: string) {
   if (!scope.startsWith('user:')) {
     return null;
@@ -35,30 +31,12 @@ function extractUserIdFromScope(scope: string) {
 export function TopNav() {
   const queryScope = useQueryScope();
   const userId = extractUserIdFromScope(queryScope);
-  const hasShownPendingToastRef = useRef(false);
 
   const { data: hasPendingInvitations = false } = useQuery({
     ...createHasPendingInvitationsQueryOptions(queryScope),
     enabled: Boolean(userId),
   });
   const hasNewNotification = hasPendingInvitations;
-
-  useEffect(() => {
-    if (!hasPendingInvitations) {
-      hasShownPendingToastRef.current = false;
-      toast.dismiss(PENDING_INVITATION_TOAST_ID);
-      return;
-    }
-
-    if (hasShownPendingToastRef.current) {
-      return;
-    }
-
-    toast.error('새로운 알림이 있습니다.', {
-      id: PENDING_INVITATION_TOAST_ID,
-    });
-    hasShownPendingToastRef.current = true;
-  }, [hasPendingInvitations]);
 
   return (
     <header className={topNav}>

@@ -10,6 +10,7 @@ interface PlainTopNavProps {
   title: string;
   onBack?: () => void;
   backHref?: string;
+  backBehavior?: 'auto' | 'history' | 'href';
   backAriaLabel?: string;
   rightLabel?: string;
   onRightAction?: () => void;
@@ -23,6 +24,7 @@ export default function PlainTopNav({
   title,
   onBack,
   backHref,
+  backBehavior = 'auto',
   backAriaLabel = '뒤로가기',
   rightLabel,
   onRightAction,
@@ -39,7 +41,17 @@ export default function PlainTopNav({
       return;
     }
 
-    if (canUseHistoryBack()) {
+    if (backBehavior === 'href') {
+      router.replace(backHref || '/dashboard');
+      return;
+    }
+
+    if (backBehavior !== 'history') {
+      if (canUseHistoryBack()) {
+        router.back();
+        return;
+      }
+    } else if (canUseHistoryBack()) {
       router.back();
       return;
     }

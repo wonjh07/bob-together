@@ -3,8 +3,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/libs/supabase/proxy';
 
 // 경로 보호 설정
-const PUBLIC_ROUTES = ['/', '/login', '/signup'];
-const AUTH_ROUTES = ['/login', '/signup'];
+const PUBLIC_ROUTES = ['/', '/login', '/signup', '/email-find', '/reset-password'];
+const AUTH_ROUTES = ['/login', '/signup', '/email-find', '/reset-password'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
