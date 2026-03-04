@@ -5,35 +5,22 @@ import { findEmailAction } from './findEmailAction';
 jest.mock('@/libs/supabase/server');
 
 describe('findEmailAction', () => {
-  const mockLimit = jest.fn();
-  const mockOrder = jest.fn();
-  const mockNot = jest.fn();
-  const mockEq = jest.fn();
-  const mockSelect = jest.fn();
-  const mockFrom = jest.fn();
+  const mockRpc = jest.fn();
 
   const mockSupabaseClient = {
-    from: mockFrom,
+    rpc: mockRpc,
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFrom.mockReturnValue({ select: mockSelect });
-    mockSelect.mockReturnValue({ eq: mockEq });
-    mockEq.mockReturnValue({ eq: mockEq });
-    mockNot.mockReturnValue({ order: mockOrder });
-    mockOrder.mockReturnValue({ limit: mockLimit });
-
     (createSupabaseAdminClient as jest.Mock).mockReturnValue(
       mockSupabaseClient,
     );
   });
 
   it('유효한 이름/닉네임이면 마스킹 이메일을 반환해야 한다', async () => {
-    mockEq.mockImplementationOnce(() => ({ eq: mockEq }));
-    mockEq.mockImplementationOnce(() => ({ not: mockNot }));
-    mockLimit.mockResolvedValue({
-      data: [{ email: 'te1234@example.com' }],
+    mockRpc.mockResolvedValue({
+      data: [{ masked_email: 'te****@example.com' }],
       error: null,
     });
 
@@ -43,13 +30,14 @@ describe('findEmailAction', () => {
       ok: true,
       data: { maskedEmail: 'te****@example.com' },
     });
-    expect(mockFrom).toHaveBeenCalledWith('users');
+    expect(mockRpc).toHaveBeenCalledWith('find_masked_email_by_identity', {
+      p_name: '홍길동',
+      p_nickname: '길동이',
+    });
   });
 
   it('일치 계정이 없으면 user-not-found를 반환해야 한다', async () => {
-    mockEq.mockImplementationOnce(() => ({ eq: mockEq }));
-    mockEq.mockImplementationOnce(() => ({ not: mockNot }));
-    mockLimit.mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: [],
       error: null,
     });
@@ -64,9 +52,7 @@ describe('findEmailAction', () => {
   });
 
   it('RPC 오류가 발생하면 server-error를 반환해야 한다', async () => {
-    mockEq.mockImplementationOnce(() => ({ eq: mockEq }));
-    mockEq.mockImplementationOnce(() => ({ not: mockNot }));
-    mockLimit.mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: null,
       error: { message: 'db error' },
     });
@@ -87,6 +73,6 @@ describe('findEmailAction', () => {
     if (!result.ok) {
       expect(result.error).toBe('invalid-format');
     }
-    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 });

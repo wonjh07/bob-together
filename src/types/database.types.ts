@@ -569,6 +569,18 @@ export type Database = {
           ok: boolean
         }[]
       }
+      find_masked_email_by_identity: {
+        Args: { p_name: string; p_nickname: string }
+        Returns: {
+          masked_email: string
+        }[]
+      }
+      find_user_id_for_password_reset: {
+        Args: { p_email: string; p_name: string }
+        Returns: {
+          user_id: string
+        }[]
+      }
       get_appointment_comments_with_cursor: {
         Args: {
           p_appointment_id: string

@@ -5,30 +5,21 @@ import { verifyResetPasswordIdentityAction } from './verifyResetPasswordIdentity
 jest.mock('@/libs/supabase/server');
 
 describe('verifyResetPasswordIdentityAction', () => {
-  const mockLimit = jest.fn();
-  const mockEq = jest.fn();
-  const mockSelect = jest.fn();
-  const mockFrom = jest.fn();
+  const mockRpc = jest.fn();
 
   const mockSupabaseClient = {
-    from: mockFrom,
+    rpc: mockRpc,
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFrom.mockReturnValue({ select: mockSelect });
-    mockSelect.mockReturnValue({ eq: mockEq });
-    mockEq.mockReturnValue({ eq: mockEq });
-
     (createSupabaseAdminClient as jest.Mock).mockReturnValue(
       mockSupabaseClient,
     );
   });
 
   it('일치 계정이 있으면 ok: true를 반환해야 한다', async () => {
-    mockEq.mockImplementationOnce(() => ({ eq: mockEq }));
-    mockEq.mockImplementationOnce(() => ({ limit: mockLimit }));
-    mockLimit.mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: [{ user_id: 'user-1' }],
       error: null,
     });
@@ -39,13 +30,14 @@ describe('verifyResetPasswordIdentityAction', () => {
     );
 
     expect(result).toEqual({ ok: true });
-    expect(mockFrom).toHaveBeenCalledWith('users');
+    expect(mockRpc).toHaveBeenCalledWith('find_user_id_for_password_reset', {
+      p_email: 'test@example.com',
+      p_name: '홍길동',
+    });
   });
 
   it('일치 계정이 없으면 user-not-found를 반환해야 한다', async () => {
-    mockEq.mockImplementationOnce(() => ({ eq: mockEq }));
-    mockEq.mockImplementationOnce(() => ({ limit: mockLimit }));
-    mockLimit.mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: [],
       error: null,
     });
@@ -69,6 +61,6 @@ describe('verifyResetPasswordIdentityAction', () => {
     if (!result.ok) {
       expect(result.error).toBe('invalid-format');
     }
-    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 });

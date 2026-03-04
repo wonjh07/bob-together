@@ -22,12 +22,13 @@ export async function resetPasswordByIdentityAction(
 
   try {
     const supabase = createSupabaseAdminClient();
-    const { data: userRows, error: findError } = await supabase
-      .from('users')
-      .select('user_id')
-      .eq('email', parsed.data.email)
-      .eq('name', parsed.data.name)
-      .limit(1);
+    const { data: userRows, error: findError } = await supabase.rpc(
+      'find_user_id_for_password_reset',
+      {
+        p_email: parsed.data.email,
+        p_name: parsed.data.name,
+      },
+    );
 
     if (findError) {
       return actionError('server-error', '계정 조회 중 오류가 발생했습니다.');

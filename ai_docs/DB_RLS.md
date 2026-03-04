@@ -62,6 +62,11 @@
 - `supabase/migrations/20260227013100_revoke_public_function_execute.sql`
   - Revokes `PUBLIC` execute on app/internal functions.
   - Prevents implicit execution by all roles through shared `PUBLIC` ACL.
+- `supabase/migrations/20260304093000_add_auth_identity_lookup_rpcs.sql`
+  - Adds pre-auth identity lookup RPCs:
+    - `find_masked_email_by_identity(p_name, p_nickname)`
+    - `find_user_id_for_password_reset(p_email, p_name)`
+  - Both are `security definer` and execute-granted to `service_role` only.
 
 ## Policies (summary)
 - `groups_select_authenticated`: authenticated can select all groups.
@@ -103,5 +108,6 @@
 - Keep event trigger `rls_auto_enable_on_ddl` active so newly added `public` tables cannot miss RLS enablement.
 - Function execution policy:
   - `anon`: only explicitly needed pre-auth RPC (currently `check_email_exists`)
+  - `service_role` only: identity lookup RPCs used by server actions (`find_masked_email_by_identity`, `find_user_id_for_password_reset`)
   - `authenticated`/`service_role`: explicit grant per function
   - `PUBLIC` execute should be revoked for application functions

@@ -5,14 +5,11 @@ import { resetPasswordByIdentityAction } from './resetPasswordByIdentityAction';
 jest.mock('@/libs/supabase/server');
 
 describe('resetPasswordByIdentityAction', () => {
-  const mockLimit = jest.fn();
-  const mockEq = jest.fn();
-  const mockSelect = jest.fn();
-  const mockFrom = jest.fn();
+  const mockRpc = jest.fn();
   const mockUpdateUserById = jest.fn();
 
   const mockSupabaseClient = {
-    from: mockFrom,
+    rpc: mockRpc,
     auth: {
       admin: {
         updateUserById: mockUpdateUserById,
@@ -22,19 +19,13 @@ describe('resetPasswordByIdentityAction', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFrom.mockReturnValue({ select: mockSelect });
-    mockSelect.mockReturnValue({ eq: mockEq });
-    mockEq.mockReturnValue({ eq: mockEq });
-
     (createSupabaseAdminClient as jest.Mock).mockReturnValue(
       mockSupabaseClient,
     );
   });
 
   it('입력이 유효하고 계정이 있으면 비밀번호 재설정에 성공해야 한다', async () => {
-    mockEq.mockImplementationOnce(() => ({ eq: mockEq }));
-    mockEq.mockImplementationOnce(() => ({ limit: mockLimit }));
-    mockLimit.mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: [{ user_id: 'user-1' }],
       error: null,
     });
@@ -57,9 +48,7 @@ describe('resetPasswordByIdentityAction', () => {
   });
 
   it('일치 계정이 없으면 user-not-found를 반환해야 한다', async () => {
-    mockEq.mockImplementationOnce(() => ({ eq: mockEq }));
-    mockEq.mockImplementationOnce(() => ({ limit: mockLimit }));
-    mockLimit.mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: [],
       error: null,
     });
@@ -91,6 +80,6 @@ describe('resetPasswordByIdentityAction', () => {
     if (!result.ok) {
       expect(result.error).toBe('invalid-format');
     }
-    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 });

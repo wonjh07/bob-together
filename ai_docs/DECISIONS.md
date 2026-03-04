@@ -1,5 +1,18 @@
 # DECISIONS
 
+## 온보딩 계정찾기/비밀번호 재설정 액션 RPC 전환 (2026-03-04)
+- Decision: `findEmailAction`, `verifyResetPasswordIdentityAction`, `resetPasswordByIdentityAction`의 `users` 직접 조회를 RPC 기반 조회로 전환한다.
+- Alternatives: 액션에서 `users` 테이블을 직접 `select`하는 기존 구현 유지
+- Reason: 사전 인증(onboarding) 계정 식별 로직을 DB 함수로 고정해 액션 책임을 단순화하고, 테이블 직접 접근 경로를 줄이기 위함
+- Scope:
+  - `supabase/migrations/20260304093000_add_auth_identity_lookup_rpcs.sql`
+  - `src/actions/auth/findEmailAction.ts`
+  - `src/actions/auth/verifyResetPasswordIdentityAction.ts`
+  - `src/actions/auth/resetPasswordByIdentityAction.ts`
+  - `src/actions/auth/findEmailAction.test.ts`
+  - `src/actions/auth/verifyResetPasswordIdentityAction.test.ts`
+  - `src/actions/auth/resetPasswordByIdentityAction.test.ts`
+
 ## 요청 에러 표시 훅을 Presenter 계층으로 통일 (2026-03-01)
 - Decision: 화면 컴포넌트는 `useRequestErrorModal` 직접 의존 대신 `useRequestErrorPresenter`를 기본 사용한다.
 - Alternatives: 화면별로 `openRequestError/closeRequestError`를 직접 제어
