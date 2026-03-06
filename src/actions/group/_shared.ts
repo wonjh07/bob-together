@@ -1,4 +1,4 @@
-import type { ActionResult, GroupErrorCode } from '@/types/result';
+import type { ActionResult, GroupErrorType } from '@/types/result';
 
 export interface GroupSummary {
   groupId: string;
@@ -51,37 +51,37 @@ export interface UserSummary {
   profileImage?: string | null;
 }
 
-export type CreateGroupResult = ActionResult<GroupSummary, GroupErrorCode>;
-export type FindGroupResult = ActionResult<GroupSummary, GroupErrorCode>;
-export type GetGroupResult = ActionResult<GroupSummary, GroupErrorCode>;
-export type JoinGroupResult = ActionResult<{ groupId: string }, GroupErrorCode>;
-export type LeaveGroupResult = ActionResult<{ groupId: string }, GroupErrorCode>;
+export type CreateGroupResult = ActionResult<GroupSummary, GroupErrorType>;
+export type FindGroupResult = ActionResult<GroupSummary, GroupErrorType>;
+export type GetGroupResult = ActionResult<GroupSummary, GroupErrorType>;
+export type JoinGroupResult = ActionResult<{ groupId: string }, GroupErrorType>;
+export type LeaveGroupResult = ActionResult<{ groupId: string }, GroupErrorType>;
 export type SearchGroupsResult = ActionResult<
   { groups: GroupSummary[] },
-  GroupErrorCode
+  GroupErrorType
 >;
 export type SearchGroupsWithCountResult = ActionResult<
   { groups: GroupSearchItem[]; nextCursor: GroupSearchCursor | null },
-  GroupErrorCode
+  GroupErrorType
 >;
 export type GetMyGroupsResult = ActionResult<
   { groups: GroupSummary[] },
-  GroupErrorCode
+  GroupErrorType
 >;
 export type ListMyGroupsWithStatsResult = ActionResult<
   { groups: GroupManageItem[]; nextCursor: GroupManageCursor | null },
-  GroupErrorCode
+  GroupErrorType
 >;
 export type GetGroupMembersResult = ActionResult<
   { memberCount: number; members: GroupMemberItem[]; currentUserId: string },
-  GroupErrorCode
+  GroupErrorType
 >;
-export type SearchUsersResult = ActionResult<{ users: UserSummary[] }, GroupErrorCode>;
+export type SearchUsersResult = ActionResult<{ users: UserSummary[] }, GroupErrorType>;
 export type SearchGroupInvitableUsersResult = ActionResult<
   { users: UserSummary[]; pendingInviteeIds: string[] },
-  GroupErrorCode
+  GroupErrorType
 >;
-export type SendInvitationResult = ActionResult<void, GroupErrorCode>;
+export type SendInvitationResult = ActionResult<void, GroupErrorType>;
 
 export const mapGroup = (group: { group_id: string; name: string }): GroupSummary => ({
   groupId: group.group_id,

@@ -10,6 +10,7 @@ import {
   listMyReviewsAction,
   searchAppointmentsByTitleAction,
 } from '@/actions/appointment';
+import { runQueryAction } from '@/libs/errors/request-error';
 import { appointmentKeys } from '@/libs/query/appointmentKeys';
 import { type QueryScope } from '@/libs/query/queryScope';
 
@@ -133,23 +134,18 @@ export function createAppointmentListQueryOptions(
         return { appointments: [], nextCursor: null };
       }
 
-      const result = await listAppointmentsAction({
-        groupId,
-        period,
-        type,
-        cursor: pageParam ?? undefined,
-        limit: APPOINTMENT_LIST_LIMIT,
-      });
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '약속 목록을 가져올 수 없습니다.',
-        );
-      }
-
-      return result.data;
+      return runQueryAction(
+        () => listAppointmentsAction({
+          groupId,
+          period,
+          type,
+          cursor: pageParam ?? undefined,
+          limit: APPOINTMENT_LIST_LIMIT,
+        }),
+        {
+        fallbackMessage: '약속 목록을 가져올 수 없습니다.',
+        },
+      );
     },
     initialPageParam: null as AppointmentListCursor | null,
     getNextPageParam: (lastPage: AppointmentPage) => lastPage.nextCursor ?? null,
@@ -172,21 +168,16 @@ export function createAppointmentSearchQueryOptions(
         return { appointments: [], nextCursor: null };
       }
 
-      const result = await searchAppointmentsByTitleAction({
-        query,
-        cursor: pageParam ?? undefined,
-        limit: APPOINTMENT_SEARCH_LIMIT,
-      });
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '약속 검색에 실패했습니다.',
-        );
-      }
-
-      return result.data;
+      return runQueryAction(
+        () => searchAppointmentsByTitleAction({
+          query,
+          cursor: pageParam ?? undefined,
+          limit: APPOINTMENT_SEARCH_LIMIT,
+        }),
+        {
+        fallbackMessage: '약속 검색에 실패했습니다.',
+        },
+      );
     },
     initialPageParam: null as AppointmentSearchCursor | null,
     getNextPageParam: (lastPage: AppointmentSearchPage) =>
@@ -203,20 +194,15 @@ export function createAppointmentHistoryQueryOptions(scope?: QueryScope) {
       AppointmentHistoryQueryKey,
       AppointmentHistoryCursor | null
     >) => {
-      const result = await listAppointmentHistoryAction({
-        cursor: pageParam ?? undefined,
-        limit: APPOINTMENT_HISTORY_LIMIT,
-      });
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '히스토리 약속을 불러오지 못했습니다.',
-        );
-      }
-
-      return result.data;
+      return runQueryAction(
+        () => listAppointmentHistoryAction({
+          cursor: pageParam ?? undefined,
+          limit: APPOINTMENT_HISTORY_LIMIT,
+        }),
+        {
+        fallbackMessage: '히스토리 약속을 불러오지 못했습니다.',
+        },
+      );
     },
     initialPageParam: null as AppointmentHistoryCursor | null,
     getNextPageParam: (lastPage: AppointmentHistoryPage) =>
@@ -229,22 +215,16 @@ export function createMyReviewsQueryOptions(scope?: QueryScope) {
     queryKey: appointmentKeys.myReviews(scope) as MyReviewListQueryKey,
     queryFn: async ({
       pageParam,
-    }: QueryFunctionContext<MyReviewListQueryKey, MyReviewCursor | null>) => {
-      const result = await listMyReviewsAction({
-        cursor: pageParam ?? undefined,
-        limit: MY_REVIEW_LIST_LIMIT,
-      });
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '내 리뷰 목록을 불러오지 못했습니다.',
-        );
-      }
-
-      return result.data;
-    },
+    }: QueryFunctionContext<MyReviewListQueryKey, MyReviewCursor | null>) =>
+      runQueryAction(
+        () => listMyReviewsAction({
+          cursor: pageParam ?? undefined,
+          limit: MY_REVIEW_LIST_LIMIT,
+        }),
+        {
+        fallbackMessage: '내 리뷰 목록을 불러오지 못했습니다.',
+        },
+      ),
     initialPageParam: null as MyReviewCursor | null,
     getNextPageParam: (lastPage: MyReviewPage) => lastPage.nextCursor ?? null,
   };
@@ -255,22 +235,16 @@ export function createMyCommentsQueryOptions(scope?: QueryScope) {
     queryKey: appointmentKeys.myComments(scope) as MyCommentsQueryKey,
     queryFn: async ({
       pageParam,
-    }: QueryFunctionContext<MyCommentsQueryKey, MyCommentCursor | null>) => {
-      const result = await listMyCommentsAction({
-        cursor: pageParam ?? undefined,
-        limit: MY_COMMENT_LIST_LIMIT,
-      });
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '내 댓글 목록을 불러오지 못했습니다.',
-        );
-      }
-
-      return result.data;
-    },
+    }: QueryFunctionContext<MyCommentsQueryKey, MyCommentCursor | null>) =>
+      runQueryAction(
+        () => listMyCommentsAction({
+          cursor: pageParam ?? undefined,
+          limit: MY_COMMENT_LIST_LIMIT,
+        }),
+        {
+        fallbackMessage: '내 댓글 목록을 불러오지 못했습니다.',
+        },
+      ),
     initialPageParam: null as MyCommentCursor | null,
     getNextPageParam: (lastPage: MyCommentsPage) => lastPage.nextCursor ?? null,
   };
@@ -285,20 +259,15 @@ export function createReviewableAppointmentsQueryOptions(scope?: QueryScope) {
       ReviewableAppointmentsQueryKey,
       ReviewableAppointmentsCursor | null
     >) => {
-      const result = await listReviewableAppointmentsAction({
-        cursor: pageParam ?? undefined,
-        limit: REVIEWABLE_APPOINTMENT_LIST_LIMIT,
-      });
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '작성 가능한 리뷰를 불러오지 못했습니다.',
-        );
-      }
-
-      return result.data;
+      return runQueryAction(
+        () => listReviewableAppointmentsAction({
+          cursor: pageParam ?? undefined,
+          limit: REVIEWABLE_APPOINTMENT_LIST_LIMIT,
+        }),
+        {
+        fallbackMessage: '작성 가능한 리뷰를 불러오지 못했습니다.',
+        },
+      );
     },
     initialPageParam: null as ReviewableAppointmentsCursor | null,
     getNextPageParam: (lastPage: ReviewableAppointmentsPage) =>
@@ -315,19 +284,10 @@ export function createAppointmentReviewTargetQueryOptions(
       appointmentId,
       scope,
     ) as AppointmentReviewTargetQueryKey,
-    queryFn: async (_: QueryFunctionContext<AppointmentReviewTargetQueryKey>) => {
-      const result = await getAppointmentReviewTargetAction(appointmentId);
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '리뷰 대상을 불러오지 못했습니다.',
-        );
-      }
-
-      return result.data;
-    },
+    queryFn: async (_: QueryFunctionContext<AppointmentReviewTargetQueryKey>) =>
+      runQueryAction(() => getAppointmentReviewTargetAction(appointmentId), {
+        fallbackMessage: '리뷰 대상을 불러오지 못했습니다.',
+      }),
   };
 }
 
@@ -340,19 +300,10 @@ export function createAppointmentDetailQueryOptions(
       appointmentId,
       scope,
     ) as AppointmentDetailQueryKey,
-    queryFn: async (_: QueryFunctionContext<AppointmentDetailQueryKey>) => {
-      const result = await getAppointmentDetailAction(appointmentId);
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '약속 정보를 불러올 수 없습니다.',
-        );
-      }
-
-      return result.data;
-    },
+    queryFn: async (_: QueryFunctionContext<AppointmentDetailQueryKey>) =>
+      runQueryAction(() => getAppointmentDetailAction(appointmentId), {
+        fallbackMessage: '약속 정보를 불러올 수 없습니다.',
+      }),
   };
 }
 
@@ -371,21 +322,16 @@ export function createAppointmentCommentsQueryOptions(
       AppointmentCommentsQueryKey,
       AppointmentCommentsCursor | null
     >) => {
-      const result = await getAppointmentCommentsAction({
-        appointmentId,
-        cursor: pageParam ?? undefined,
-        limit: APPOINTMENT_COMMENTS_LIMIT,
-      });
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '댓글을 불러오지 못했습니다.',
-        );
-      }
-
-      return result.data;
+      return runQueryAction(
+        () => getAppointmentCommentsAction({
+          appointmentId,
+          cursor: pageParam ?? undefined,
+          limit: APPOINTMENT_COMMENTS_LIMIT,
+        }),
+        {
+        fallbackMessage: '댓글을 불러오지 못했습니다.',
+        },
+      );
     },
     initialPageParam: null as AppointmentCommentsCursor | null,
     getNextPageParam: (lastPage: AppointmentCommentsPage) =>
@@ -402,18 +348,9 @@ export function createAppointmentInvitationStateQueryOptions(
       appointmentId,
       scope,
     ) as AppointmentInvitationStateQueryKey,
-    queryFn: async (_: QueryFunctionContext<AppointmentInvitationStateQueryKey>) => {
-      const result = await getAppointmentInvitationStateAction(appointmentId);
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '초대 상태를 불러오지 못했습니다.',
-        );
-      }
-
-      return result.data;
-    },
+    queryFn: async (_: QueryFunctionContext<AppointmentInvitationStateQueryKey>) =>
+      runQueryAction(() => getAppointmentInvitationStateAction(appointmentId), {
+        fallbackMessage: '초대 상태를 불러오지 못했습니다.',
+      }),
   };
 }

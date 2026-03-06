@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 
 import { loginAction } from '@/actions/auth';
 import { Input } from '@/components/ui/FormInput';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import { loginSchema } from '@/schemas/auth';
 
 import { loginForm, linkContainer, submitButton } from './page.css';
@@ -24,7 +24,7 @@ export default function LoginForm() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
 
-  const { openRequestError } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
 
   const {
     register,
@@ -40,9 +40,8 @@ export default function LoginForm() {
       const result = await loginAction(data.email, data.password);
 
       if (!result.ok) {
-        openRequestError(result.message || '로그인에 실패했습니다.', {
-          err: result,
-          source: 'LoginForm.onSubmit.result',
+        showRequestError(result, {
+          fallbackMessage: '로그인에 실패했습니다.',
         });
         return;
       }
@@ -51,9 +50,8 @@ export default function LoginForm() {
       queryClient.clear();
       router.replace(resolveLoginRedirectPath(searchParams.get('redirect')));
     } catch (err) {
-      openRequestError('로그인 중 오류가 발생했습니다.', {
-        err,
-        source: 'LoginForm.onSubmit.catch',
+      showRequestError(err, {
+        fallbackMessage: '로그인 중 오류가 발생했습니다.',
       });
     }
   };

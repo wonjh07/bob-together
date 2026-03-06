@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { getAppointmentReviewTargetAction } from './getTarget';
 
@@ -7,7 +7,7 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
@@ -15,7 +15,7 @@ const APPOINTMENT_ID = '20000000-0000-4000-8000-000000000001';
 const USER_ID = '20000000-0000-4000-8000-000000000002';
 
 describe('getAppointmentReviewTargetAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -24,9 +24,9 @@ describe('getAppointmentReviewTargetAction', () => {
   it('약속 ID 형식이 올바르지 않으면 invalid-format을 반환한다', async () => {
     const result = await getAppointmentReviewTargetAction('invalid-id');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 약속 정보가 필요합니다.',
     });
   });
@@ -42,7 +42,7 @@ describe('getAppointmentReviewTargetAction', () => {
       error: null,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { rpc },
       user: { id: USER_ID },
@@ -50,9 +50,9 @@ describe('getAppointmentReviewTargetAction', () => {
 
     const result = await getAppointmentReviewTargetAction(APPOINTMENT_ID);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'forbidden',
+      errorType: 'permission',
       message: '종료된 약속만 리뷰를 작성할 수 있습니다.',
     });
   });
@@ -82,7 +82,7 @@ describe('getAppointmentReviewTargetAction', () => {
       error: null,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { rpc },
       user: { id: USER_ID },
@@ -90,7 +90,7 @@ describe('getAppointmentReviewTargetAction', () => {
 
     const result = await getAppointmentReviewTargetAction(APPOINTMENT_ID);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         target: {

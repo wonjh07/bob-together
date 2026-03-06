@@ -7,6 +7,7 @@ import {
   type GroupSearchCursor,
   type GroupSearchItem,
 } from '@/actions/group';
+import { runQueryAction } from '@/libs/errors/request-error';
 import { groupKeys } from '@/libs/query/groupKeys';
 import { type QueryScope } from '@/libs/query/queryScope';
 
@@ -32,19 +33,11 @@ export type GroupManagePage = {
 export function createMyGroupsQueryOptions(scope?: QueryScope) {
   return {
     queryKey: groupKeys.myGroups(scope),
-    queryFn: async (_: QueryFunctionContext<MyGroupsQueryKey>) => {
-      const result = await getMyGroupsAction();
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '그룹 목록을 가져올 수 없습니다.',
-        );
-      }
-
-      return result.data.groups;
-    },
+    queryFn: async (_: QueryFunctionContext<MyGroupsQueryKey>) =>
+      runQueryAction(() => getMyGroupsAction(), {
+        fallbackMessage: '그룹 목록을 가져올 수 없습니다.',
+        select: (data) => data.groups,
+      }),
   };
 }
 
@@ -54,20 +47,15 @@ export function createGroupManageQueryOptions(scope?: QueryScope) {
     queryFn: async ({
       pageParam,
     }: QueryFunctionContext<GroupManageQueryKey, GroupManageCursor | null>) => {
-      const result = await listMyGroupsWithStatsAction({
-        cursor: pageParam ?? undefined,
-        limit: GROUP_MANAGE_LIMIT,
-      });
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '그룹 목록을 가져올 수 없습니다.',
-        );
-      }
-
-      return result.data;
+      return runQueryAction(
+        () => listMyGroupsWithStatsAction({
+          cursor: pageParam ?? undefined,
+          limit: GROUP_MANAGE_LIMIT,
+        }),
+        {
+        fallbackMessage: '그룹 목록을 가져올 수 없습니다.',
+        },
+      );
     },
     initialPageParam: null as GroupManageCursor | null,
     getNextPageParam: (lastPage: GroupManagePage) => lastPage.nextCursor ?? null,
@@ -87,21 +75,16 @@ export function createGroupSearchQueryOptions(
         return { groups: [], nextCursor: null };
       }
 
-      const result = await searchGroupsWithCountAction({
-        query,
-        cursor: pageParam ?? undefined,
-        limit: GROUP_SEARCH_LIMIT,
-      });
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '그룹 검색에 실패했습니다.',
-        );
-      }
-
-      return result.data;
+      return runQueryAction(
+        () => searchGroupsWithCountAction({
+          query,
+          cursor: pageParam ?? undefined,
+          limit: GROUP_SEARCH_LIMIT,
+        }),
+        {
+        fallbackMessage: '그룹 검색에 실패했습니다.',
+        },
+      );
     },
     initialPageParam: null as GroupSearchCursor | null,
     getNextPageParam: (lastPage: GroupSearchPage) => lastPage.nextCursor ?? null,

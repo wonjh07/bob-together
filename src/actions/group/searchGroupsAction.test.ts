@@ -12,9 +12,9 @@ describe('searchGroupsAction', () => {
   it('검색어가 짧으면 invalid-format을 반환한다', async () => {
     const result = await searchGroupsAction('a');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '검색어를 2자 이상 입력해주세요.',
     });
   });
@@ -36,9 +36,9 @@ describe('searchGroupsAction', () => {
 
     const result = await searchGroupsAction('점심');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '그룹 검색 중 오류가 발생했습니다.',
     });
   });
@@ -68,7 +68,7 @@ describe('searchGroupsAction', () => {
     expect(query.ilike).toHaveBeenCalledWith('name', '%점심%');
     expect(query.order).toHaveBeenCalledWith('name');
     expect(query.limit).toHaveBeenCalledWith(6);
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         groups: [

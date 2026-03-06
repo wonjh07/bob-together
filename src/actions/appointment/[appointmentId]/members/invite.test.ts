@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { sendAppointmentInvitationAction } from './invite';
 
@@ -7,7 +7,7 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
@@ -16,7 +16,7 @@ const INVITER_ID = '10000000-0000-4000-8000-000000000002';
 const INVITEE_ID = '10000000-0000-4000-8000-000000000003';
 
 describe('sendAppointmentInvitationAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -25,9 +25,9 @@ describe('sendAppointmentInvitationAction', () => {
   it('약속 ID 형식이 올바르지 않으면 invalid-format을 반환한다', async () => {
     const result = await sendAppointmentInvitationAction('invalid-id', INVITEE_ID);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 약속 ID가 아닙니다.',
     });
   });
@@ -39,10 +39,11 @@ describe('sendAppointmentInvitationAction', () => {
     });
     const supabase = { rpc };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: INVITER_ID },
+      requestId: 'req-test',
     });
 
     const result = await sendAppointmentInvitationAction(APPOINTMENT_ID, INVITEE_ID);
@@ -52,9 +53,9 @@ describe('sendAppointmentInvitationAction', () => {
       p_appointment_id: APPOINTMENT_ID,
       p_invitee_id: INVITEE_ID,
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'forbidden',
+      errorType: 'permission',
       message: '취소된 약속은 초대할 수 없습니다.',
     });
   });
@@ -66,17 +67,18 @@ describe('sendAppointmentInvitationAction', () => {
     });
     const supabase = { rpc };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: INVITER_ID },
+      requestId: 'req-test',
     });
 
     const result = await sendAppointmentInvitationAction(APPOINTMENT_ID, INVITEE_ID);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'forbidden',
+      errorType: 'permission',
       message: '종료된 약속은 초대할 수 없습니다.',
     });
   });
@@ -88,17 +90,18 @@ describe('sendAppointmentInvitationAction', () => {
     });
     const supabase = { rpc };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: INVITER_ID },
+      requestId: 'req-test',
     });
 
     const result = await sendAppointmentInvitationAction(APPOINTMENT_ID, INVITEE_ID);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'appointment-not-found',
+      errorType: 'not_found',
       message: '약속 정보를 찾을 수 없습니다.',
     });
   });
@@ -110,18 +113,44 @@ describe('sendAppointmentInvitationAction', () => {
     });
     const supabase = { rpc };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: INVITER_ID },
+      requestId: 'req-test',
     });
 
     const result = await sendAppointmentInvitationAction(APPOINTMENT_ID, INVITEE_ID);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'already-member',
+      errorType: 'conflict',
+      reason: 'already_member',
       message: '이미 약속에 참여한 사용자입니다.',
+    });
+  });
+
+  it('이미 초대된 사용자는 already_invited reason을 반환한다', async () => {
+    const rpc = jest.fn().mockResolvedValue({
+      data: [{ ok: false, error_code: 'invite-already-sent' }],
+      error: null,
+    });
+    const supabase = { rpc };
+
+    mockRequireUserService.mockResolvedValue({
+      ok: true,
+      supabase,
+      user: { id: INVITER_ID },
+      requestId: 'req-test',
+    });
+
+    const result = await sendAppointmentInvitationAction(APPOINTMENT_ID, INVITEE_ID);
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorType: 'conflict',
+      reason: 'already_invited',
+      message: '이미 초대가 발송되었습니다.',
     });
   });
 
@@ -132,15 +161,16 @@ describe('sendAppointmentInvitationAction', () => {
     });
     const supabase = { rpc };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: INVITER_ID },
+      requestId: 'req-test',
     });
 
     const result = await sendAppointmentInvitationAction(APPOINTMENT_ID, INVITEE_ID);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
     });
   });

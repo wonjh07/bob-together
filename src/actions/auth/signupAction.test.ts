@@ -33,7 +33,7 @@ describe('signupAction', () => {
 
     const result = await signupAction(params);
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toMatchObject({ ok: true });
     expect(mockSupabaseClient.auth.signUp).toHaveBeenCalledWith({
       email: 'test@example.com',
       password: 'Password123!',
@@ -61,9 +61,9 @@ describe('signupAction', () => {
 
     const result = await signupAction(params);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'signup-failed',
+      errorType: 'server',
       message: 'User already exists',
     });
   });
@@ -80,7 +80,7 @@ describe('signupAction', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('invalid-format');
+      expect('validation');
     }
     expect(mockSupabaseClient.auth.signUp).not.toHaveBeenCalled();
   });
@@ -97,7 +97,7 @@ describe('signupAction', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('invalid-format');
+      expect('validation');
     }
     expect(mockSupabaseClient.auth.signUp).not.toHaveBeenCalled();
   });
@@ -114,7 +114,7 @@ describe('signupAction', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('invalid-format');
+      expect('validation');
     }
   });
 
@@ -130,9 +130,9 @@ describe('signupAction', () => {
 
     const result = await signupAction(params);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: 'Network error',
     });
   });

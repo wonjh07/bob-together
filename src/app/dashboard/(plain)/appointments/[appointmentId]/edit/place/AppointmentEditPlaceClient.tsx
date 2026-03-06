@@ -7,7 +7,7 @@ import PlainTopNav from '@/components/ui/PlainTopNav';
 import SearchInput from '@/components/ui/SearchInput';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
 import { usePlaceSearch } from '@/hooks/usePlaceSearch';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 
 import * as styles from './page.css';
 
@@ -23,9 +23,9 @@ export default function AppointmentEditPlaceClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
-    openRequestError,
-    closeRequestError,
-  } = useRequestErrorPresenter();
+    showRequestError,
+    hideRequestError,
+  } = useRequestError();
 
   const { currentLocation, isLocating, locationError, requestLocation } =
     useCurrentLocation();
@@ -38,8 +38,8 @@ export default function AppointmentEditPlaceClient({
     handlePlaceSearchSubmit,
   } = usePlaceSearch({
     currentLocation,
-    onRequestError: openRequestError,
-    onRequestClear: closeRequestError,
+    onRequestError: showRequestError,
+    onRequestClear: hideRequestError,
   });
 
   useEffect(() => {

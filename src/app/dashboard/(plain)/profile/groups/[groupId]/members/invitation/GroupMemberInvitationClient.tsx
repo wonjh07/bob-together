@@ -12,7 +12,7 @@ import {
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import SearchInput from '@/components/ui/SearchInput';
 import UserIdentityInline from '@/components/ui/UserIdentityInline';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import { groupSearchFormSchema } from '@/schemas/group';
 
 import {
@@ -46,9 +46,7 @@ export default function GroupMemberInvitationClient({
   const [memberIds, setMemberIds] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isInviting, setIsInviting] = useState<Record<string, boolean>>({});
-  const {
-    openRequestError,
-  } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
 
   const {
     control,
@@ -65,9 +63,7 @@ export default function GroupMemberInvitationClient({
   const performSearch = useCallback(
     async (query: string) => {
       if (!groupId) {
-        openRequestError('그룹 정보가 필요합니다.', {
-          source: 'GroupMemberInvitationClient.performSearch.noGroupId',
-        });
+        showRequestError('그룹 정보가 필요합니다.');
         return;
       }
 
@@ -84,18 +80,14 @@ export default function GroupMemberInvitationClient({
       setIsSearching(false);
 
       if (!result.ok) {
-        openRequestError(result.message || '사용자 검색에 실패했습니다.', {
-          err: result,
-          source: 'GroupMemberInvitationClient.performSearch.result',
+        showRequestError(result, {
+          fallbackMessage: '사용자 검색에 실패했습니다.',
         });
         return;
       }
 
       if (!result.data) {
-        openRequestError('검색 결과를 불러올 수 없습니다.', {
-          err: result,
-          source: 'GroupMemberInvitationClient.performSearch.noData',
-        });
+        showRequestError('검색 결과를 불러올 수 없습니다.');
         return;
       }
 
@@ -106,7 +98,7 @@ export default function GroupMemberInvitationClient({
         Array.from(new Set([...prev, ...pendingInviteeIds])),
       );
     },
-    [groupId, openRequestError],
+    [groupId, showRequestError],
   );
 
   const onSubmit = async (data: GroupSearchFormInput) => {
@@ -115,9 +107,7 @@ export default function GroupMemberInvitationClient({
 
   const handleInvite = async (userId: string) => {
     if (!groupId) {
-      openRequestError('그룹 정보가 필요합니다.', {
-        source: 'GroupMemberInvitationClient.handleInvite.noGroupId',
-      });
+      showRequestError('그룹 정보가 필요합니다.');
       return;
     }
 
@@ -128,23 +118,22 @@ export default function GroupMemberInvitationClient({
     setIsInviting((prev) => ({ ...prev, [userId]: false }));
 
     if (!result.ok) {
-      if (result.error === 'already-member') {
+      if (result.reason === 'already_member') {
         setMemberIds((prev) =>
           prev.includes(userId) ? prev : [...prev, userId],
         );
         return;
       }
 
-      if (result.error === 'invite-already-sent') {
+      if (result.reason === 'already_invited') {
         setInvitedIds((prev) =>
           prev.includes(userId) ? prev : [...prev, userId],
         );
         return;
       }
 
-      openRequestError(result.message || '초대에 실패했습니다.', {
-        err: result,
-        source: 'GroupMemberInvitationClient.handleInvite.result',
+      showRequestError(result, {
+        fallbackMessage: '초대에 실패했습니다.',
       });
       return;
     }
@@ -225,6 +214,7 @@ export default function GroupMemberInvitationClient({
             <div className={emptyResult}>검색 결과가 없습니다.</div>
           ) : null}
         </div>
-      </div>    </div>
+      </div>
+    </div>
   );
 }

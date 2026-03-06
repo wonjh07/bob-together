@@ -1,4 +1,5 @@
-import type { ActionResult, CommonErrorCode } from '@/types/result';
+import type { ServiceErrorCode } from '@/actions/_common/service-action';
+import type { ActionResult } from '@/types/result';
 
 export interface InvitationCursor {
   createdTime: string;
@@ -21,11 +22,7 @@ export interface InvitationListItem {
   appointmentEndsAt: string | null;
 }
 
-export type InvitationErrorCode =
-  | CommonErrorCode
-  | 'invitation-not-found'
-  | 'invitation-already-responded'
-  | 'invalid-invitation';
+export type InvitationErrorCode = ServiceErrorCode;
 
 export type ListReceivedInvitationsResult = ActionResult<
   {

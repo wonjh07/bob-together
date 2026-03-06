@@ -6,6 +6,26 @@
 - Fix:
 - Lesson:
 
+## validation / Postgrest raw error가 브라우저 디버그 콘솔에서 사라짐
+- Context: `/dashboard/appointments/<잘못된 ID>` 같은 query 실패에서 validation 메시지는 모달과 콘솔에 보였지만, 실제 Zod `issues`나 Postgrest raw error는 브라우저 콘솔에서 확인할 수 없었음
+- Cause:
+  - `createZodValidationErrorState`는 내부 state에 `error: { issues }`를 넣었지만, `toActionResult`가 `validation` 타입의 `error`를 의도적으로 제거하고 있었음
+  - `dbError/createPostgrestErrorState`는 서버 콘솔에는 raw DB 에러를 로그했지만, 클라이언트 결과에는 `error`를 넣지 않아 `RequestError`까지 raw 객체가 전달되지 않았음
+- Fix:
+  - `src/actions/_common/service-action.ts`에서 `toActionResult`가 `validation`을 포함한 모든 실패 타입의 `error`를 유지하도록 변경
+  - `dbError/createPostgrestErrorState`가 permission/server 결과에도 raw DB 에러를 함께 싣도록 변경
+- Lesson: 사용자 표시 정보와 개발자 디버그 정보는 분리할 수 있지만, 브라우저 디버깅 경로를 유지하려면 `ActionError.error`를 타입별로 임의 삭제하지 말고 공통적으로 전달해야 한다
+
+## 약속 상세 초기 에러 모달이 개발 모드에서 열리지 않음
+- Context: `/dashboard/appointments/<잘못된 ID>` 같은 초기 query 실패에서 에러 모달이 간헐적으로 열리지 않았고, 약속 상세 RPC 실패도 서버 콘솔에 구조화 로그가 남지 않았음
+- Cause:
+  - `RequestErrorProvider`가 같은 `message + errorCode`를 cooldown 동안 다시 열지 않도록 막고 있었는데, React Strict Mode의 개발용 effect cleanup/setup 재실행과 겹치며 첫 open 직후 close된 뒤 동일 에러 재오픈이 억제됨
+  - `getAppointmentDetailAction`의 RPC 에러 분기가 공통 DB 에러 로거(`createPostgrestErrorState`)를 거치지 않아 서버 콘솔 로그가 누락됨
+- Fix:
+  - `src/provider/request-error-provider.tsx`에서 `closeRequestError()` 시 dedupe key/timestamp를 함께 초기화해 close 직후 동일 에러 재오픈을 허용
+  - `src/actions/appointment/[appointmentId]/get.ts`의 RPC 에러 분기를 `createPostgrestErrorState`로 전환해 서버 콘솔에 `[action-error]` 로그를 남기도록 수정
+- Lesson: 전역 모달 dedupe는 사용자 중복 클릭 억제만 목표로 해야 하며, 개발 모드 remount/cleanup 사이클까지 막으면 초기 query 에러가 사라질 수 있다. DB/RPC 액션은 서버 로그 경로를 우회하지 말고 항상 공통 로거를 타야 한다.
+
 ## 프로필 이미지 업로드 시 `이미지 업로드 중 오류가 발생했습니다.` 발생
 - Context: 로컬 DB 전환 후 프로필 이미지 업로드가 즉시 실패하고, UI에는 공통 업로드 실패 메시지만 표시됨
 - Cause: `storage.buckets`에 `profile-images` 버킷 row가 없어서 Storage upload API가 실패함 (스키마/정책은 있어도 버킷 데이터가 누락된 상태)

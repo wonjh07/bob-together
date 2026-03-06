@@ -54,9 +54,9 @@ describe('deleteProfileImageAction', () => {
 
     const result = await deleteProfileImageAction();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
   });
@@ -84,7 +84,7 @@ describe('deleteProfileImageAction', () => {
 
       const result = await deleteProfileImageAction();
 
-      expect(result).toEqual({ ok: true });
+      expect(result).toMatchObject({ ok: true });
       expect(rpc).toHaveBeenCalledWith(
         'clear_user_profile_image_transactional',
         { p_user_id: '123' },
@@ -110,7 +110,7 @@ describe('deleteProfileImageAction', () => {
 
     const result = await deleteProfileImageAction();
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toMatchObject({ ok: true });
     expect(rpc).toHaveBeenCalled();
     expect(storageRemove).not.toHaveBeenCalledWith(['invalid-url-format']);
   });
@@ -129,45 +129,36 @@ describe('deleteProfileImageAction', () => {
 
     const result = await deleteProfileImageAction();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'profile-not-found',
+      errorType: 'not_found',
       message: '프로필 정보를 찾을 수 없습니다.',
     });
   });
 
   it('metadata 동기화 실패 시 metadata-sync-failed를 반환해야 한다', async () => {
-    const consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
+    rpc.mockResolvedValue({
+      data: [
+        {
+          ok: true,
+          error_code: null,
+          previous_profile_image:
+            'https://example.com/storage/v1/object/public/profile-images/123/avatar-old.jpg',
+        },
+      ],
+      error: null,
+    });
+    mockSupabaseClient.auth.updateUser.mockResolvedValue({
+      error: { message: 'metadata fail' },
+    });
 
-    try {
-      rpc.mockResolvedValue({
-        data: [
-          {
-            ok: true,
-            error_code: null,
-            previous_profile_image:
-              'https://example.com/storage/v1/object/public/profile-images/123/avatar-old.jpg',
-          },
-        ],
-        error: null,
-      });
-      mockSupabaseClient.auth.updateUser.mockResolvedValue({
-        error: { message: 'metadata fail' },
-      });
+    const result = await deleteProfileImageAction();
 
-      const result = await deleteProfileImageAction();
-
-      expect(result).toEqual({
-        ok: false,
-        error: 'metadata-sync-failed',
-        message: '프로필 이미지는 삭제되었지만 계정 정보 동기화에 실패했습니다.',
-      });
-      expect(storageRemove).toHaveBeenCalledWith(['123/avatar-old.jpg']);
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    } finally {
-      consoleErrorSpy.mockRestore();
-    }
+    expect(result).toMatchObject({
+      ok: false,
+      errorType: 'server',
+      message: '프로필 이미지는 삭제되었지만 계정 정보 동기화에 실패했습니다.',
+    });
+    expect(storageRemove).toHaveBeenCalledWith(['123/avatar-old.jpg']);
   });
 });

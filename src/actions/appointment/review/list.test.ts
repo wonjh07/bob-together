@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { listReviewableAppointmentsAction } from './list';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('listReviewableAppointmentsAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -26,9 +26,9 @@ describe('listReviewableAppointmentsAction', () => {
       },
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 커서 정보가 아닙니다.',
     });
   });
@@ -41,7 +41,7 @@ describe('listReviewableAppointmentsAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '20000000-0000-4000-8000-000000000001' },
@@ -49,9 +49,9 @@ describe('listReviewableAppointmentsAction', () => {
 
     const result = await listReviewableAppointmentsAction({ limit: 2 });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '리뷰 가능한 약속 목록을 불러오지 못했습니다.',
     });
   });
@@ -95,7 +95,7 @@ describe('listReviewableAppointmentsAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '20000000-0000-4000-8000-000000000001' },
@@ -118,7 +118,7 @@ describe('listReviewableAppointmentsAction', () => {
         p_cursor_appointment_id: '20000000-0000-4000-8000-000000000299',
       },
     );
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         appointments: [

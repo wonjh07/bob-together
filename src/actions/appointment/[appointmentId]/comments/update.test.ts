@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { updateAppointmentCommentAction } from './update';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('updateAppointmentCommentAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -31,9 +31,9 @@ describe('updateAppointmentCommentAction', () => {
       content: '수정 댓글',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 약속 ID가 아닙니다.',
     });
   });
@@ -45,9 +45,9 @@ describe('updateAppointmentCommentAction', () => {
       content: '   ',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '댓글을 입력해주세요.',
     });
   });
@@ -72,10 +72,11 @@ describe('updateAppointmentCommentAction', () => {
       from: jest.fn().mockReturnValue(updateQuery),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '550e8400-e29b-41d4-a716-446655440100' },
+      requestId: 'req-test',
     });
 
     const result = await updateAppointmentCommentAction({
@@ -84,9 +85,9 @@ describe('updateAppointmentCommentAction', () => {
       content: '수정 댓글',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '댓글 수정 중 오류가 발생했습니다.',
     });
   });
@@ -119,10 +120,11 @@ describe('updateAppointmentCommentAction', () => {
       from: jest.fn().mockReturnValue(updateQuery),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
+      requestId: 'req-test',
     });
 
     const result = await updateAppointmentCommentAction({
@@ -131,7 +133,7 @@ describe('updateAppointmentCommentAction', () => {
       content: '수정 댓글',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         appointmentId,

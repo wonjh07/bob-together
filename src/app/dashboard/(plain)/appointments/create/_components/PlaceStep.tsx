@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import SearchInput from '@/components/ui/SearchInput';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
 import { usePlaceSearch } from '@/hooks/usePlaceSearch';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 
 import * as styles from './PlaceStep.css';
 
@@ -12,9 +12,9 @@ import type { CreateAppointmentForm } from '../types';
 
 export function PlaceStep() {
   const {
-    openRequestError,
-    closeRequestError,
-  } = useRequestErrorPresenter();
+    showRequestError,
+    hideRequestError,
+  } = useRequestError();
   const {
     setValue,
     clearErrors,
@@ -34,8 +34,8 @@ export function PlaceStep() {
     handlePlaceSearchSubmit,
   } = usePlaceSearch({
     currentLocation,
-    onRequestError: openRequestError,
-    onRequestClear: closeRequestError,
+    onRequestError: showRequestError,
+    onRequestClear: hideRequestError,
   });
 
   const hasLocation = Boolean(currentLocation);

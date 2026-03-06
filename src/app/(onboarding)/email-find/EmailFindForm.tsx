@@ -7,21 +7,40 @@ import { useForm } from 'react-hook-form';
 
 import { findEmailAction } from '@/actions/auth';
 import { Input } from '@/components/ui/FormInput';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import { emailFindSchema } from '@/schemas/auth';
 
 import * as styles from './page.css';
 
 import type { EmailFindInput } from '@/schemas/auth';
 
+function applyFieldErrors(
+  fieldErrors: Record<string, string[]>,
+  setError: (
+    name: keyof EmailFindInput,
+    error: { message: string },
+  ) => void,
+) {
+  const entries = Object.entries(fieldErrors);
+  for (const [fieldName, messages] of entries) {
+    const message = messages?.[0];
+    if (!message) continue;
+
+    if (fieldName === 'name' || fieldName === 'nickname') {
+      setError(fieldName, { message });
+    }
+  }
+}
+
 export default function EmailFindForm() {
   const [maskedEmail, setMaskedEmail] = useState<string | null>(null);
   const [notFoundMessage, setNotFoundMessage] = useState<string | null>(null);
-  const { openRequestError } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<EmailFindInput>({
     resolver: zodResolver(emailFindSchema),
@@ -35,25 +54,26 @@ export default function EmailFindForm() {
     const result = await findEmailAction(data.name, data.nickname);
 
     if (!result.ok) {
-      if (result.error === 'user-not-found') {
+      if (result.fieldErrors) {
+        applyFieldErrors(result.fieldErrors, setError);
+        return;
+      }
+
+      if (result.errorType === 'not_found') {
         setNotFoundMessage(
           result.message || '일치하는 계정을 찾을 수 없습니다.',
         );
         return;
       }
 
-      openRequestError(result.message || '이메일 조회에 실패했습니다.', {
-        err: result,
-        source: 'EmailFindForm.onSubmit.result',
+      showRequestError(result, {
+        fallbackMessage: '이메일 조회에 실패했습니다.',
       });
       return;
     }
 
     if (!result.data?.maskedEmail) {
-      openRequestError('이메일 조회 결과를 확인할 수 없습니다.', {
-        err: result,
-        source: 'EmailFindForm.onSubmit.noData',
-      });
+      showRequestError('이메일 조회 결과를 확인할 수 없습니다.');
       return;
     }
 

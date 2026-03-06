@@ -18,7 +18,7 @@ import {
   type UpdateAppointmentCommentResult,
 } from '@/actions/appointment';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import { appointmentKeys } from '@/libs/query/appointmentKeys';
 import { createAppointmentCommentsQueryOptions } from '@/libs/query/appointmentQueries';
 import {
@@ -59,7 +59,7 @@ export default function useAppointmentCommentsController({
     [appointmentId, queryScope],
   );
   const commentsQuery = useInfiniteQuery(queryOptions);
-  const { openRequestError } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
   const { loadMoreRef } = useInfiniteLoadMore({
     fetchNextPage: commentsQuery.fetchNextPage,
     hasNextPage: commentsQuery.hasNextPage,
@@ -93,7 +93,6 @@ export default function useAppointmentCommentsController({
     (
       result: CommentMutationResult,
       fallbackMessage: string,
-      source: string,
     ) => {
       if (result.ok && result.data) {
         return false;
@@ -103,13 +102,12 @@ export default function useAppointmentCommentsController({
         ? result.message || fallbackMessage
         : fallbackMessage;
 
-      openRequestError(message, {
-        err: result,
-        source,
+      showRequestError(result, {
+        fallbackMessage: message,
       });
       return true;
     },
-    [openRequestError],
+    [showRequestError],
   );
 
   const addUpdatingCommentId = useCallback((commentId: string) => {
@@ -192,7 +190,6 @@ export default function useAppointmentCommentsController({
         presentMutationError(
           result,
           FALLBACK_CREATE_ERROR,
-          'AppointmentCommentsSection.submitComment.result',
         )
       ) {
         return;
@@ -248,7 +245,6 @@ export default function useAppointmentCommentsController({
           presentMutationError(
             result,
             FALLBACK_UPDATE_ERROR,
-            'AppointmentCommentsSection.submitEdit.result',
           )
         ) {
           return false;
@@ -301,7 +297,6 @@ export default function useAppointmentCommentsController({
           presentMutationError(
             result,
             FALLBACK_DELETE_ERROR,
-            'AppointmentCommentsSection.handleDelete.result',
           )
         ) {
           return false;

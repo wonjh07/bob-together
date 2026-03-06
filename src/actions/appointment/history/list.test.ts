@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { listAppointmentHistoryAction } from './list';
 
@@ -7,31 +7,32 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 const USER_ID = '20000000-0000-4000-8000-000000000002';
 
 describe('listAppointmentHistoryAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('인증 실패는 그대로 반환한다', async () => {
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: false,
-      error: 'unauthorized',
+      requestId: 'req-unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
 
     const result = await listAppointmentHistoryAction();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
   });
@@ -44,7 +45,7 @@ describe('listAppointmentHistoryAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: USER_ID },
@@ -52,9 +53,9 @@ describe('listAppointmentHistoryAction', () => {
 
     const result = await listAppointmentHistoryAction();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '히스토리 약속 목록을 불러오지 못했습니다.',
     });
   });
@@ -124,7 +125,7 @@ describe('listAppointmentHistoryAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: USER_ID },
@@ -148,7 +149,7 @@ describe('listAppointmentHistoryAction', () => {
       },
     );
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         appointments: [
@@ -211,7 +212,7 @@ describe('listAppointmentHistoryAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: USER_ID },
@@ -219,7 +220,7 @@ describe('listAppointmentHistoryAction', () => {
 
     const result = await listAppointmentHistoryAction({ limit: 5 });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         appointments: [],

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import RequestErrorModal from '@/components/ui/RequestErrorModal';
+import { useSyncRequestError } from '@/hooks/useRequestError';
+import { logUiError, readUiError } from '@/libs/errors/action-error';
 
 import * as styles from './ListStateView.css';
 
@@ -34,21 +35,41 @@ export default function ListStateView({
   errorPresentation = 'inline',
   errorTitle,
 }: ListStateViewProps) {
-  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const lastInlineLoggedErrorKeyRef = useRef<string | null>(null);
+  useSyncRequestError({
+    active: errorPresentation === 'modal' && isError,
+    error,
+    fallbackMessage: defaultErrorText,
+    message: errorPresentation === 'modal' && isError
+      ? readUiError(error)?.message ?? defaultErrorText
+      : undefined,
+    title: errorTitle ?? '요청 처리 실패',
+  });
 
-  const errorMessage = useMemo(
-    () => (error instanceof Error ? error.message : defaultErrorText),
-    [defaultErrorText, error],
-  );
+  const resolvedError = useMemo(() => readUiError(error), [error]);
+  const errorMessage = resolvedError?.message ?? defaultErrorText;
 
   useEffect(() => {
-    if (errorPresentation !== 'modal') return;
-    if (isError) {
-      setIsErrorModalOpen(true);
+    if (errorPresentation === 'modal') {
       return;
     }
-    setIsErrorModalOpen(false);
-  }, [errorMessage, errorPresentation, isError]);
+
+    if (!isError) {
+      lastInlineLoggedErrorKeyRef.current = null;
+      return;
+    }
+
+    const logKey = [errorMessage, resolvedError?.errorType ?? ''].join('|');
+    if (lastInlineLoggedErrorKeyRef.current === logKey) {
+      return;
+    }
+
+    lastInlineLoggedErrorKeyRef.current = logKey;
+    logUiError({
+      err: error,
+      fallbackMessage: errorMessage,
+    });
+  }, [error, errorMessage, errorPresentation, isError, resolvedError?.errorType]);
 
   if (isLoading) {
     if (loadingVariant === 'spinner') {
@@ -67,14 +88,7 @@ export default function ListStateView({
 
   if (isError) {
     if (errorPresentation === 'modal') {
-      return (
-        <RequestErrorModal
-          isOpen={isErrorModalOpen}
-          title={errorTitle ?? '요청 처리 실패'}
-          message={errorMessage}
-          onClose={() => setIsErrorModalOpen(false)}
-        />
-      );
+      return null;
     }
 
     return (

@@ -37,9 +37,9 @@ describe('updateAppointmentStatusAction', () => {
       status: 'pending',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 약속 ID가 아닙니다.',
     });
   });
@@ -60,7 +60,7 @@ describe('updateAppointmentStatusAction', () => {
       p_appointment_id: appointmentId,
       p_status: 'canceled',
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: { status: 'canceled' },
     });

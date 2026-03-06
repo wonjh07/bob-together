@@ -13,7 +13,7 @@ import InlineLoading from '@/components/ui/InlineLoading';
 import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import {
   createMyReviewsQueryOptions,
   type MyReviewPage,
@@ -36,7 +36,7 @@ export default function ProfileReviewsClient() {
   const [deletingAppointmentId, setDeletingAppointmentId] = useState<
     string | null
   >(null);
-  const { openRequestError } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
 
   const {
     data,
@@ -78,9 +78,8 @@ export default function ProfileReviewsClient() {
       try {
         const result = await deleteMyReviewAction({ appointmentId });
         if (!result.ok) {
-          openRequestError(result.message || '리뷰 삭제에 실패했습니다.', {
-            err: result,
-            source: 'ProfileReviewsClient.handleDeleteReview.result',
+          showRequestError(result, {
+            fallbackMessage: '리뷰 삭제에 실패했습니다.',
           });
           return;
         }
@@ -112,7 +111,7 @@ export default function ProfileReviewsClient() {
         setDeletingAppointmentId(null);
       }
     },
-    [deletingAppointmentId, openRequestError, queryClient, queryOptions.queryKey],
+    [deletingAppointmentId, queryClient, queryOptions.queryKey, showRequestError],
   );
   const hasState = isLoading || isError || reviews.length === 0;
 

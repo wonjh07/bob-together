@@ -7,9 +7,9 @@ describe('searchUsersAction', () => {
   it('검색어가 짧으면 invalid-format을 반환한다', async () => {
     const result = await searchUsersAction('a');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '검색어를 2자 이상 입력해주세요.',
     });
   });

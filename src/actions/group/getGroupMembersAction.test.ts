@@ -49,9 +49,9 @@ describe('getGroupMembersAction', () => {
   it('groupId가 비어 있으면 invalid-format을 반환한다', async () => {
     const result = await getGroupMembersAction('');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '그룹 정보가 필요합니다.',
     });
   });
@@ -59,9 +59,9 @@ describe('getGroupMembersAction', () => {
   it('groupId 형식이 올바르지 않으면 invalid-format을 반환한다', async () => {
     const result = await getGroupMembersAction('invalid-group-id');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 그룹 ID가 아닙니다.',
     });
   });
@@ -74,7 +74,7 @@ describe('getGroupMembersAction', () => {
       p_user_id: '550e8400-e29b-41d4-a716-446655440123',
       p_group_id: groupId,
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         memberCount: 1,
@@ -105,9 +105,9 @@ describe('getGroupMembersAction', () => {
 
     const result = await getGroupMembersAction('550e8400-e29b-41d4-a716-446655440000');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '그룹 정보가 필요합니다.',
     });
   });

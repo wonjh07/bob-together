@@ -15,7 +15,7 @@ import ClockIcon from '@/components/icons/ClockIcon';
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
 import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
 import PlainTopNav from '@/components/ui/PlainTopNav';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import { createAppointmentDetailQueryOptions } from '@/libs/query/appointmentQueries';
 import {
   invalidateAppointmentDetailAndCollectionQueries,
@@ -71,9 +71,7 @@ export default function AppointmentEditClient({
   const [endTime, setEndTime] = useState(initialEndTime);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const {
-    openRequestError,
-  } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
   const detailQuery = useQuery(
     createAppointmentDetailQueryOptions(appointmentId, queryScope),
   );
@@ -137,9 +135,8 @@ export default function AppointmentEditClient({
     setIsSubmitting(false);
 
     if (!result.ok) {
-      openRequestError(result.message || '약속 수정에 실패했습니다.', {
-        err: result,
-        source: 'AppointmentEditClient.handleComplete.result',
+      showRequestError(result, {
+        fallbackMessage: '약속 수정에 실패했습니다.',
       });
       return;
     }
@@ -170,18 +167,14 @@ export default function AppointmentEditClient({
     setIsSubmitting(false);
 
     if (!result.ok) {
-      openRequestError(result.message || '약속 취소에 실패했습니다.', {
-        err: result,
-        source: 'AppointmentEditClient.handleUpdateStatus.result',
+      showRequestError(result, {
+        fallbackMessage: '약속 취소에 실패했습니다.',
       });
       return;
     }
 
     if (!result.data) {
-      openRequestError('약속 취소에 실패했습니다.', {
-        err: result,
-        source: 'AppointmentEditClient.handleUpdateStatus.noData',
-      });
+      showRequestError('약속 취소에 실패했습니다.');
       return;
     }
 

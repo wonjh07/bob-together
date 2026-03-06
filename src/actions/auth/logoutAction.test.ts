@@ -39,9 +39,9 @@ describe('logoutAction', () => {
 
     const result = await logoutAction();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'logout-failed',
+      errorType: 'auth',
       message: 'Failed to sign out',
     });
   });

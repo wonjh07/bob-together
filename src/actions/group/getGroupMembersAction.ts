@@ -2,8 +2,13 @@
 
 import { z } from 'zod';
 
-import { requireUser } from '@/actions/_common/guards';
-import { actionError, actionSuccess } from '@/actions/_common/result';
+import { requireUserService } from '@/actions/_common/guards';
+import {
+  createActionSuccessState,
+  createActionErrorState,
+  runServiceAction,
+  toActionResult,
+} from '@/actions/_common/service-action';
 
 import type {
   GetGroupMembersResult,
@@ -59,63 +64,102 @@ function mapRpcMembers(members: unknown): GroupMemberItem[] {
 export async function getGroupMembersAction(
   groupId: string,
 ): Promise<GetGroupMembersResult> {
-  if (!groupId) {
-    return actionError('invalid-format', '그룹 정보가 필요합니다.');
-  }
-  if (!z.string().uuid().safeParse(groupId).success) {
-    return actionError('invalid-format', '유효한 그룹 ID가 아닙니다.');
-  }
+  const state = await runServiceAction({
+    serverErrorMessage: '그룹 멤버를 불러올 수 없습니다.',
+    run: async ({ requestId }) => {
+      if (!groupId) {
+        return createActionErrorState({
+          requestId,
+          code: 'validation',
+          message: '그룹 정보가 필요합니다.',
+        });
+      }
+      if (!z.string().uuid().safeParse(groupId).success) {
+        return createActionErrorState({
+          requestId,
+          code: 'validation',
+          message: '유효한 그룹 ID가 아닙니다.',
+        });
+      }
 
-  const auth = await requireUser();
-  if (!auth.ok) {
-    return auth;
-  }
-  const { supabase, user } = auth;
+      const auth = await requireUserService(requestId);
+      if (!('supabase' in auth)) {
+        return auth;
+      }
+      const { supabase, user } = auth;
 
-  const getGroupMembersRpc = 'get_group_members_with_count' as never;
-  const getGroupMembersParams = {
-    p_user_id: user.id,
-    p_group_id: groupId,
-  } as never;
-  const { data, error } = await supabase.rpc(
-    getGroupMembersRpc,
-    getGroupMembersParams,
-  );
-
-  if (error) {
-    if (error.code === '42501') {
-      return actionError(
-        'forbidden',
-        '그룹을 찾을 수 없거나 접근 권한이 없습니다.',
+      const getGroupMembersRpc = 'get_group_members_with_count' as never;
+      const getGroupMembersParams = {
+        p_user_id: user.id,
+        p_group_id: groupId,
+      } as never;
+      const { data, error } = await supabase.rpc(
+        getGroupMembersRpc,
+        getGroupMembersParams,
       );
-    }
-    return actionError('server-error', '그룹 멤버를 불러올 수 없습니다.');
-  }
 
-  const row = ((data as GetGroupMembersRpcRow[] | null) ?? [])[0] ?? null;
-  if (!row) {
-    return actionError('server-error', '그룹 멤버를 불러올 수 없습니다.');
-  }
-  if (!row.ok) {
-    if (row.error_code === 'forbidden') {
-      return actionError(
-        'forbidden',
-        '그룹을 찾을 수 없거나 접근 권한이 없습니다.',
-      );
-    }
-    if (row.error_code === 'invalid-format') {
-      return actionError('invalid-format', '그룹 정보가 필요합니다.');
-    }
-    return actionError('server-error', '그룹 멤버를 불러올 수 없습니다.');
-  }
+      if (error) {
+        if (error.code === '42501') {
+          return createActionErrorState({
+            requestId,
+            code: 'permission',
+            message: '그룹을 찾을 수 없거나 접근 권한이 없습니다.',
+          });
+        }
+        return createActionErrorState({
+          requestId,
+          code: 'server',
+          message: '그룹 멤버를 불러올 수 없습니다.',
+          error,
+        });
+      }
 
-  const members = mapRpcMembers(row.members);
-  const memberCount =
-    typeof row.member_count === 'number' ? row.member_count : members.length;
+      const row = ((data as GetGroupMembersRpcRow[] | null) ?? [])[0] ?? null;
+      if (!row) {
+        return createActionErrorState({
+          requestId,
+          code: 'server',
+          message: '그룹 멤버를 불러올 수 없습니다.',
+        });
+      }
 
-  return actionSuccess({
-    memberCount,
-    members,
-    currentUserId: user.id,
+      if (!row.ok) {
+        if (row.error_code === 'forbidden') {
+          return createActionErrorState({
+            requestId,
+            code: 'permission',
+            message: '그룹을 찾을 수 없거나 접근 권한이 없습니다.',
+          });
+        }
+        if (row.error_code === 'invalid-format') {
+          return createActionErrorState({
+            requestId,
+            code: 'validation',
+            message: '그룹 정보가 필요합니다.',
+          });
+        }
+        return createActionErrorState({
+          requestId,
+          code: 'server',
+          message: '그룹 멤버를 불러올 수 없습니다.',
+          error: { rpcErrorCode: row.error_code },
+        });
+      }
+
+      const members = mapRpcMembers(row.members);
+      const memberCount =
+        typeof row.member_count === 'number' ? row.member_count : members.length;
+
+      return createActionSuccessState({
+        requestId,
+        data: {
+          memberCount,
+          members,
+          currentUserId: user.id,
+        },
+      });
+    },
   });
+
+  return toActionResult(state);
 }

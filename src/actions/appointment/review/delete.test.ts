@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { deleteMyReviewAction } from './delete';
 
@@ -7,7 +7,7 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
@@ -15,7 +15,7 @@ const APPOINTMENT_ID = '20000000-0000-4000-8000-000000000001';
 const USER_ID = '20000000-0000-4000-8000-000000000002';
 
 describe('deleteMyReviewAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -26,9 +26,9 @@ describe('deleteMyReviewAction', () => {
       appointmentId: 'invalid-id',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 약속 정보가 필요합니다.',
     });
   });
@@ -45,7 +45,7 @@ describe('deleteMyReviewAction', () => {
       error: null,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { rpc },
       user: { id: USER_ID },
@@ -55,9 +55,9 @@ describe('deleteMyReviewAction', () => {
       appointmentId: APPOINTMENT_ID,
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '리뷰 정보를 확인하지 못했습니다.',
     });
   });
@@ -74,7 +74,7 @@ describe('deleteMyReviewAction', () => {
       error: null,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { rpc },
       user: { id: USER_ID },
@@ -89,7 +89,7 @@ describe('deleteMyReviewAction', () => {
       p_appointment_id: APPOINTMENT_ID,
       p_edited_at: expect.any(String),
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         appointmentId: APPOINTMENT_ID,

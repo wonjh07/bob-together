@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { createAppointmentCommentAction } from './create';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('createAppointmentCommentAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -30,10 +30,13 @@ describe('createAppointmentCommentAction', () => {
       content: '   ',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '댓글을 입력해주세요.',
+      fieldErrors: {
+        content: ['댓글을 입력해주세요.'],
+      },
     });
   });
 
@@ -55,10 +58,11 @@ describe('createAppointmentCommentAction', () => {
       from: jest.fn().mockReturnValue(insertQuery),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '550e8400-e29b-41d4-a716-446655440100' },
+      requestId: 'req-test',
     });
 
     const result = await createAppointmentCommentAction({
@@ -66,9 +70,9 @@ describe('createAppointmentCommentAction', () => {
       content: '테스트 댓글',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '댓글 작성 중 오류가 발생했습니다.',
     });
   });
@@ -98,10 +102,11 @@ describe('createAppointmentCommentAction', () => {
       from: jest.fn().mockReturnValue(insertQuery),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
+      requestId: 'req-test',
     });
 
     const result = await createAppointmentCommentAction({
@@ -109,7 +114,7 @@ describe('createAppointmentCommentAction', () => {
       content: '테스트 댓글',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         appointmentId,

@@ -4,39 +4,21 @@ import { useEffect, useState } from 'react';
 
 import * as styles from './RequestErrorModal.css';
 
+import type { ServiceErrorCode } from '@/actions/_common/service-action';
+
 interface RequestErrorModalProps {
   isOpen: boolean;
   message: string;
+  errorType: ServiceErrorCode;
   onClose?: () => void;
   title?: string;
   closeLabel?: string;
 }
 
-interface ParsedMessage {
-  userMessage: string;
-  debugMessage: string | null;
-}
-
-function parseMessage(message: string): ParsedMessage {
-  const marker = '\n\n[debug]\n';
-  const markerIndex = message.indexOf(marker);
-
-  if (markerIndex === -1) {
-    return {
-      userMessage: message,
-      debugMessage: null,
-    };
-  }
-
-  return {
-    userMessage: message.slice(0, markerIndex),
-    debugMessage: message.slice(markerIndex + marker.length).trim(),
-  };
-}
-
 export default function RequestErrorModal({
   isOpen,
   message,
+  errorType,
   onClose,
   title = '요청 처리 실패',
   closeLabel = '확인',
@@ -74,8 +56,6 @@ export default function RequestErrorModal({
     return null;
   }
 
-  const { userMessage, debugMessage } = parseMessage(message);
-
   return (
     <div
       className={styles.overlay}
@@ -89,13 +69,8 @@ export default function RequestErrorModal({
         onClick={(event) => event.stopPropagation()}>
         <div className={styles.body}>
           <p className={styles.title}>{title}</p>
-          <p className={styles.message}>{userMessage}</p>
-          {debugMessage ? (
-            <div className={styles.debugBox}>
-              <p className={styles.debugTitle}>디버그 정보</p>
-              <pre className={styles.debugMessage}>{debugMessage}</pre>
-            </div>
-          ) : null}
+          <p className={styles.message}>{message}</p>
+          <p className={styles.errorType}>에러 타입: {errorType}</p>
         </div>
         <div className={styles.footer}>
           <button

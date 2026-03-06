@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { createAppointmentAction } from './create';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('createAppointmentAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   const userId = '20000000-0000-4000-8000-000000000001';
 
   beforeEach(() => {
@@ -36,9 +36,9 @@ describe('createAppointmentAction', () => {
       },
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-time',
+      errorType: 'validation',
       message: '종료 시간이 시작 시간보다 늦어야 합니다.',
     });
   });
@@ -55,10 +55,11 @@ describe('createAppointmentAction', () => {
       },
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { rpc },
       user: { id: userId },
+      requestId: 'req-test',
     });
 
     try {
@@ -78,9 +79,9 @@ describe('createAppointmentAction', () => {
         },
       });
 
-      expect(result).toEqual({
+      expect(result).toMatchObject({
         ok: false,
-        error: 'missing-group',
+        errorType: 'validation',
         message: '가입한 그룹이 없습니다.',
       });
     } finally {
@@ -100,10 +101,11 @@ describe('createAppointmentAction', () => {
       error: null,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { rpc },
       user: { id: userId },
+      requestId: 'req-test',
     });
 
     const result = await createAppointmentAction({
@@ -129,7 +131,7 @@ describe('createAppointmentAction', () => {
         p_group_id: null,
       }),
     );
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         appointmentId,

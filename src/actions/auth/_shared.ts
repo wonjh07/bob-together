@@ -1,19 +1,19 @@
-import type { ActionResult, AuthErrorCode } from '@/types/result';
+import type { ActionResult, AuthErrorType } from '@/types/result';
 
-export type LoginActionResult = ActionResult<void, AuthErrorCode>;
-export type SignupActionResult = ActionResult<void, AuthErrorCode>;
-export type LogoutActionResult = ActionResult<void, AuthErrorCode>;
+export type LoginActionResult = ActionResult<void, AuthErrorType>;
+export type SignupActionResult = ActionResult<void, AuthErrorType>;
+export type LogoutActionResult = ActionResult<void, AuthErrorType>;
 export type FindEmailActionResult = ActionResult<
   { maskedEmail: string },
-  AuthErrorCode | 'user-not-found'
+  AuthErrorType
 >;
 export type VerifyResetPasswordIdentityActionResult = ActionResult<
   void,
-  AuthErrorCode | 'user-not-found'
+  AuthErrorType
 >;
 export type ResetPasswordByIdentityActionResult = ActionResult<
   void,
-  AuthErrorCode | 'user-not-found'
+  AuthErrorType
 >;
 
 export type SignupParams = {

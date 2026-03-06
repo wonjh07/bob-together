@@ -2,8 +2,15 @@
 
 import { z } from 'zod';
 
-import { parseOrFail, requireUser } from '@/actions/_common/guards';
-import { actionError, actionSuccess } from '@/actions/_common/result';
+import { requireUserService } from '@/actions/_common/guards';
+import {
+  createActionSuccessState,
+  createActionErrorState,
+  createPostgrestErrorState,
+  runServiceAction,
+  toActionResult,
+  createZodValidationErrorState,
+} from '@/actions/_common/service-action';
 
 import type {
   AppointmentDetailItem,
@@ -67,69 +74,92 @@ function resolveGroupName(groups: unknown): string | null {
 export async function getAppointmentDetailAction(
   appointmentId: string,
 ): Promise<GetAppointmentDetailResult> {
-  const parsed = parseOrFail(appointmentIdSchema, appointmentId);
-  if (!parsed.ok) {
-    return parsed;
-  }
+  const state = await runServiceAction({
+    serverErrorMessage: '약속 정보를 불러올 수 없습니다.',
+    run: async ({ requestId }) => {
+      const parsed = appointmentIdSchema.safeParse(appointmentId);
+      if (!parsed.success) {
+        return createZodValidationErrorState({
+          requestId,
+          error: parsed.error,
+          fallbackMessage: '유효한 약속 ID가 아닙니다.',
+        });
+      }
 
-  const auth = await requireUser();
-  if (!auth.ok) {
-    return auth;
-  }
+      const auth = await requireUserService(requestId);
+      if (!('supabase' in auth)) {
+        return auth;
+      }
 
-  const { supabase, user } = auth;
-  const { data, error } = await supabase.rpc('get_appointment_detail_with_count', {
-    p_user_id: user.id,
-    p_appointment_id: parsed.data,
+      const { supabase, user } = auth;
+      const { data, error } = await supabase.rpc('get_appointment_detail_with_count', {
+        p_user_id: user.id,
+        p_appointment_id: parsed.data,
+      });
+
+      if (error) {
+        return createPostgrestErrorState({
+          action: 'getAppointmentDetailAction.rpc',
+          requestId,
+          error,
+          serverMessage: '약속 정보를 불러올 수 없습니다.',
+        });
+      }
+
+      const row = ((data as AppointmentDetailRow[] | null) ?? [])[0];
+      if (!row) {
+        return createActionErrorState({
+          requestId,
+          code: 'permission',
+          message: '약속을 찾을 수 없거나 접근 권한이 없습니다.',
+        });
+      }
+
+      const { data: appointmentGroupData } = await supabase
+        .from('appointments')
+        .select('groups(name)')
+        .eq('appointment_id', parsed.data)
+        .maybeSingle();
+      const groupName = resolveGroupName(
+        (appointmentGroupData as { groups?: unknown } | null)?.groups ?? null,
+      );
+
+      const appointmentDetail: AppointmentDetailItem = {
+        appointmentId: row.appointment_id,
+        title: row.title,
+        groupName,
+        status: row.status === 'canceled' ? 'canceled' : 'pending',
+        startAt: row.start_at,
+        endsAt: row.ends_at,
+        createdAt: row.created_at,
+        creatorId: row.creator_id,
+        creatorName: row.creator_name,
+        creatorNickname: row.creator_nickname,
+        creatorProfileImage: row.creator_profile_image,
+        place: {
+          placeId: row.place_id,
+          name: row.place_name,
+          address: row.place_address,
+          category: row.place_category,
+          latitude: row.place_latitude,
+          longitude: row.place_longitude,
+          reviewAverage:
+            typeof row.review_avg === 'number'
+              ? Number(row.review_avg.toFixed(1))
+              : null,
+          reviewCount: Number(row.review_count) || 0,
+        },
+        memberCount: Number(row.member_count) || 0,
+        isOwner: row.creator_id === user.id,
+        isMember: row.is_member,
+      };
+
+      return createActionSuccessState({
+        requestId,
+        data: { appointment: appointmentDetail },
+      });
+    },
   });
 
-  if (error) {
-    return actionError('server-error', '약속 정보를 불러올 수 없습니다.');
-  }
-
-  const row = ((data as AppointmentDetailRow[] | null) ?? [])[0];
-  if (!row) {
-    return actionError('forbidden', '약속을 찾을 수 없거나 접근 권한이 없습니다.');
-  }
-
-  const { data: appointmentGroupData } = await supabase
-    .from('appointments')
-    .select('groups(name)')
-    .eq('appointment_id', parsed.data)
-    .maybeSingle();
-  const groupName = resolveGroupName(
-    (appointmentGroupData as { groups?: unknown } | null)?.groups ?? null,
-  );
-
-  const appointment: AppointmentDetailItem = {
-    appointmentId: row.appointment_id,
-    title: row.title,
-    groupName,
-    status: row.status === 'canceled' ? 'canceled' : 'pending',
-    startAt: row.start_at,
-    endsAt: row.ends_at,
-    createdAt: row.created_at,
-    creatorId: row.creator_id,
-    creatorName: row.creator_name,
-    creatorNickname: row.creator_nickname,
-    creatorProfileImage: row.creator_profile_image,
-    place: {
-      placeId: row.place_id,
-      name: row.place_name,
-      address: row.place_address,
-      category: row.place_category,
-      latitude: row.place_latitude,
-      longitude: row.place_longitude,
-      reviewAverage:
-        typeof row.review_avg === 'number'
-          ? Number(row.review_avg.toFixed(1))
-          : null,
-      reviewCount: Number(row.review_count) || 0,
-    },
-    memberCount: Number(row.member_count) || 0,
-    isOwner: row.creator_id === user.id,
-    isMember: row.is_member,
-  };
-
-  return actionSuccess({ appointment });
+  return toActionResult(state);
 }

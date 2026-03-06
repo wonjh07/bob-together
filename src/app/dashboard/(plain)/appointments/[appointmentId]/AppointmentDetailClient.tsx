@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
 
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
 import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
@@ -11,7 +10,7 @@ import DateTimeMetaRow from '@/components/ui/DateTimeMetaRow';
 import IconLabel from '@/components/ui/IconLabel';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import UserIdentityInline from '@/components/ui/UserIdentityInline';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useSyncRequestError } from '@/hooks/useRequestError';
 import { createAppointmentDetailQueryOptions } from '@/libs/query/appointmentQueries';
 import { useQueryScope } from '@/provider/query-scope-provider';
 import { formatRelativeKorean } from '@/utils/dateFormat';
@@ -28,27 +27,14 @@ export default function AppointmentDetailClient({
 }: AppointmentDetailClientProps) {
   const router = useRouter();
   const queryScope = useQueryScope();
-  const { syncRequestError } = useRequestErrorPresenter({
-    source: 'AppointmentDetailClient.detailQuery.error',
-    fallbackMessage: '약속 정보를 불러올 수 없습니다.',
-  });
   const detailQuery = useQuery(
     createAppointmentDetailQueryOptions(appointmentId, queryScope),
   );
-  const detailErrorMessage = useMemo(() => {
-    if (!detailQuery.isError) return '';
-    return detailQuery.error instanceof Error
-      ? detailQuery.error.message
-      : '약속 정보를 불러올 수 없습니다.';
-  }, [detailQuery.error, detailQuery.isError]);
-
-  useEffect(() => {
-    syncRequestError({
-      isError: Boolean(detailErrorMessage),
-      err: detailQuery.error,
-      message: detailErrorMessage,
-    });
-  }, [detailErrorMessage, detailQuery.error, syncRequestError]);
+  useSyncRequestError({
+    active: detailQuery.isError,
+    error: detailQuery.error,
+    fallbackMessage: '약속 정보를 불러올 수 없습니다.',
+  });
 
   if (detailQuery.isLoading) {
     return (

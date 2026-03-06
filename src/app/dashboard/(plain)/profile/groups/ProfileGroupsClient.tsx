@@ -17,7 +17,7 @@ import InlineLoading from '@/components/ui/InlineLoading';
 import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import {
   createGroupManageQueryOptions,
   type GroupManagePage,
@@ -45,9 +45,7 @@ export default function ProfileGroupsClient() {
     null,
   );
   const [leavingGroupId, setLeavingGroupId] = useState<string | null>(null);
-  const {
-    openRequestError,
-  } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
 
   const {
     data,
@@ -91,9 +89,8 @@ export default function ProfileGroupsClient() {
       try {
         const result = await leaveGroupAction(groupId);
         if (!result.ok) {
-          openRequestError(result.message || '그룹 탈퇴에 실패했습니다.', {
-            err: result,
-            source: 'ProfileGroupsClient.handleLeaveGroup.result',
+          showRequestError(result, {
+            fallbackMessage: '그룹 탈퇴에 실패했습니다.',
           });
           return;
         }
@@ -120,7 +117,7 @@ export default function ProfileGroupsClient() {
         setLeavingGroupId(null);
       }
     },
-    [leavingGroupId, openRequestError, queryClient, queryOptions.queryKey],
+    [leavingGroupId, queryClient, queryOptions.queryKey, showRequestError],
   );
 
   const emptyTextByTab =

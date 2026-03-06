@@ -22,9 +22,9 @@ describe('findGroupByNameAction', () => {
 
     const result = await findGroupByNameAction('없는그룹');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'group-not-found',
+      errorType: 'not_found',
       message: '해당 그룹을 찾을 수 없습니다.',
     });
   });

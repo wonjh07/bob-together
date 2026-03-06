@@ -66,58 +66,49 @@ describe('uploadProfileImageAction', () => {
 
     const result = await uploadProfileImageAction(formData);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-file',
+      errorType: 'validation',
       message: '이미지 파일을 선택해주세요.',
     });
   });
 
   it('metadata 동기화 실패 시 metadata-sync-failed를 반환해야 한다', async () => {
-    const consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
-
-    try {
-      rpc.mockResolvedValue({
-        data: [
-          {
-            ok: true,
-            error_code: null,
-            previous_profile_image:
-              'https://example.com/storage/v1/object/public/profile-images/123/avatar-old.jpg',
-          },
-        ],
-        error: null,
-      });
-      mockSupabaseClient.auth.updateUser.mockResolvedValue({
-        error: { message: 'metadata fail' },
-      });
-
-      const formData = new FormData();
-      const file = new File(['jpeg data'], 'profile.jpg', { type: 'image/jpeg' });
-      formData.append('file', file);
-
-      const result = await uploadProfileImageAction(formData);
-
-      expect(result).toEqual({
-        ok: false,
-        error: 'metadata-sync-failed',
-        message: '프로필 이미지는 저장되었지만 계정 정보 동기화에 실패했습니다.',
-      });
-      expect(rpc).toHaveBeenCalledWith(
-        'set_user_profile_image_transactional',
+    rpc.mockResolvedValue({
+      data: [
         {
-          p_user_id: '123',
-          p_profile_image:
-            'https://example.com/storage/v1/object/public/profile-images/123/avatar-new.jpg',
+          ok: true,
+          error_code: null,
+          previous_profile_image:
+            'https://example.com/storage/v1/object/public/profile-images/123/avatar-old.jpg',
         },
-      );
-      expect(storageRemove).toHaveBeenCalledWith(['123/avatar-old.jpg']);
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    } finally {
-      consoleErrorSpy.mockRestore();
-    }
+      ],
+      error: null,
+    });
+    mockSupabaseClient.auth.updateUser.mockResolvedValue({
+      error: { message: 'metadata fail' },
+    });
+
+    const formData = new FormData();
+    const file = new File(['jpeg data'], 'profile.jpg', { type: 'image/jpeg' });
+    formData.append('file', file);
+
+    const result = await uploadProfileImageAction(formData);
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorType: 'server',
+      message: '프로필 이미지는 저장되었지만 계정 정보 동기화에 실패했습니다.',
+    });
+    expect(rpc).toHaveBeenCalledWith(
+      'set_user_profile_image_transactional',
+      {
+        p_user_id: '123',
+        p_profile_image:
+          'https://example.com/storage/v1/object/public/profile-images/123/avatar-new.jpg',
+      },
+    );
+    expect(storageRemove).toHaveBeenCalledWith(['123/avatar-old.jpg']);
   });
 
   it('이전 profile_image URL 파싱에 실패해도 업로드 성공을 반환해야 한다', async () => {
@@ -160,9 +151,9 @@ describe('uploadProfileImageAction', () => {
 
     const result = await uploadProfileImageAction(formData);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'profile-not-found',
+      errorType: 'not_found',
       message: '프로필 정보를 찾을 수 없습니다.',
     });
     expect(storageRemove).toHaveBeenCalled();

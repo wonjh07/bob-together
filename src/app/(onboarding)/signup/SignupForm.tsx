@@ -9,7 +9,7 @@ import { signupAction } from '@/actions/auth';
 import { SubmitButton } from '@/components/ui/Buttons';
 import { Input } from '@/components/ui/FormInput';
 import { useEmailValidation } from '@/hooks/useEmailValidation';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import { signupSchema } from '@/schemas/auth';
 
 import { signupForm } from './page.css';
@@ -30,9 +30,7 @@ export default function SignupForm() {
     resolver: zodResolver(signupSchema),
     mode: 'onChange',
   });
-  const {
-    openRequestError,
-  } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
 
   const email = watch('email');
   const router = useRouter();
@@ -48,9 +46,8 @@ export default function SignupForm() {
       const result = await signupAction(data);
 
       if (!result.ok) {
-        openRequestError(result.message || '회원가입에 실패했습니다.', {
-          err: result,
-          source: 'SignupForm.onSubmit.result',
+        showRequestError(result, {
+          fallbackMessage: '회원가입에 실패했습니다.',
         });
         return;
       }
@@ -58,9 +55,8 @@ export default function SignupForm() {
       toast.success('회원가입 성공!');
       router.push('/signup/success');
     } catch (err) {
-      openRequestError('회원가입 중 오류가 발생했습니다.', {
-        err,
-        source: 'SignupForm.onSubmit.catch',
+      showRequestError(err, {
+        fallbackMessage: '회원가입 중 오류가 발생했습니다.',
       });
     }
   };

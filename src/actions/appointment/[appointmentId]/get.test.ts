@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { getAppointmentDetailAction } from './get';
 
@@ -7,41 +7,53 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('getAppointmentDetailAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   const userId = '20000000-0000-4000-8000-000000000001';
   const appointmentId = '20000000-0000-4000-8000-000000000101';
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
+  beforeAll(() => {
+    consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
   it('약속 ID 형식이 올바르지 않으면 invalid-format을 반환한다', async () => {
     const result = await getAppointmentDetailAction('invalid-id');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 약속 ID가 아닙니다.',
     });
   });
 
   it('인증 실패는 그대로 반환한다', async () => {
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: false,
-      error: 'unauthorized',
+      requestId: 'req-unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
 
     const result = await getAppointmentDetailAction(appointmentId);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
   });
@@ -50,11 +62,16 @@ describe('getAppointmentDetailAction', () => {
     const supabase = {
       rpc: jest.fn().mockResolvedValue({
         data: null,
-        error: { message: 'rpc failed' },
+        error: {
+          code: 'XX000',
+          message: 'rpc failed',
+          details: 'detail payload',
+          hint: 'check rpc',
+        },
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
@@ -62,11 +79,23 @@ describe('getAppointmentDetailAction', () => {
 
     const result = await getAppointmentDetailAction(appointmentId);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '약속 정보를 불러올 수 없습니다.',
     });
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[action-error]',
+      expect.objectContaining({
+        action: 'getAppointmentDetailAction.rpc',
+        errorType: 'server',
+        requestId: expect.any(String),
+        code: 'XX000',
+        message: 'rpc failed',
+        details: 'detail payload',
+        hint: 'check rpc',
+      }),
+    );
   });
 
   it('상세 정보를 매핑해 반환한다', async () => {
@@ -113,7 +142,7 @@ describe('getAppointmentDetailAction', () => {
       from: jest.fn().mockReturnValue(appointmentGroupQuery),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
@@ -125,7 +154,7 @@ describe('getAppointmentDetailAction', () => {
       p_user_id: userId,
       p_appointment_id: appointmentId,
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         appointment: {

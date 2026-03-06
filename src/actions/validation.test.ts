@@ -31,7 +31,7 @@ describe('checkEmailExists', () => {
     const result = await checkEmailExists('existing@example.com');
 
     // Assert
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: { exists: true },
     });
@@ -51,7 +51,7 @@ describe('checkEmailExists', () => {
     const result = await checkEmailExists('new@example.com');
 
     // Assert
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: { exists: false },
     });
@@ -62,9 +62,9 @@ describe('checkEmailExists', () => {
     const result = await checkEmailExists('');
 
     // Assert
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: 'Invalid email format',
     });
     expect(mockSupabaseClient.rpc).not.toHaveBeenCalled();
@@ -75,9 +75,9 @@ describe('checkEmailExists', () => {
     const result = await checkEmailExists('invalid-email');
 
     // Assert
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: 'Invalid email format',
     });
     expect(mockSupabaseClient.rpc).not.toHaveBeenCalled();
@@ -94,9 +94,9 @@ describe('checkEmailExists', () => {
     const result = await checkEmailExists('test@example.com');
 
     // Assert
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'check-failed',
+      errorType: 'server',
       message: 'Failed to check email',
     });
   });
@@ -109,9 +109,9 @@ describe('checkEmailExists', () => {
     const result = await checkEmailExists('test@example.com');
 
     // Assert
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: 'Server error occurred',
     });
   });

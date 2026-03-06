@@ -2,7 +2,6 @@
 
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
 
 import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
 import IconLabel from '@/components/ui/IconLabel';
@@ -11,7 +10,7 @@ import ListStateView from '@/components/ui/ListStateView';
 import PlaceRatingMeta from '@/components/ui/PlaceRatingMeta';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useSyncRequestError } from '@/hooks/useRequestError';
 import {
   createPlaceDetailQueryOptions,
   createPlaceReviewsQueryOptions,
@@ -30,30 +29,15 @@ interface PlaceDetailClientProps {
 export default function PlaceDetailClient({ placeId }: PlaceDetailClientProps) {
   const router = useRouter();
   const queryScope = useQueryScope();
-  const {
-    syncRequestError,
-  } = useRequestErrorPresenter({
-    source: 'PlaceDetailClient.detailQuery.error',
-    fallbackMessage: '장소 정보를 불러오지 못했습니다.',
-  });
   const detailQuery = useQuery(createPlaceDetailQueryOptions(placeId, queryScope));
   const reviewsQuery = useInfiniteQuery(
     createPlaceReviewsQueryOptions(placeId, queryScope),
   );
-  const detailErrorMessage = useMemo(() => {
-    if (!detailQuery.isError) return '';
-    return detailQuery.error instanceof Error
-      ? detailQuery.error.message
-      : '장소 정보를 불러오지 못했습니다.';
-  }, [detailQuery.error, detailQuery.isError]);
-
-  useEffect(() => {
-    syncRequestError({
-      isError: Boolean(detailErrorMessage),
-      err: detailQuery.error,
-      message: detailErrorMessage,
-    });
-  }, [detailErrorMessage, detailQuery.error, syncRequestError]);
+  useSyncRequestError({
+    active: detailQuery.isError,
+    error: detailQuery.error,
+    fallbackMessage: '장소 정보를 불러오지 못했습니다.',
+  });
 
   const reviews =
     reviewsQuery.data?.pages.flatMap(

@@ -20,9 +20,9 @@ describe('createGroupAction', () => {
 
     const result = await createGroupAction('테스트그룹');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
   });
@@ -53,7 +53,7 @@ describe('createGroupAction', () => {
 
     const result = await createGroupAction('테스트그룹');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: { groupId: 'group-1', name: '테스트그룹' },
     });
@@ -92,9 +92,9 @@ describe('createGroupAction', () => {
 
     const result = await createGroupAction('테스트그룹');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.',
     });
   });

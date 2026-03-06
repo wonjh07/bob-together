@@ -58,6 +58,7 @@ export default async function AppointmentEditPage({
         <PlainTopNav title="약속 수정" rightHidden />
         <RequestErrorModal
           isOpen
+          errorType={result.ok ? 'server' : result.errorType}
           message={
             result.ok
               ? '약속 정보를 불러올 수 없습니다.'

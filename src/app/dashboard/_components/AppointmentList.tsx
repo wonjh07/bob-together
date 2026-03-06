@@ -1,7 +1,7 @@
 'use client';
 
 import { useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   type AppointmentListCursor,
@@ -10,7 +10,7 @@ import {
 } from '@/actions/appointment';
 import GroupEmptyIcon from '@/components/icons/GroupEmptyIcon';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useSyncRequestError } from '@/hooks/useRequestError';
 import {
   createAppointmentListQueryOptions,
   type AppointmentPage,
@@ -31,7 +31,6 @@ export function AppointmentList() {
 
   const [period, setPeriod] = useState<PeriodFilterType>('all');
   const [type, setType] = useState<TypeFilterType>('all');
-  const { openRequestError } = useRequestErrorPresenter();
   const queryOptions = useMemo(
     () =>
       createAppointmentListQueryOptions(
@@ -74,22 +73,11 @@ export function AppointmentList() {
     isFetchingNextPage,
     isLoading,
   });
-
-  const errorMessage = useMemo(
-    () =>
-      error instanceof Error
-        ? error.message
-        : '약속 목록을 가져올 수 없습니다.',
-    [error],
-  );
-
-  useEffect(() => {
-    if (!isError) return;
-    openRequestError(errorMessage, {
-      err: error,
-      source: 'AppointmentList.query.error',
-    });
-  }, [error, errorMessage, isError, openRequestError]);
+  useSyncRequestError({
+    active: isError,
+    error,
+    fallbackMessage: '약속 목록을 가져올 수 없습니다.',
+  });
 
   if (!currentGroupId) {
     return (

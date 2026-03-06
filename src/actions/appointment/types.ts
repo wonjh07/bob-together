@@ -1,4 +1,4 @@
-import type { ActionResult, AppointmentErrorCode } from '@/types/result';
+import type { ActionResult, AppointmentErrorType } from '@/types/result';
 
 export type PeriodFilter = 'today' | 'week' | 'month' | 'all';
 export type TypeFilter = 'all' | 'created' | 'joined';
@@ -207,22 +207,22 @@ export type ListAppointmentsResult = ActionResult<
     appointments: AppointmentListItem[];
     nextCursor: AppointmentListCursor | null;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type CreateAppointmentResult = ActionResult<
   { appointmentId: string },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type SendAppointmentInvitationResult = ActionResult<
   void,
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type SearchAppointmentInvitableUsersResult = ActionResult<
   { users: AppointmentInviteeSummary[] },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type SearchAppointmentsResult = ActionResult<
@@ -230,7 +230,7 @@ export type SearchAppointmentsResult = ActionResult<
     appointments: AppointmentSearchItem[];
     nextCursor: AppointmentSearchCursor | null;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type ListAppointmentHistoryResult = ActionResult<
@@ -238,26 +238,26 @@ export type ListAppointmentHistoryResult = ActionResult<
     appointments: AppointmentHistoryItem[];
     nextCursor: AppointmentHistoryCursor | null;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type GetAppointmentDetailResult = ActionResult<
   { appointment: AppointmentDetailItem },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type UpdateAppointmentStatusResult = ActionResult<
   { status: 'pending' | 'canceled' },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type UpdateAppointmentResult = ActionResult<
   { appointmentId: string },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
-export type JoinAppointmentResult = ActionResult<void, AppointmentErrorCode>;
-export type LeaveAppointmentResult = ActionResult<void, AppointmentErrorCode>;
+export type JoinAppointmentResult = ActionResult<void, AppointmentErrorType>;
+export type LeaveAppointmentResult = ActionResult<void, AppointmentErrorType>;
 
 export type GetAppointmentMembersResult = ActionResult<
   {
@@ -265,7 +265,7 @@ export type GetAppointmentMembersResult = ActionResult<
     members: AppointmentMemberItem[];
     currentUserId: string;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type GetAppointmentInvitationStateResult = ActionResult<
@@ -273,7 +273,7 @@ export type GetAppointmentInvitationStateResult = ActionResult<
     memberIds: string[];
     pendingInviteeIds: string[];
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type GetAppointmentCommentsResult = ActionResult<
@@ -283,7 +283,7 @@ export type GetAppointmentCommentsResult = ActionResult<
     nextCursor: AppointmentCommentsCursor | null;
     currentUserId: string;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type CreateAppointmentCommentResult = ActionResult<
@@ -293,7 +293,7 @@ export type CreateAppointmentCommentResult = ActionResult<
     comment: AppointmentCommentItem;
     commentCountDelta: 1;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type UpdateAppointmentCommentResult = ActionResult<
@@ -303,7 +303,7 @@ export type UpdateAppointmentCommentResult = ActionResult<
     comment: AppointmentCommentItem;
     commentCountDelta: 0;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type DeleteAppointmentCommentResult = ActionResult<
@@ -312,7 +312,7 @@ export type DeleteAppointmentCommentResult = ActionResult<
     commentId: string;
     commentCountDelta: -1;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type ListReviewableAppointmentsResult = ActionResult<
@@ -320,14 +320,14 @@ export type ListReviewableAppointmentsResult = ActionResult<
     appointments: ReviewableAppointmentItem[];
     nextCursor: ReviewableAppointmentsCursor | null;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type GetAppointmentReviewTargetResult = ActionResult<
   {
     target: AppointmentReviewTargetItem;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type SubmitPlaceReviewResult = ActionResult<
@@ -338,7 +338,7 @@ export type SubmitPlaceReviewResult = ActionResult<
     content: string;
     mode: 'created' | 'updated';
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type ListMyReviewsResult = ActionResult<
@@ -346,7 +346,7 @@ export type ListMyReviewsResult = ActionResult<
     reviews: MyReviewItem[];
     nextCursor: MyReviewCursor | null;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type ListMyCommentsResult = ActionResult<
@@ -354,12 +354,12 @@ export type ListMyCommentsResult = ActionResult<
     comments: MyCommentItem[];
     nextCursor: MyCommentCursor | null;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;
 
 export type DeleteMyReviewResult = ActionResult<
   {
     appointmentId: string;
   },
-  AppointmentErrorCode
+  AppointmentErrorType
 >;

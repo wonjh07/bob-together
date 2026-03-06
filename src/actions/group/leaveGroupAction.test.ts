@@ -36,9 +36,9 @@ describe('leaveGroupAction', () => {
 
     const result = await leaveGroupAction(GROUP_ID);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'forbidden',
+      errorType: 'permission',
       message: '그룹장은 그룹을 탈퇴할 수 없습니다.',
     });
   });
@@ -69,7 +69,7 @@ describe('leaveGroupAction', () => {
 
     const result = await leaveGroupAction(GROUP_ID);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: { groupId: GROUP_ID },
     });

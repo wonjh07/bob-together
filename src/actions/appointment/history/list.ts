@@ -2,8 +2,14 @@
 
 import { z } from 'zod';
 
-import { parseOrFail, requireUser } from '@/actions/_common/guards';
-import { actionSuccess } from '@/actions/_common/result';
+import { requireUserService } from '@/actions/_common/guards';
+import {
+  createActionSuccessState,
+  createActionErrorState,
+  runServiceAction,
+  toActionResult,
+  createZodValidationErrorState,
+} from '@/actions/_common/service-action';
 
 import type {
   AppointmentHistoryItem,
@@ -65,82 +71,99 @@ function toNullableNumber(value: number | string | null): number | null {
 export async function listAppointmentHistoryAction(
   params: ListHistoryParams = {},
 ): Promise<ListAppointmentHistoryResult> {
-  const parsed = parseOrFail(listHistorySchema, params);
-  if (!parsed.ok) {
-    return parsed;
-  }
+  const state = await runServiceAction({
+    serverErrorMessage: '히스토리 약속 목록을 불러오지 못했습니다.',
+    run: async ({ requestId }) => {
+      const parsed = listHistorySchema.safeParse(params);
+      if (!parsed.success) {
+        return createZodValidationErrorState({
+          requestId,
+          error: parsed.error,
+          fallbackMessage: '입력값이 올바르지 않습니다.',
+        });
+      }
 
-  const auth = await requireUser();
-  if (!auth.ok) {
-    return auth;
-  }
+      const auth = await requireUserService(requestId);
+      if (!('supabase' in auth)) {
+        return auth;
+      }
 
-  const { supabase, user } = auth;
-  const { cursor, limit = DEFAULT_LIMIT } = parsed.data;
-  const historyRpc = 'list_appointment_history_with_stats_cursor' as never;
-  const historyRpcParams = {
-    p_user_id: user.id,
-    p_limit: limit,
-    p_cursor_ends_at: cursor?.endsAt ?? null,
-    p_cursor_appointment_id: cursor?.appointmentId ?? null,
-  } as never;
-  const { data, error } = await supabase.rpc(
-    historyRpc,
-    historyRpcParams,
-  );
+      const { supabase, user } = auth;
+      const { cursor, limit = DEFAULT_LIMIT } = parsed.data;
+      const historyRpc = 'list_appointment_history_with_stats_cursor' as never;
+      const historyRpcParams = {
+        p_user_id: user.id,
+        p_limit: limit,
+        p_cursor_ends_at: cursor?.endsAt ?? null,
+        p_cursor_appointment_id: cursor?.appointmentId ?? null,
+      } as never;
+      const { data, error } = await supabase.rpc(
+        historyRpc,
+        historyRpcParams,
+      );
 
-  if (error) {
-    return {
-      ok: false,
-      error: 'server-error',
-      message: '히스토리 약속 목록을 불러오지 못했습니다.',
-    };
-  }
+      if (error) {
+        return createActionErrorState({
+          requestId,
+          code: 'server',
+          message: '히스토리 약속 목록을 불러오지 못했습니다.',
+          error,
+        });
+      }
 
-  const rows = (data as AppointmentHistoryRpcRow[] | null) ?? [];
+      const rows = (data as AppointmentHistoryRpcRow[] | null) ?? [];
+      if (rows.length === 0) {
+        return createActionSuccessState({
+          requestId,
+          data: {
+            appointments: [],
+            nextCursor: null,
+          },
+        });
+      }
 
-  if (rows.length === 0) {
-    return actionSuccess({
-      appointments: [],
-      nextCursor: null,
-    });
-  }
+      const hasMore = rows.length > limit;
+      const visibleRows = hasMore ? rows.slice(0, limit) : rows;
+      const lastRow = visibleRows[visibleRows.length - 1];
 
-  const hasMore = rows.length > limit;
-  const visibleRows = hasMore ? rows.slice(0, limit) : rows;
-  const lastRow = visibleRows[visibleRows.length - 1];
+      const appointments: AppointmentHistoryItem[] = visibleRows.map((row) => {
+        return {
+          appointmentId: row.appointment_id,
+          title: row.title,
+          startAt: row.start_at,
+          endsAt: row.ends_at,
+          creatorId: row.creator_id,
+          creatorName: row.creator_name,
+          creatorNickname: row.creator_nickname,
+          creatorProfileImage: row.creator_profile_image,
+          place: {
+            placeId: row.place_id,
+            name: row.place_name || '장소 미정',
+            address: row.place_address || '',
+            category: row.place_category,
+            reviewAverage: toNullableNumber(row.review_avg),
+            reviewCount: toCount(row.review_count),
+          },
+          memberCount: toCount(row.member_count),
+          isOwner: row.creator_id === user.id,
+          canWriteReview: row.can_write_review !== false,
+        };
+      });
 
-  const appointments: AppointmentHistoryItem[] = visibleRows.map((row) => {
-    return {
-      appointmentId: row.appointment_id,
-      title: row.title,
-      startAt: row.start_at,
-      endsAt: row.ends_at,
-      creatorId: row.creator_id,
-      creatorName: row.creator_name,
-      creatorNickname: row.creator_nickname,
-      creatorProfileImage: row.creator_profile_image,
-      place: {
-        placeId: row.place_id,
-        name: row.place_name || '장소 미정',
-        address: row.place_address || '',
-        category: row.place_category,
-        reviewAverage: toNullableNumber(row.review_avg),
-        reviewCount: toCount(row.review_count),
-      },
-      memberCount: toCount(row.member_count),
-      isOwner: row.creator_id === user.id,
-      canWriteReview: row.can_write_review !== false,
-    };
+      return createActionSuccessState({
+        requestId,
+        data: {
+          appointments,
+          nextCursor: hasMore && lastRow
+            ? {
+                endsAt: lastRow.ends_at,
+                appointmentId: lastRow.appointment_id,
+              }
+            : null,
+        },
+      });
+    },
   });
 
-  return actionSuccess({
-    appointments,
-    nextCursor: hasMore && lastRow
-      ? {
-          endsAt: lastRow.ends_at,
-          appointmentId: lastRow.appointment_id,
-        }
-      : null,
-  });
+  return toActionResult(state);
 }

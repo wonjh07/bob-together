@@ -2,8 +2,14 @@
 
 import { z } from 'zod';
 
-import { parseOrFail, requireUser } from '@/actions/_common/guards';
-import { actionError, actionSuccess } from '@/actions/_common/result';
+import { requireUserService } from '@/actions/_common/guards';
+import {
+  createActionSuccessState,
+  createActionErrorState,
+  runServiceAction,
+  toActionResult,
+  createZodValidationErrorState,
+} from '@/actions/_common/service-action';
 
 import type {
   AppointmentMemberItem,
@@ -61,49 +67,87 @@ function mapRpcMembers(members: unknown): AppointmentMemberItem[] {
 export async function getAppointmentMembersAction(
   appointmentId: string,
 ): Promise<GetAppointmentMembersResult> {
-  const parsed = parseOrFail(appointmentIdSchema, appointmentId);
-  if (!parsed.ok) {
-    return parsed;
-  }
+  const state = await runServiceAction({
+    serverErrorMessage: '약속 멤버를 불러올 수 없습니다.',
+    run: async ({ requestId }) => {
+      const parsed = appointmentIdSchema.safeParse(appointmentId);
+      if (!parsed.success) {
+        return createZodValidationErrorState({
+          requestId,
+          error: parsed.error,
+          fallbackMessage: '유효한 약속 ID가 아닙니다.',
+        });
+      }
 
-  const auth = await requireUser();
-  if (!auth.ok) {
-    return auth;
-  }
+      const auth = await requireUserService(requestId);
+      if (!('supabase' in auth)) {
+        return auth;
+      }
 
-  const { supabase, user } = auth;
-  const getMembersRpc = 'get_appointment_members_with_count' as never;
-  const getMembersParams = {
-    p_user_id: user.id,
-    p_appointment_id: parsed.data,
-  } as never;
-  const { data, error } = await supabase.rpc(getMembersRpc, getMembersParams);
+      const { supabase, user } = auth;
+      const getMembersRpc = 'get_appointment_members_with_count' as never;
+      const getMembersParams = {
+        p_user_id: user.id,
+        p_appointment_id: parsed.data,
+      } as never;
+      const { data, error } = await supabase.rpc(getMembersRpc, getMembersParams);
 
-  if (error) {
-    if (error.code === '42501') {
-      return actionError('forbidden', '약속을 찾을 수 없거나 접근 권한이 없습니다.');
-    }
-    return actionError('server-error', '약속 멤버를 불러올 수 없습니다.');
-  }
+      if (error) {
+        if (error.code === '42501') {
+          return createActionErrorState({
+            requestId,
+            code: 'permission',
+            message: '약속을 찾을 수 없거나 접근 권한이 없습니다.',
+            error,
+          });
+        }
+        return createActionErrorState({
+          requestId,
+          code: 'server',
+          message: '약속 멤버를 불러올 수 없습니다.',
+          error,
+        });
+      }
 
-  const row = ((data as GetAppointmentMembersRpcRow[] | null) ?? [])[0] ?? null;
-  if (!row) {
-    return actionError('server-error', '약속 멤버를 불러올 수 없습니다.');
-  }
-  if (!row.ok) {
-    if (row.error_code === 'forbidden') {
-      return actionError('forbidden', '약속을 찾을 수 없거나 접근 권한이 없습니다.');
-    }
-    return actionError('server-error', '약속 멤버를 불러올 수 없습니다.');
-  }
+      const row = ((data as GetAppointmentMembersRpcRow[] | null) ?? [])[0] ?? null;
+      if (!row) {
+        return createActionErrorState({
+          requestId,
+          code: 'server',
+          message: '약속 멤버를 불러올 수 없습니다.',
+        });
+      }
 
-  const members = mapRpcMembers(row.members);
-  const memberCount =
-    typeof row.member_count === 'number' ? row.member_count : members.length;
+      if (!row.ok) {
+        if (row.error_code === 'forbidden') {
+          return createActionErrorState({
+            requestId,
+            code: 'permission',
+            message: '약속을 찾을 수 없거나 접근 권한이 없습니다.',
+          });
+        }
+        return createActionErrorState({
+          requestId,
+          code: 'server',
+          message: '약속 멤버를 불러올 수 없습니다.',
+          error: { rpcErrorCode: row.error_code },
+        });
+      }
 
-  return actionSuccess({
-    memberCount,
-    members,
-    currentUserId: user.id,
+      const members = mapRpcMembers(row.members);
+      const memberCount =
+        typeof row.member_count === 'number' ? row.member_count : members.length;
+
+      return createActionSuccessState({
+        requestId,
+        data: {
+          memberCount,
+          members,
+          currentUserId: user.id,
+        },
+      });
+    },
   });
+
+  return toActionResult(state);
 }

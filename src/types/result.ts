@@ -1,72 +1,43 @@
+import type {
+  FieldErrorMap,
+  ServiceErrorCode,
+} from '@/actions/_common/service-action';
+
 // 공통 Action 응답 타입
 
 export type ActionSuccess<T = void> = {
   ok: true;
   data?: T;
+  success?: string;
 };
 
-export type ActionError<E extends string = string> = {
+export type ActionError<E extends ServiceErrorCode = ServiceErrorCode> = {
   ok: false;
-  error: E;
-  message?: string;
+  errorType: E;
+  message: string;
+  reason?: string;
+  fieldErrors?: FieldErrorMap;
+  error?: unknown;
 };
 
-export type ActionResult<T = void, E extends string = string> =
+export type ActionResult<T = void, E extends ServiceErrorCode = ServiceErrorCode> =
   | ActionSuccess<T>
   | ActionError<E>;
 
-// 공통 에러 코드
-export type CommonErrorCode =
-  | 'missing-fields'
-  | 'invalid-format'
-  | 'server-error'
-  | 'unauthorized'
-  | 'forbidden';
+// 공통 에러 타입
+export type CommonErrorType = ServiceErrorCode;
 
 // 인증 관련 에러
-export type AuthErrorCode =
-  | CommonErrorCode
-  | 'invalid-email'
-  | 'invalid-password'
-  | 'invalid-credentials'
-  | 'email-exists'
-  | 'signup-failed'
-  | 'login-failed'
-  | 'logout-failed'
-  | 'forbidden-origin';
+export type AuthErrorType = ServiceErrorCode;
 
 // 데이터 검증 에러
-export type ValidationErrorCode =
-  | CommonErrorCode
-  | 'email-invalid'
-  | 'password-too-short'
-  | 'password-too-long'
-  | 'passwords-mismatch'
-  | 'name-required'
-  | 'nickname-required'
-  | 'check-failed';
+export type ValidationErrorType = ServiceErrorCode;
 
 // 그룹 관련 에러
-export type GroupErrorCode =
-  | CommonErrorCode
-  | 'group-not-found'
-  | 'group-name-taken'
-  | 'group-name-duplicated'
-  | 'already-member'
-  | 'invite-already-sent';
+export type GroupErrorType = ServiceErrorCode;
 
 // 장소 관련 에러
-export type PlaceErrorCode =
-  | CommonErrorCode
-  | 'missing-config'
-  | 'provider-error';
+export type PlaceErrorType = ServiceErrorCode;
 
 // 약속 관련 에러
-export type AppointmentErrorCode =
-  | CommonErrorCode
-  | 'invalid-time'
-  | 'missing-place'
-  | 'missing-group'
-  | 'appointment-not-found'
-  | 'already-member'
-  | 'invite-already-sent';
+export type AppointmentErrorType = ServiceErrorCode;

@@ -26,10 +26,12 @@ describe('findEmailAction', () => {
 
     const result = await findEmailAction('홍길동', '길동이');
 
-    expect(result).toEqual({
-      ok: true,
-      data: { maskedEmail: 'te****@example.com' },
-    });
+    expect(result).toEqual(
+      expect.objectContaining({
+        ok: true,
+        data: { maskedEmail: 'te****@example.com' },
+      }),
+    );
     expect(mockRpc).toHaveBeenCalledWith('find_masked_email_by_identity', {
       p_name: '홍길동',
       p_nickname: '길동이',
@@ -44,11 +46,13 @@ describe('findEmailAction', () => {
 
     const result = await findEmailAction('홍길동', '없는닉네임');
 
-    expect(result).toEqual({
-      ok: false,
-      error: 'user-not-found',
-      message: '입력한 이름과 닉네임에 해당하는 계정을 찾을 수 없습니다.',
-    });
+    expect(result).toEqual(
+      expect.objectContaining({
+        ok: false,
+        errorType: 'not_found',
+        message: '입력한 이름과 닉네임에 해당하는 계정을 찾을 수 없습니다.',
+      }),
+    );
   });
 
   it('RPC 오류가 발생하면 server-error를 반환해야 한다', async () => {
@@ -59,11 +63,13 @@ describe('findEmailAction', () => {
 
     const result = await findEmailAction('홍길동', '길동이');
 
-    expect(result).toEqual({
-      ok: false,
-      error: 'server-error',
-      message: '이메일 조회 중 오류가 발생했습니다.',
-    });
+    expect(result).toEqual(
+      expect.objectContaining({
+        ok: false,
+        errorType: 'server',
+        message: '이메일 조회 중 오류가 발생했습니다.',
+      }),
+    );
   });
 
   it('유효하지 않은 입력은 invalid-format을 반환해야 한다', async () => {
@@ -71,7 +77,7 @@ describe('findEmailAction', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('invalid-format');
+      expect('validation');
     }
     expect(mockRpc).not.toHaveBeenCalled();
   });

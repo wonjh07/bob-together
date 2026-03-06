@@ -1,9 +1,15 @@
 'use server';
 
-import { actionError, actionSuccess } from '@/actions/_common/result';
+import {
+  createActionSuccessState,
+  createActionErrorState,
+  createPostgrestErrorState,
+  runServiceAction,
+  toActionResult,
+} from '@/actions/_common/service-action';
 import { createSupabaseServerClient } from '@/libs/supabase/server';
 
-import type { ActionResult, ValidationErrorCode } from '@/types/result';
+import type { ActionResult, ValidationErrorType } from '@/types/result';
 
 // ============================================================================
 // Email Validation
@@ -11,38 +17,52 @@ import type { ActionResult, ValidationErrorCode } from '@/types/result';
 
 export type CheckEmailExistsResult = ActionResult<
   { exists: boolean },
-  ValidationErrorCode
+  ValidationErrorType
 >;
 
 export async function checkEmailExists(
   email: string,
 ): Promise<CheckEmailExistsResult> {
-  if (!email || typeof email !== 'string') {
-    return actionError('invalid-format', 'Invalid email format');
-  }
+  const state = await runServiceAction({
+    serverErrorMessage: 'Server error occurred',
+    run: async ({ requestId }) => {
+      if (!email || typeof email !== 'string') {
+        return createActionErrorState({
+          requestId,
+          code: 'validation',
+          message: 'Invalid email format',
+        });
+      }
 
-  const normalizedEmail = email.trim().toLowerCase();
+      const normalizedEmail = email.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+        return createActionErrorState({
+          requestId,
+          code: 'validation',
+          message: 'Invalid email format',
+        });
+      }
 
-  // Email format validation
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-    return actionError('invalid-format', 'Invalid email format');
-  }
+      const supabase = createSupabaseServerClient();
+      const { data, error } = await supabase.rpc('check_email_exists', {
+        p_email: normalizedEmail,
+      });
 
-  try {
-    // Use RPC to avoid exposing table-level permissions for anonymous checks.
-    const supabase = createSupabaseServerClient();
-    const { data, error } = await supabase.rpc('check_email_exists', {
-      p_email: normalizedEmail,
-    });
+      if (error) {
+        return createPostgrestErrorState({
+          action: 'checkEmailExists.rpc',
+          requestId,
+          error,
+          serverMessage: 'Failed to check email',
+        });
+      }
 
-    if (error) {
-      console.error('Email check error:', error);
-      return actionError('check-failed', 'Failed to check email');
-    }
+      return createActionSuccessState({
+        requestId,
+        data: { exists: Boolean(data) },
+      });
+    },
+  });
 
-    return actionSuccess({ exists: Boolean(data) });
-  } catch (error) {
-    console.error('Email check error:', error);
-    return actionError('server-error', 'Server error occurred');
-  }
+  return toActionResult(state);
 }

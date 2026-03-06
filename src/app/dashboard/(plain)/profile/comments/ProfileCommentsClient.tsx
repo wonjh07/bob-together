@@ -13,7 +13,7 @@ import InlineLoading from '@/components/ui/InlineLoading';
 import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import {
   createMyCommentsQueryOptions,
   type MyCommentsPage,
@@ -34,7 +34,7 @@ export default function ProfileCommentsClient() {
     null,
   );
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
-  const { openRequestError } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
 
   const {
     data,
@@ -77,9 +77,8 @@ export default function ProfileCommentsClient() {
           commentId,
         });
         if (!result.ok) {
-          openRequestError(result.message || '댓글 삭제에 실패했습니다.', {
-            err: result,
-            source: 'ProfileCommentsClient.handleDeleteComment.result',
+          showRequestError(result, {
+            fallbackMessage: '댓글 삭제에 실패했습니다.',
           });
           return;
         }
@@ -108,7 +107,7 @@ export default function ProfileCommentsClient() {
         setDeletingCommentId(null);
       }
     },
-    [deletingCommentId, openRequestError, queryClient, queryOptions.queryKey],
+    [deletingCommentId, queryClient, queryOptions.queryKey, showRequestError],
   );
   const hasState = isLoading || isError || comments.length === 0;
 

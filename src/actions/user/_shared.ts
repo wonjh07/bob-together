@@ -1,4 +1,5 @@
-import type { ActionResult, AuthErrorCode } from '@/types/result';
+import type { ServiceErrorCode } from '@/actions/_common/service-action';
+import type { ActionResult, AuthErrorType } from '@/types/result';
 
 export interface UserData {
   id?: string;
@@ -8,16 +9,9 @@ export interface UserData {
   profileImage?: string;
 }
 
-export type GetUserDataResult = ActionResult<UserData, AuthErrorCode>;
+export type GetUserDataResult = ActionResult<UserData, AuthErrorType>;
 
-export type ProfileErrorCode =
-  | AuthErrorCode
-  | 'profile-not-found'
-  | 'metadata-sync-failed'
-  | 'invalid-file'
-  | 'file-too-large'
-  | 'upload-failed'
-  | 'update-failed';
+export type ProfileErrorCode = ServiceErrorCode;
 
 export const MAX_PROFILE_IMAGE_SIZE = 200 * 1024; // 200KB
 export const PROFILE_IMAGE_BUCKET = 'profile-images';

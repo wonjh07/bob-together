@@ -125,7 +125,7 @@ describe('useEmailValidation', () => {
   it('이메일 체크 실패 시 에러를 설정해야 한다', async () => {
     mockCheckEmailExists.mockResolvedValue({
       ok: false,
-      error: 'check-failed',
+      errorType: 'server',
       message: 'Failed to check email',
     });
 
@@ -172,7 +172,7 @@ describe('useEmailValidation', () => {
 
     // 첫 번째 디바운스 진행 중
     act(() => {
-      jest.advanceTimersByTime(300);
+      jest.advanceTimersByTime(200);
     });
 
     // 이메일 변경
@@ -180,15 +180,15 @@ describe('useEmailValidation', () => {
 
     // 이전 타이머는 취소되고 새로운 타이머가 시작됨
     act(() => {
-      jest.advanceTimersByTime(300);
+      jest.advanceTimersByTime(299);
     });
 
-    // 아직 500ms가 지나지 않았으므로 호출되지 않음
+    // 디바운스(300ms) 직전까지는 호출되지 않음
     expect(mockCheckEmailExists).not.toHaveBeenCalled();
 
-    // 나머지 200ms 대기
+    // 마지막 1ms를 진행하면 최신 이메일로 1회 호출
     act(() => {
-      jest.advanceTimersByTime(200);
+      jest.advanceTimersByTime(1);
     });
 
     await waitFor(() => {

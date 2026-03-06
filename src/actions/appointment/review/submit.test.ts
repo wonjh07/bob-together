@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { submitPlaceReviewAction } from './submit';
 
@@ -7,7 +7,7 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
@@ -16,7 +16,7 @@ const PLACE_ID = '20000000-0000-4000-8000-000000000003';
 const USER_ID = '20000000-0000-4000-8000-000000000002';
 
 describe('submitPlaceReviewAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -29,9 +29,9 @@ describe('submitPlaceReviewAction', () => {
       content: '좋아요',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 약속 정보가 필요합니다.',
     });
   });
@@ -50,7 +50,7 @@ describe('submitPlaceReviewAction', () => {
       error: null,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { rpc },
       user: { id: USER_ID },
@@ -62,9 +62,9 @@ describe('submitPlaceReviewAction', () => {
       content: '좋아요',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'forbidden',
+      errorType: 'permission',
       message: '리뷰 대상 약속을 찾을 수 없습니다.',
     });
   });
@@ -83,7 +83,7 @@ describe('submitPlaceReviewAction', () => {
       error: null,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { rpc },
       user: { id: USER_ID },
@@ -95,7 +95,7 @@ describe('submitPlaceReviewAction', () => {
       content: '좋아요',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         appointmentId: APPOINTMENT_ID,

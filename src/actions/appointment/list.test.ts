@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { listAppointmentsAction } from './list';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('listAppointmentsAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   const userId = '20000000-0000-4000-8000-000000000001';
   const groupId = '20000000-0000-4000-8000-000000000101';
 
@@ -25,9 +25,9 @@ describe('listAppointmentsAction', () => {
       groupId: '',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '그룹 ID가 필요합니다.',
     });
   });
@@ -43,7 +43,7 @@ describe('listAppointmentsAction', () => {
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
@@ -54,9 +54,9 @@ describe('listAppointmentsAction', () => {
       limit: 2,
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '약속 목록을 가져올 수 없습니다.',
     });
     consoleErrorSpy.mockRestore();
@@ -71,9 +71,9 @@ describe('listAppointmentsAction', () => {
       },
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 커서 정보가 아닙니다.',
     });
   });
@@ -144,7 +144,7 @@ describe('listAppointmentsAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
@@ -174,7 +174,7 @@ describe('listAppointmentsAction', () => {
       },
     );
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         appointments: [

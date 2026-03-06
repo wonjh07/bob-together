@@ -47,35 +47,12 @@ export const message = style({
   wordBreak: 'break-word',
 });
 
-export const debugBox = style({
-  marginTop: '4px',
-  border: `1px solid ${vars.color.stroke}`,
-  borderRadius: vars.radius.md,
-  backgroundColor: vars.color.mainSoft,
-  padding: '10px 10px 8px',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '6px',
-  maxHeight: '180px',
-  overflow: 'auto',
-});
-
-export const debugTitle = style({
+export const errorType = style({
   margin: 0,
   fontSize: vars.fontSize.caption,
   fontWeight: vars.fontWeight.semibold,
   color: vars.color.subText,
-});
-
-export const debugMessage = style({
-  margin: 0,
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-  fontSize: vars.fontSize.caption,
-  fontWeight: vars.fontWeight.medium,
-  color: vars.color.text,
-  lineHeight: 1.4,
-  whiteSpace: 'pre-wrap',
-  wordBreak: 'break-word',
 });
 
 export const footer = style({

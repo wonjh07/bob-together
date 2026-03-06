@@ -2,8 +2,14 @@
 
 import { z } from 'zod';
 
-import { parseOrFail, requireUser } from '@/actions/_common/guards';
-import { actionError, actionSuccess } from '@/actions/_common/result';
+import { requireUserService } from '@/actions/_common/guards';
+import {
+  createActionSuccessState,
+  createActionErrorState,
+  runServiceAction,
+  toActionResult,
+  createZodValidationErrorState,
+} from '@/actions/_common/service-action';
 
 import type {
   InvitationListItem,
@@ -50,71 +56,93 @@ interface InvitationRow {
 export async function listReceivedInvitationsAction(
   params: ListReceivedInvitationsParams = {},
 ): Promise<ListReceivedInvitationsResult> {
-  const parsed = parseOrFail(listReceivedInvitationsSchema, params);
-  if (!parsed.ok) {
-    return parsed;
-  }
+  const state = await runServiceAction({
+    serverErrorMessage: '알림 목록을 불러오지 못했습니다.',
+    run: async ({ requestId }) => {
+      const parsed = listReceivedInvitationsSchema.safeParse(params);
+      if (!parsed.success) {
+        return createZodValidationErrorState({
+          requestId,
+          error: parsed.error,
+          fallbackMessage: '입력값이 올바르지 않습니다.',
+        });
+      }
 
-  const auth = await requireUser();
-  if (!auth.ok) {
-    return auth;
-  }
+      const auth = await requireUserService(requestId);
+      if (!('supabase' in auth)) {
+        return auth;
+      }
 
-  const { supabase } = auth;
-  const { cursor, limit = DEFAULT_LIMIT } = parsed.data;
-  const listReceivedInvitationsRpc = 'list_received_invitations_with_cursor' as never;
-  const listReceivedInvitationsParams = {
-    p_limit: limit,
-    p_cursor_created_time: cursor?.createdTime ?? null,
-    p_cursor_invitation_id: cursor?.invitationId ?? null,
-  } as never;
-  const { data, error } = await supabase.rpc(
-    listReceivedInvitationsRpc,
-    listReceivedInvitationsParams,
-  );
+      const { supabase } = auth;
+      const { cursor, limit = DEFAULT_LIMIT } = parsed.data;
+      const listReceivedInvitationsRpc = 'list_received_invitations_with_cursor' as never;
+      const listReceivedInvitationsParams = {
+        p_limit: limit,
+        p_cursor_created_time: cursor?.createdTime ?? null,
+        p_cursor_invitation_id: cursor?.invitationId ?? null,
+      } as never;
+      const { data, error } = await supabase.rpc(
+        listReceivedInvitationsRpc,
+        listReceivedInvitationsParams,
+      );
 
-  if (error) {
-    return actionError('server-error', '알림 목록을 불러오지 못했습니다.');
-  }
+      if (error) {
+        return createActionErrorState({
+          requestId,
+          code: 'server',
+          message: '알림 목록을 불러오지 못했습니다.',
+          error,
+        });
+      }
 
-  const rows = ((data as InvitationRow[] | null) ?? []).filter(
-    (row) => row.invitation_id && row.group_id,
-  );
+      const rows = ((data as InvitationRow[] | null) ?? []).filter(
+        (row) => row.invitation_id && row.group_id,
+      );
 
-  if (rows.length === 0) {
-    return actionSuccess({
-      invitations: [],
-      nextCursor: null,
-    });
-  }
+      if (rows.length === 0) {
+        return createActionSuccessState({
+          requestId,
+          data: {
+            invitations: [],
+            nextCursor: null,
+          },
+        });
+      }
 
-  const hasMore = rows.length > limit;
-  const visibleRows = hasMore ? rows.slice(0, limit) : rows;
-  const lastRow = visibleRows[visibleRows.length - 1];
+      const hasMore = rows.length > limit;
+      const visibleRows = hasMore ? rows.slice(0, limit) : rows;
+      const lastRow = visibleRows[visibleRows.length - 1];
 
-  const invitations: InvitationListItem[] = visibleRows.map((row) => ({
-    invitationId: row.invitation_id,
-    type: row.type,
-    status: row.status,
-    createdTime: row.created_time,
-    inviterId: row.inviter_id ?? '',
-    inviterName: row.inviter_name ?? null,
-    inviterNickname: row.inviter_nickname ?? null,
-    inviterProfileImage: row.inviter_profile_image ?? null,
-    groupId: row.group_id,
-    groupName: row.group_name ?? null,
-    appointmentId: row.appointment_id,
-    appointmentTitle: row.appointment_title ?? null,
-    appointmentEndsAt: row.appointment_ends_at ?? null,
-  }));
+      const invitations: InvitationListItem[] = visibleRows.map((row) => ({
+        invitationId: row.invitation_id,
+        type: row.type,
+        status: row.status,
+        createdTime: row.created_time,
+        inviterId: row.inviter_id ?? '',
+        inviterName: row.inviter_name ?? null,
+        inviterNickname: row.inviter_nickname ?? null,
+        inviterProfileImage: row.inviter_profile_image ?? null,
+        groupId: row.group_id,
+        groupName: row.group_name ?? null,
+        appointmentId: row.appointment_id,
+        appointmentTitle: row.appointment_title ?? null,
+        appointmentEndsAt: row.appointment_ends_at ?? null,
+      }));
 
-  return actionSuccess({
-    invitations,
-    nextCursor: hasMore && lastRow
-      ? {
-          createdTime: lastRow.created_time,
-          invitationId: lastRow.invitation_id,
-        }
-      : null,
+      return createActionSuccessState({
+        requestId,
+        data: {
+          invitations,
+          nextCursor: hasMore && lastRow
+            ? {
+                createdTime: lastRow.created_time,
+                invitationId: lastRow.invitation_id,
+              }
+            : null,
+        },
+      });
+    },
   });
+
+  return toActionResult(state);
 }

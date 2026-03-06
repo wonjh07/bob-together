@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import {
   getPlaceDetailAction,
@@ -11,7 +11,7 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
@@ -19,9 +19,9 @@ describe('searchPlacesAction', () => {
   it('검색어가 짧으면 invalid-format을 반환한다', async () => {
     const result = await searchPlacesAction({ query: 'a' });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '검색어를 2자 이상 입력해주세요.',
     });
   });
@@ -32,9 +32,9 @@ describe('searchPlacesAction', () => {
       latitude: 37.5,
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '위도와 경도는 함께 전달되어야 합니다.',
     });
   });
@@ -53,9 +53,9 @@ describe('searchPlacesAction', () => {
     try {
       const result = await searchPlacesAction({ query: '스타벅스' });
 
-      expect(result).toEqual({
+      expect(result).toMatchObject({
         ok: false,
-        error: 'server-error',
+        errorType: 'server',
         message: '장소 검색 중 오류가 발생했습니다.',
       });
     } finally {
@@ -71,7 +71,7 @@ describe('searchPlacesAction', () => {
 });
 
 describe('getPlaceDetailAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -80,9 +80,9 @@ describe('getPlaceDetailAction', () => {
   it('placeId 형식이 올바르지 않으면 invalid-format을 반환한다', async () => {
     const result = await getPlaceDetailAction('invalid-place-id');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 장소 ID가 아닙니다.',
     });
   });
@@ -95,7 +95,7 @@ describe('getPlaceDetailAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '20000000-0000-4000-8000-000000000001' },
@@ -105,9 +105,9 @@ describe('getPlaceDetailAction', () => {
       '20000000-0000-4000-8000-000000000010',
     );
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '장소 정보를 찾을 수 없습니다.',
     });
   });
@@ -132,7 +132,7 @@ describe('getPlaceDetailAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '20000000-0000-4000-8000-000000000001' },
@@ -147,7 +147,7 @@ describe('getPlaceDetailAction', () => {
       },
     );
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         place: {
@@ -166,7 +166,7 @@ describe('getPlaceDetailAction', () => {
 });
 
 describe('listPlaceReviewsAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   const placeId = '20000000-0000-4000-8000-000000000010';
 
   beforeEach(() => {
@@ -182,9 +182,9 @@ describe('listPlaceReviewsAction', () => {
       },
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 커서 정보가 아닙니다.',
     });
   });
@@ -197,7 +197,7 @@ describe('listPlaceReviewsAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '20000000-0000-4000-8000-000000000001' },
@@ -205,9 +205,9 @@ describe('listPlaceReviewsAction', () => {
 
     const result = await listPlaceReviewsAction({ placeId, limit: 2 });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '장소 리뷰를 불러오지 못했습니다.',
     });
   });
@@ -254,7 +254,7 @@ describe('listPlaceReviewsAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '20000000-0000-4000-8000-000000000001' },
@@ -278,7 +278,7 @@ describe('listPlaceReviewsAction', () => {
         p_cursor_review_id: '20000000-0000-4000-8000-000000000199',
       },
     );
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         reviews: [

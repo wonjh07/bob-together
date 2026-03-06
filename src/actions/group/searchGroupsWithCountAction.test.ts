@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { searchGroupsWithCountAction } from './searchGroupsWithCountAction';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('searchGroupsWithCountAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   const userId = '20000000-0000-4000-8000-000000000001';
 
   beforeEach(() => {
@@ -24,17 +24,18 @@ describe('searchGroupsWithCountAction', () => {
       query: 'a',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '검색어를 2자 이상 입력해주세요.',
     });
   });
 
   it('인증 실패는 그대로 반환한다', async () => {
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: false,
-      error: 'unauthorized',
+      requestId: 'req-unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
 
@@ -42,9 +43,9 @@ describe('searchGroupsWithCountAction', () => {
       query: '점심',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
   });
@@ -57,7 +58,7 @@ describe('searchGroupsWithCountAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
@@ -68,9 +69,9 @@ describe('searchGroupsWithCountAction', () => {
       limit: 2,
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '그룹 검색 중 오류가 발생했습니다.',
     });
   });
@@ -111,7 +112,7 @@ describe('searchGroupsWithCountAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
@@ -133,7 +134,7 @@ describe('searchGroupsWithCountAction', () => {
       p_cursor_name: '중간팟',
       p_cursor_group_id: '20000000-0000-4000-8000-000000000199',
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         groups: [

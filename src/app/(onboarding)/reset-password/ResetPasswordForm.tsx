@@ -12,7 +12,7 @@ import {
   verifyResetPasswordIdentityAction,
 } from '@/actions/auth';
 import { Input } from '@/components/ui/FormInput';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import {
   resetPasswordIdentitySchema,
   resetPasswordUpdateSchema,
@@ -25,12 +25,46 @@ import type {
   ResetPasswordUpdateInput,
 } from '@/schemas/auth';
 
+function applyIdentityFieldErrors(
+  fieldErrors: Record<string, string[]>,
+  setError: (
+    name: keyof ResetPasswordIdentityInput,
+    error: { message: string },
+  ) => void,
+) {
+  for (const [fieldName, messages] of Object.entries(fieldErrors)) {
+    const message = messages?.[0];
+    if (!message) continue;
+
+    if (fieldName === 'email' || fieldName === 'name') {
+      setError(fieldName, { message });
+    }
+  }
+}
+
+function applyUpdateFieldErrors(
+  fieldErrors: Record<string, string[]>,
+  setError: (
+    name: keyof ResetPasswordUpdateInput,
+    error: { message: string },
+  ) => void,
+) {
+  for (const [fieldName, messages] of Object.entries(fieldErrors)) {
+    const message = messages?.[0];
+    if (!message) continue;
+
+    if (fieldName === 'newPassword' || fieldName === 'passwordConfirm') {
+      setError(fieldName, { message });
+    }
+  }
+}
+
 export default function ResetPasswordForm() {
   const router = useRouter();
   const [verifiedIdentity, setVerifiedIdentity] =
     useState<ResetPasswordIdentityInput | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
-  const { openRequestError } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
 
   const verifyForm = useForm<ResetPasswordIdentityInput>({
     resolver: zodResolver(resetPasswordIdentitySchema),
@@ -51,16 +85,20 @@ export default function ResetPasswordForm() {
     setIsVerifying(false);
 
     if (!result.ok) {
-      if (result.error === 'user-not-found') {
+      if (result.fieldErrors) {
+        applyIdentityFieldErrors(result.fieldErrors, verifyForm.setError);
+        return;
+      }
+
+      if (result.errorType === 'not_found') {
         verifyForm.setError('name', {
           message: result.message || '일치하는 계정을 찾을 수 없습니다.',
         });
         return;
       }
 
-      openRequestError(result.message || '계정 검증에 실패했습니다.', {
-        err: result,
-        source: 'ResetPasswordForm.onVerifyIdentity.result',
+      showRequestError(result, {
+        fallbackMessage: '계정 검증에 실패했습니다.',
       });
       return;
     }
@@ -72,9 +110,7 @@ export default function ResetPasswordForm() {
 
   const onResetPassword = async (data: ResetPasswordUpdateInput) => {
     if (!verifiedIdentity) {
-      openRequestError('먼저 이메일과 이름을 검증해주세요.', {
-        source: 'ResetPasswordForm.onResetPassword.notVerified',
-      });
+      showRequestError('먼저 이메일과 이름을 검증해주세요.');
       return;
     }
 
@@ -86,7 +122,12 @@ export default function ResetPasswordForm() {
     });
 
     if (!result.ok) {
-      if (result.error === 'user-not-found') {
+      if (result.fieldErrors) {
+        applyUpdateFieldErrors(result.fieldErrors, updateForm.setError);
+        return;
+      }
+
+      if (result.errorType === 'not_found') {
         setVerifiedIdentity(null);
         verifyForm.setError('name', {
           message: result.message || '일치하는 계정을 찾을 수 없습니다.',
@@ -94,9 +135,8 @@ export default function ResetPasswordForm() {
         return;
       }
 
-      openRequestError(result.message || '비밀번호 재설정에 실패했습니다.', {
-        err: result,
-        source: 'ResetPasswordForm.onResetPassword.result',
+      showRequestError(result, {
+        fallbackMessage: '비밀번호 재설정에 실패했습니다.',
       });
       return;
     }

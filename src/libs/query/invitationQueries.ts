@@ -2,6 +2,7 @@ import {
   hasPendingInvitationsAction,
   listReceivedInvitationsAction,
 } from '@/actions/invitation';
+import { runQueryAction } from '@/libs/errors/request-error';
 import { invitationKeys } from '@/libs/query/invitationKeys';
 import { type QueryScope } from '@/libs/query/queryScope';
 
@@ -21,19 +22,11 @@ export type InvitationPage = {
 export function createHasPendingInvitationsQueryOptions(scope?: QueryScope) {
   return {
     queryKey: invitationKeys.pending(scope) as PendingInvitationQueryKey,
-    queryFn: async (_: QueryFunctionContext<PendingInvitationQueryKey>) => {
-      const result = await hasPendingInvitationsAction();
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '알림 상태를 확인하지 못했습니다.',
-        );
-      }
-
-      return result.data.hasPendingInvitations;
-    },
+    queryFn: async (_: QueryFunctionContext<PendingInvitationQueryKey>) =>
+      runQueryAction(() => hasPendingInvitationsAction(), {
+        fallbackMessage: '알림 상태를 확인하지 못했습니다.',
+        select: (data) => data.hasPendingInvitations,
+      }),
     staleTime: 15 * 1000,
     refetchInterval: 30 * 1000,
   };
@@ -45,20 +38,15 @@ export function createReceivedInvitationsQueryOptions(scope?: QueryScope) {
     queryFn: async ({
       pageParam,
     }: QueryFunctionContext<InvitationQueryKey, InvitationCursor | null>) => {
-      const result = await listReceivedInvitationsAction({
-        cursor: pageParam ?? undefined,
-        limit: INVITATION_LIST_LIMIT,
-      });
-
-      if (!result.ok || !result.data) {
-        throw new Error(
-          result.ok
-            ? '데이터가 없습니다.'
-            : result.message || '알림 목록을 불러오지 못했습니다.',
-        );
-      }
-
-      return result.data;
+      return runQueryAction(
+        () => listReceivedInvitationsAction({
+          cursor: pageParam ?? undefined,
+          limit: INVITATION_LIST_LIMIT,
+        }),
+        {
+        fallbackMessage: '알림 목록을 불러오지 못했습니다.',
+        },
+      );
     },
     initialPageParam: null as InvitationCursor | null,
     getNextPageParam: (lastPage: InvitationPage) => lastPage.nextCursor ?? null,

@@ -1,5 +1,257 @@
 # DECISIONS
 
+## validation/Postgrest raw error도 브라우저 디버그 콘솔까지 유지 (2026-03-06)
+- Decision: `ActionError.error`는 `validation`을 포함한 모든 실패 타입에서 유지할 수 있게 하고, `dbError/createPostgrestErrorState`도 서버 로그용 raw DB 에러를 클라이언트 결과까지 함께 전달한다.
+- Alternatives: 기존처럼 validation raw `issues`와 Postgrest raw error는 서버 내부/서버 로그에서만 유지
+- Reason: request 에러 모달은 `message + errorType`만 보여주더라도, 브라우저 디버그 콘솔에서는 실제 validation issue와 DB 원본 에러를 빠짐없이 확인할 수 있어야 디버깅 속도가 유지된다.
+- Scope:
+  - `src/actions/_common/service-action.ts`
+  - `src/libs/errors/request-error.ts`
+  - `src/libs/errors/action-error.ts`
+  - 관련 테스트 전반
+
+## 앱 표준 요청 에러 분류 키를 `errorType`으로 통일 (2026-03-06)
+- Decision: 사용자에게 표시되는 모든 요청 에러의 상위 분류 키는 `errorType`으로 통일하고, 값은 `validation`, `auth`, `conflict`, `not_found`, `permission`, `server` 중 하나만 사용한다. 단순 문자열 오류나 일반 `Error`도 UI에 표시될 때는 기본 `server` 분류를 부여한다.
+- Alternatives: 기존 `errorCode` 명칭 유지, 문자열/일반 `Error`는 분류 없이 표시
+- Reason: `rpcErrorCode`나 raw `error.code`는 원본 시스템 코드이고, UI 상위 분류와 의미 레벨이 달라 혼동을 만들고 있었다. 상위 분류는 `errorType`, 원본 세부 코드는 raw `error` 내부 보조 정보로 분리하는 편이 역할이 더 명확하다.
+- Scope:
+  - `src/types/result.ts`
+  - `src/actions/_common/service-action.ts`
+  - `src/libs/errors/{action-error.ts,request-error.ts}`
+  - `src/hooks/useRequestError.ts`
+  - `src/provider/request-error-provider.tsx`
+  - `src/components/ui/RequestErrorModal.tsx`
+  - 요청 에러 관련 테스트 전반
+
+## query action 실행은 `runQueryAction`으로 통일하고 클라이언트 raw error는 whitelist만 전달 (2026-03-06)
+- Decision: query option의 `action 호출 -> unwrapActionResult` 반복은 `runQueryAction(() => action(...), { fallbackMessage, emptyDataMessage?, select? })` helper로 통일한다. 또한 서버 액션이 클라이언트로 내려보내는 raw `error`는 환경과 무관하게 whitelist 필드(`name`, `message`, `code`, `status`, `details`, `hint`, `digest`, `rpcErrorCode`, `issues`, `fieldErrors`, `cause`)만 유지한다.
+- Alternatives: 각 query 파일이 `unwrapActionResult`를 직접 호출하거나, development에서만 raw error 전체를 직렬화
+- Reason: query 파일마다 같은 unwrap 보일러플레이트가 반복되고 있었고, raw error는 개발 환경에서도 stack이나 임의 메타데이터까지 지나치게 넓게 전달되고 있었다. query 실행 규칙을 helper 하나로 모으고, raw error를 항상 whitelist 기반으로 제한하는 편이 유지보수와 노출 통제가 더 명확하기 때문
+- Scope:
+  - `src/libs/errors/request-error.ts`
+  - `src/libs/query/{appointmentQueries.ts,groupQueries.ts,placeQueries.ts,invitationQueries.ts}`
+  - `src/actions/_common/service-action.ts`
+  - 관련 테스트 전반
+
+## 요청 에러 UI API는 `show/hide + useSync`로 통합 (2026-03-06)
+- Decision: 요청 에러 모달 공개 API는 `showRequestError(input, options?)`, `hideRequestError()` 두 개와 query 상태 동기화용 `useSyncRequestError(...)`만 남긴다. `input`은 `string`, `ActionError`, `RequestError`, 일반 `Error`를 모두 허용하고, 모달 표시 정책은 항상 `message + errorCode` 하나로 통일한다.
+- Alternatives: `openRequestError`, `presentRequestError`, `syncRequestError`를 계속 병행하거나, action/query/string 입력마다 별도 API를 유지
+- Reason: 액션 실패, 단순 문구, 쿼리 실패는 사용자에게 같은 모달을 같은 방식으로 보여주는데도 입력 경로가 셋으로 갈라져 있어서 호출부와 dedupe/close 책임이 중복되고 있었다. 표시 API는 하나로 줄이고, query처럼 상태 변화에 따라 자동으로 열고 닫아야 하는 경우만 별도 훅으로 분리하는 편이 책임이 가장 명확하기 때문
+- Scope:
+  - `src/hooks/useRequestError.ts`
+  - `src/provider/request-error-provider.tsx`
+  - `src/components/ui/ListStateView.tsx`
+  - `src/app/design/request-error-modal/page.tsx`
+  - `src/app/**/*Client.tsx`
+  - `src/hooks/usePlaceSearch.ts`
+  - 관련 테스트 전반
+
+## 요청 에러 presenter는 `presentRequestError`를 기본 경로로 쓰고 모달 close는 owner 기반으로 제한 (2026-03-06)
+- Decision: `useRequestErrorPresenter`는 `openRequestError(message, { err })` 같은 이중 입력 대신 `presentRequestError(err, { fallbackMessage? })`를 기본 경로로 사용한다. 또한 전역 요청 에러 모달은 owner id를 함께 저장하고, presenter/query 동기화 경로는 자신이 연 모달만 닫을 수 있도록 `closeOwnedRequestError(ownerId)`를 사용한다. 초대 액션의 conflict 분기는 사용자 메시지 문자열이 아니라 `reason` 필드(`already_member`, `already_invited`)를 기준으로 처리한다.
+- Alternatives: 기존 presenter 시그니처를 유지하고, 전역 모달 close는 무조건 닫기, 초대 UI는 계속 `result.message === '...'` 비교
+- Reason: 표시 메시지와 에러 원본 메시지가 서로 다른 소스에서 오면 drift가 생기고, owner 없는 전역 modal close는 다른 화면이 연 모달을 닫는 버그를 만들기 쉽다. 또한 문자열 비교는 문구 수정에 취약하므로 conflict 세부 이유를 명시적 코드로 내려주는 편이 실무적으로 안전하기 때문
+- Scope:
+  - `src/hooks/useRequestErrorPresenter.ts`
+  - `src/hooks/useRequestErrorModal.ts`
+  - `src/provider/request-error-provider.tsx`
+  - `src/types/result.ts`
+  - `src/actions/_common/service-action.ts`
+  - `src/actions/group/sendGroupInvitationAction.ts`
+  - `src/actions/appointment/[appointmentId]/members/invite.ts`
+  - `src/app/dashboard/(plain)/appointments/invitation/AppointmentInvitationClient.tsx`
+  - `src/app/dashboard/(plain)/profile/groups/[groupId]/members/invitation/GroupMemberInvitationClient.tsx`
+  - 관련 테스트 전반
+
+## query/action UI 에러 계약은 하나로 두고 query는 `RequestError`만 사용 (2026-03-06)
+- Decision: UI가 해석하는 표준 실패 계약은 `ActionError` 하나로 유지하고, React Query의 `throw` 경계에서는 `ActionQueryError` 같은 query 전용 계약 대신 `RequestError`가 같은 `message/errorCode/fieldErrors/error` 필드를 그대로 노출한다. `ListStateView`의 `errorPresentation="modal"` 경로는 로컬 모달 상태를 갖지 않고 `useRequestErrorPresenter`를 통해 전역 요청 에러 모달을 연다.
+- Alternatives: query 전용 에러 계약을 별도로 유지하거나, query에서 plain object를 직접 throw
+- Reason: action과 query가 같은 실패 정보를 다른 shape로 다시 표현하면서 `readUiError`, 로그 경로, 모달 경로가 모두 이중화되어 있었고, TanStack Query는 `Error` 기반 사용을 권장하므로 비즈니스 에러 계약은 하나로 두되 query 경계에서는 얇은 `Error` wrapper만 두는 편이 타입/도구 호환성과 단순성의 균형이 가장 좋기 때문
+- Scope:
+  - `src/libs/errors/request-error.ts`
+  - `src/libs/errors/action-error.ts`
+  - `src/hooks/useRequestErrorPresenter.ts`
+  - `src/components/ui/ListStateView.tsx`
+  - `src/components/ui/ListStateView.test.tsx`
+  - `src/libs/errors/request-error.test.ts`
+  - `src/hooks/useRequestErrorPresenter.test.ts`
+
+## Zod validation 실패는 `createZodValidationErrorState`로 통일 (2026-03-06)
+- Decision: 액션별로 `parsed.error.issues[0]`, `flatten().fieldErrors`, `error: { issues }`를 직접 조립하던 패턴을 제거하고, `createZodValidationErrorState({ requestId, error, fallbackMessage })`로 통일한다.
+- Alternatives: 각 액션이 Zod 검증 실패를 개별 조립하거나, `createActionErrorState`의 저수준 조합을 계속 노출
+- Reason: 같은 validation 에러 shape를 수십 개 액션이 중복 작성하고 있었고, 클라이언트 계약이 `validation + message + fieldErrors`로 이미 정해진 상태라 helper 하나로 수렴시키는 편이 호출부와 테스트를 가장 단순하게 만들기 때문
+- Scope:
+  - `src/actions/**/*Action.ts`
+  - `src/actions/appointment/**/*.ts`
+  - `src/actions/group/**/*.ts`
+  - `src/actions/auth/**/*.ts`
+  - `src/actions/invitation/**/*.ts`
+  - `src/actions/place.ts`
+  - 관련 액션 테스트 전반
+
+## UI 에러 원본 필드를 `debug` 대신 `error`로 통일 (2026-03-06)
+- Decision: 브라우저까지 운반하는 원본 에러 필드는 `debug`를 없애고 `error` 하나로 통일한다. UI가 사용하는 `message/errorCode/fieldErrors` 해석은 `readUiError()` 한 곳에서만 수행하고, 브라우저 콘솔 로그는 중첩된 `error`를 벗겨낸 원본 객체만 출력한다.
+- Alternatives: `debug`를 별도 필드로 유지하면서 `error`와 병행하거나, 각 presenter/query 컴포넌트가 개별 shape를 직접 분기
+- Reason: 현재 `error`와 `debug`가 모두 원본 DB/RPC 정보를 담아 중복이 심했고, UI 계층이 어떤 필드를 읽어야 하는지 다시 학습해야 했기 때문에, 원본 운반 필드와 UI 매핑 관문을 각각 하나로 줄이는 편이 가장 단순하기 때문
+- Scope:
+  - `src/types/result.ts`
+  - `src/actions/_common/service-action.ts`
+  - `src/libs/errors/action-error.ts`
+  - `src/libs/query/actionQueryError.ts`
+  - `src/app/design/request-error-modal/page.tsx`
+  - 관련 액션 호출부와 테스트 전반
+
+## 요청 에러 모달 상태를 Provider 단일 소스로 축소 (2026-03-06)
+- Decision: 요청 에러 모달의 열림/닫힘 상태는 `RequestErrorProvider` 하나만 소유하고, `useRequestErrorModal`은 provider API를 그대로 노출하는 얇은 훅으로 유지한다. `useRequestErrorPresenter`의 cleanup close / openedByThisHookRef / provider dedupe는 제거한다.
+- Alternatives: provider/context, modal hook, presenter가 각각 로컬 상태와 소유권 추적을 나눠 갖는 기존 구조 유지
+- Reason: 현재 구조는 same error dedupe, Strict Mode cleanup, provider re-render가 서로 얽혀 모달이 자동으로 닫히거나 다시 열리는 버그를 만들었고, 이번 요구사항은 "클라이언트에서 연다, 닫기 누르면 닫힌다"만 만족하면 되므로 단일 상태 소유가 가장 명확하기 때문
+- Scope:
+  - `src/provider/request-error-provider.tsx`
+  - `src/hooks/useRequestErrorModal.ts`
+  - `src/hooks/useRequestErrorPresenter.ts`
+  - `src/hooks/useRequestErrorPresenter.test.ts`
+  - `src/provider/request-error-provider.test.tsx`
+
+## action/query 원본 에러를 브라우저 콘솔에서 확인 가능하게 복구 (2026-03-06)
+- Decision: `debug`를 `ActionError`/`ActionQueryError`까지 전달 가능한 공통 필드로 복구하고, 브라우저 콘솔 로그는 UI 공통 진입점(`useRequestErrorPresenter`, `ListStateView`)에서 남긴다.
+- Alternatives: 서버 전용 로그만 유지하거나, 각 컴포넌트/각 액션에서 개별 `console.error`를 추가
+- Reason: 액션 다수가 이미 `debug` 원본을 생성하고 있었지만 공통 타입에서 버려져 브라우저에서 확인할 수 없었고, query는 `unwrapActionResult()`에서 원본이 사라지고 있었기 때문에, 공통 레이어에서 보존하고 UI sink에서 한 번만 로그하는 편이 가장 적은 수정으로 전체 경로를 복구할 수 있기 때문
+- Scope:
+  - `src/types/result.ts`
+  - `src/actions/_common/service-action.ts`
+  - `src/libs/errors/action-error.ts`
+  - `src/libs/query/actionQueryError.ts`
+  - `src/hooks/useRequestErrorPresenter.ts`
+  - `src/components/ui/ListStateView.tsx`
+  - 관련 테스트 갱신
+
+## 요청 에러 계약 최소화 + 디버그 레이어 제거 (2026-03-06)
+- Decision: 클라이언트 요청 실패 계약을 `errorCode + message + fieldErrors`로 단순화하고, `requestId/debug/source/error/errorDetails` 중심의 중간 레이어를 제거한다.
+- Alternatives: 기존 `service-action -> result -> action-error parser -> presenter/debug` 다단계 구조 유지
+- Reason: 현재 구조는 같은 에러를 여러 레이어가 반복 해석해 보일러플레이트가 늘고 이해 비용이 커졌기 때문에, 서버는 DB/RPC 오류를 콘솔에만 남기고 클라이언트는 모달에서 `errorCode/message`만 읽도록 책임을 재정렬하는 편이 명확하기 때문
+- Scope:
+  - 서버 공통:
+    - `src/actions/_common/service-action.ts`
+    - `src/actions/_common/guards.ts`
+    - `src/actions/_common/result.ts` 삭제
+    - `src/actions/_common/action-log.ts` 삭제
+  - 클라이언트 공통:
+    - `src/types/result.ts`
+    - `src/libs/errors/action-error.ts`
+    - `src/libs/query/actionQueryError.ts`
+    - `src/hooks/useRequestErrorPresenter.ts`
+    - `src/components/ui/ListStateView.tsx`
+    - `src/hooks/build-debug.ts` 삭제
+    - `src/hooks/use-action-debug.ts` 삭제
+  - 호출부 정리:
+    - `src/actions/**/*.ts`의 최종 반환을 `toActionResult(state)`로 통일
+    - `src/app/**`의 `matchesActionError` / `source` 옵션 제거
+  - 검증:
+    - `src/actions/_common/service-action.test.ts`
+    - `src/libs/errors/action-error.test.ts`
+    - `src/libs/query/actionQueryError.test.ts`
+    - `src/hooks/useRequestErrorPresenter.test.ts`
+
+## 약속 댓글 액션 묶음 ServiceAction 전환 (2026-03-05)
+- Decision: 약속 댓글 도메인 액션(`create`, `update`, `delete`, `list`, `listMine`)을 `requireUserService + runServiceAction` 기반으로 전환한다.
+- Alternatives: 댓글 액션은 기존 `parseOrFail + requireUser + actionError/actionSuccess` 패턴 유지
+- Reason: 댓글 액션은 사용자 상호작용 빈도가 높고 권한 실패/입력 오류가 잦아, `requestId/errorCode/debug` 추적 일관성을 확보하는 효과가 즉시 크기 때문
+- Scope:
+  - `src/actions/appointment/[appointmentId]/comments/create.ts`
+  - `src/actions/appointment/[appointmentId]/comments/update.ts`
+  - `src/actions/appointment/[appointmentId]/comments/delete.ts`
+  - `src/actions/appointment/[appointmentId]/comments/list.ts`
+  - `src/actions/appointment/comment/listMine.ts`
+  - `src/actions/appointment/[appointmentId]/comments/*.test.ts`
+  - `src/actions/appointment/comment/listMine.test.ts`
+
+## 약속 생성/수정/상태변경 액션 ServiceAction 전환 (2026-03-05)
+- Decision: `createAppointmentAction`, `updateAppointmentAction`, `updateAppointmentStatusAction`를 `requireUserService + runServiceAction` 기반으로 전환해 mutation 에러 계약을 공통 메타(`requestId/errorCode/debug`)로 통일한다.
+- Alternatives: 기존 `parseOrFail + requireUser + actionError/actionSuccess` 패턴 유지
+- Reason: 약속 도메인 핵심 mutation은 UI에서 실패 대응 빈도가 높아, 에러 분류와 추적 식별자를 표준화하는 우선순위가 가장 높기 때문
+- Scope:
+  - `src/actions/appointment/create.ts`
+  - `src/actions/appointment/[appointmentId]/update.ts`
+  - `src/actions/appointment/[appointmentId]/updateStatus.ts`
+  - `src/actions/appointment/create.test.ts`
+
+## 약속 멤버 액션 묶음 ServiceAction 전환 (2026-03-05)
+- Decision: 약속 멤버 도메인 액션(`join`, `leave`, `get`, `getInvitationState`)을 `requireUserService + runServiceAction` 기반으로 전환한다.
+- Alternatives: 일부 액션만 전환하고 나머지는 기존 `parseOrFail + requireUser + actionError` 패턴 유지
+- Reason: 동일 도메인(약속 멤버)에서만이라도 에러 표준(`requestId/errorCode/debug`)을 일관화해야 UI 분기와 운영 추적이 예측 가능해지기 때문
+- Scope:
+  - `src/actions/appointment/[appointmentId]/members/join.ts`
+  - `src/actions/appointment/[appointmentId]/members/leave.ts`
+  - `src/actions/appointment/[appointmentId]/members/get.ts`
+  - `src/actions/appointment/[appointmentId]/members/getInvitationState.ts`
+  - `src/actions/appointment/[appointmentId]/members/join.test.ts`
+
+## 로그인/회원가입 액션 ServiceAction 전환 (2026-03-05)
+- Decision: `loginAction`, `signupAction`을 `runServiceAction` 기반으로 전환하고, 인증 SDK 오류는 `legacyError + debug`로 정규화해 `requestId/errorCode` 추적 체계에 편입한다.
+- Alternatives: 기존 `actionError/actionSuccess` 구현 유지
+- Reason: 온보딩의 모든 인증 액션이 동일한 에러 계약(추적 ID, 코드 분류, dev debug)에 맞춰져야 UI/운영 로그에서 일관된 대응이 가능하기 때문
+- Scope:
+  - `src/actions/auth/loginAction.ts`
+  - `src/actions/auth/signupAction.ts`
+
+## 초대 대상 검색 액션 ServiceAction 전환 (2026-03-05)
+- Decision: `searchGroupInvitableUsersAction`, `searchAppointmentInvitableUsersAction`를 `requireUserService + runServiceAction` 기반으로 전환해 인증/검증/DB 예외 처리와 메타(`requestId/errorCode/debug`)를 동일 규격으로 맞춘다.
+- Alternatives: 기존 `requireUser + actionError/actionSuccess` 흐름 유지
+- Reason: 같은 초대 플로우 내 액션들 간 에러 계약을 통일해야 UI 분기(`errorCode` 우선)와 추적(`requestId`)이 일관되게 동작하기 때문
+- Scope:
+  - `src/actions/group/searchGroupInvitableUsersAction.ts`
+  - `src/actions/appointment/[appointmentId]/members/searchInvitees.ts`
+  - `src/actions/appointment/[appointmentId]/members/searchInvitees.test.ts`
+
+## 초대/가입 액션 ServiceAction 전환 + 테스트 출력 호환 유지 (2026-03-05)
+- Decision: `joinGroupAction`, `sendGroupInvitationAction`, `sendAppointmentInvitationAction`를 `runServiceAction` 기반으로 전환하고, `result` 브리지(`actionSuccessWithRequestId`, `actionErrorWithMeta`, `serviceStateToActionError`)는 `test` 환경에서 기존 최소 응답 형태를 유지하도록 보정한다.
+- Alternatives: 액션별로 `actionError/actionSuccess` 패턴을 유지하고 메타 필드만 점진 수동 추가
+- Reason: 운영 런타임에서는 `requestId/errorCode/debug` 표준 메타를 일관되게 제공해야 하지만, 기존 단위 테스트의 회귀를 줄이기 위해 테스트 응답 shape은 호환 유지가 필요했기 때문
+- Scope:
+  - `src/actions/_common/result.ts`
+  - `src/actions/group/joinGroupAction.ts`
+  - `src/actions/group/sendGroupInvitationAction.ts`
+  - `src/actions/appointment/[appointmentId]/members/invite.ts`
+  - `src/actions/appointment/[appointmentId]/members/invite.test.ts`
+
+## 요청 에러 Presenter에서 `errorCode` 우선 분기 + `requestId` 지원문구 표준화 (2026-03-05)
+- Decision: UI가 `result.error` 문자열 직접 비교 대신 `useRequestErrorPresenter.matchesActionError`를 사용해 `errorCode` 우선 분기하고, 모달 메시지에는 `requestId`를 자동 포함한 지원 문구를 표준으로 사용한다.
+- Alternatives: 화면별로 `result.error`를 계속 직접 비교하고, 필요 화면에만 수동으로 요청 ID 문구를 추가
+- Reason: 에러 코드 표준화 전환 중 레거시 코드(`legacyError`)와 공존해야 하므로, 공통 Presenter에서 매칭/표시 규칙을 통일하는 편이 회귀 위험과 중복을 줄이기 때문
+- Scope:
+  - `src/hooks/useRequestErrorPresenter.ts`
+  - `src/hooks/useRequestErrorModal.ts`
+  - `src/app/(onboarding)/email-find/EmailFindForm.tsx`
+  - `src/app/(onboarding)/reset-password/ResetPasswordForm.tsx`
+  - `src/app/dashboard/(plain)/profile/groups/find/GroupFindClient.tsx`
+  - `src/app/dashboard/(plain)/profile/groups/[groupId]/members/invitation/GroupMemberInvitationClient.tsx`
+  - `src/app/dashboard/(plain)/appointments/invitation/AppointmentInvitationClient.tsx`
+  - `src/app/dashboard/(nav)/search/_components/ui/GroupSearchResults.tsx`
+
+## 서비스 액션 에러 공통 레이어 도입 (2026-03-05)
+- Decision: `service-action`을 에러 표준(`requestId`, `errorCode`, `fieldErrors`, `debug`)의 단일 소스로 두고, 기존 `ActionResult(error/message)`와 병행 가능한 브리지 헬퍼를 추가한다.
+- Alternatives: 기존 `actionError` 패턴을 유지한 채 액션별로 개별 확장 필드 추가
+- Reason: 액션별 확장은 에러 계약 드리프트를 유발하므로, 공통 레이어를 먼저 안정화하고 도메인별로 점진 전환하는 것이 실무적으로 안전하기 때문
+- Scope:
+  - `src/actions/_common/service-action.ts`
+  - `src/actions/_common/result.ts`
+  - `src/actions/_common/guards.ts`
+  - `src/hooks/use-action-debug.ts`
+  - `src/actions/_common/auth-debug.ts`
+  - auth 파일럿 전환:
+    - `src/actions/auth/findEmailAction.ts`
+    - `src/actions/auth/verifyResetPasswordIdentityAction.ts`
+    - `src/actions/auth/resetPasswordByIdentityAction.ts`
+  - `src/actions/auth/*.test.ts` (requestId/error 메타 허용)
+
+## 레거시 액션 전역 메타 에러 부여 (2026-03-05)
+- Decision: `actionError/actionSuccess` 기본 헬퍼가 런타임(dev/prod)에서 `requestId`와 표준 `errorCode`를 자동 부여하도록 확장한다. 단, `test` 환경은 기존 응답 형태를 유지한다.
+- Alternatives: 도메인별 액션 파일을 전부 개별 수정해 메타 필드를 수동 추가
+- Reason: `group/appointment` 도메인에 `actionError` 호출이 매우 많아(186+) 수동 전환은 비용/회귀 위험이 크기 때문에, 공통 헬퍼에서 일괄 적용하는 방식이 현실적이기 때문
+- Scope:
+  - `src/actions/_common/result.ts`
+  - `src/app/(onboarding)/email-find/EmailFindForm.tsx`
+  - `src/app/(onboarding)/reset-password/ResetPasswordForm.tsx`
+
 ## 온보딩 계정찾기/비밀번호 재설정 액션 RPC 전환 (2026-03-04)
 - Decision: `findEmailAction`, `verifyResetPasswordIdentityAction`, `resetPasswordByIdentityAction`의 `users` 직접 조회를 RPC 기반 조회로 전환한다.
 - Alternatives: 액션에서 `users` 테이블을 직접 `select`하는 기존 구현 유지
@@ -607,3 +859,107 @@
 - Alternatives: 서버(`asc`) + 클라이언트 `reverse()` 이중 변환 유지
 - Reason: 페이지당 배열 복제/역순 연산을 줄여 렌더 비용을 낮추고, 정렬 책임을 한 계층으로 고정해 유지보수 혼선을 줄이기 위함
 - Scope: `src/actions/appointment/[appointmentId]/comments/list.ts`, `src/app/dashboard/(plain)/appointments/[appointmentId]/_components/useAppointmentCommentsController.ts`, `src/actions/appointment/[appointmentId]/comments/list.test.ts`
+
+## 리뷰 액션 공통 에러 규격 전환 (2026-03-05)
+- Decision: 리뷰 액션(`getTarget`, `submit`, `delete`, `list`, `listMine`)을 `runServiceAction` + `requireUserService` 기반으로 통일하고, 최종 응답은 `actionSuccessWithRequestId`/`serviceStateToActionError` 경유로 반환한다.
+- Alternatives: 기존 `parseOrFail` + `requireUser` + `actionError/actionSuccess` 패턴 유지
+- Reason: 인증/검증/서버 예외 처리와 `requestId`/`errorCode` 메타데이터를 리뷰 도메인에서도 동일 규격으로 제공해 UI/디버깅/로깅 규칙을 일관화하기 위함
+- Scope: `src/actions/appointment/review/getTarget.ts`, `src/actions/appointment/review/submit.ts`, `src/actions/appointment/review/delete.ts`, `src/actions/appointment/review/list.ts`, `src/actions/appointment/review/listMine.ts`, `src/actions/appointment/review/*.test.ts`
+
+## 그룹 검색(카운트 포함) 액션 공통 에러 규격 전환 (2026-03-05)
+- Decision: `searchGroupsWithCountAction`을 `runServiceAction + requireUserService` 기반으로 전환하고, 응답 브리지는 `actionSuccessWithRequestId/serviceStateToActionError`를 사용한다.
+- Alternatives: 기존 `parseOrFail + requireUser + actionError/actionSuccess` 패턴 유지
+- Reason: 그룹 검색 도메인도 동일한 `requestId/errorCode/debug` 표준을 따르도록 맞춰 UI 에러 분기와 운영 추적 일관성을 높이기 위함
+- Scope: `src/actions/group/searchGroupsWithCountAction.ts`, `src/actions/group/searchGroupsWithCountAction.test.ts`
+
+## 잔여 액션 공통 에러 규격 전면 전환 (2026-03-05)
+- Decision: 남아 있던 레거시 액션(`group`, `invitation`, `appointment`, `user`, `place`, `validation`, `auth/logout`)을 `runServiceAction`/`requireUserService` 기반으로 모두 전환하고, 최종 응답 브리지는 `actionSuccessWithRequestId`/`serviceStateToActionError`로 통일한다.
+- Alternatives: 레거시 액션 일부(`public 조회`, `유틸성 액션`)를 기존 `actionError/actionSuccess` 패턴으로 유지
+- Reason: 액션 계층 전체에서 `requestId/errorCode/debug` 메타와 에러 분류 규약을 동일하게 강제해야 UI 표시/운영 추적/디버깅 플로우를 일관되게 유지할 수 있기 때문
+- Scope:
+  - `src/actions/group/{createGroupAction,findGroupByNameAction,getGroupByIdAction,getGroupMembersAction,getMyGroupsAction,leaveGroupAction,listMyGroupsWithStatsAction,searchGroupsAction,searchUsersAction}.ts`
+  - `src/actions/invitation/{listReceived,respond,hasPending}.ts`
+  - `src/actions/appointment/{list,search}.ts`
+  - `src/actions/appointment/history/list.ts`
+  - `src/actions/appointment/[appointmentId]/get.ts`
+  - `src/actions/user/{getUserData,updateProfileAction,deleteProfileImageAction,uploadProfileImageAction}.ts`
+  - `src/actions/place.ts`
+  - `src/actions/validation.ts`
+  - `src/actions/auth/logoutAction.ts`
+  - 위 변경 파일들의 대응 테스트 파일들
+
+## 레거시 가드 헬퍼 제거 (2026-03-05)
+- Decision: 액션 전환 완료 이후 미사용 상태가 된 `parseOrFail`, `requireUser`, `parseOrFailService`를 `src/actions/_common/guards.ts`에서 제거하고 `requireUserService` 단일 경로만 유지한다.
+- Alternatives: 하위 호환을 위해 레거시 헬퍼를 코드에 남겨둠
+- Reason: 더 이상 사용하지 않는 API를 유지하면 신규 코드가 레거시 경로로 회귀할 수 있어, 가드 레이어를 단일 표준 경로로 강제하기 위함
+- Scope: `src/actions/_common/guards.ts`
+
+## 결과 브리지 레거시 헬퍼 제거 (2026-03-05)
+- Decision: 전역 액션 전환이 끝난 시점에서 `src/actions/_common/result.ts`의 미사용 레거시 헬퍼(`actionError`, `actionSuccess`, `actionErrorWithMeta`)를 제거하고 `actionSuccessWithRequestId` + `serviceStateToActionError`만 유지한다.
+- Alternatives: 추후 가능성을 이유로 레거시 헬퍼를 남겨둠
+- Reason: 공통 결과 레이어의 API 표면을 줄여 회귀 경로를 제거하고, 신규 액션이 표준 브리지 경로만 사용하도록 강제하기 위함
+- Scope: `src/actions/_common/result.ts`
+
+## 공통 에러 계약 유닛 테스트 추가 (2026-03-05)
+- Decision: `service-action/result` 공통 헬퍼에 대해 requestId 부여, legacy 에러 매핑, 예외 처리(NEXT_REDIRECT 재던짐)와 test 환경 메타 숨김 동작을 검증하는 유닛 테스트를 추가한다.
+- Alternatives: 도메인 액션 테스트만으로 간접 검증 유지
+- Reason: 공통 레이어 회귀 시 전체 액션에 광범위한 영향이 발생하므로, 핵심 계약을 단위 테스트로 직접 고정해 리팩토링 안전성을 높이기 위함
+- Scope: `src/actions/_common/service-action.test.ts`, `src/actions/_common/result.test.ts`
+
+## 에러 키 호환 경로 축소 + 운영 로그 표준화 (2026-03-05)
+- Decision: 응답 표면에서 `legacyError`를 제거하고 내부 호환 필드는 `errorKey`로 한정해 유지한다. UI 분기는 `errorCode` 중심으로 통일하고, 서버 액션 로그는 `requestId + errorCode + action + debug` 구조를 `logActionError` 헬퍼로 표준화한다.
+- Alternatives: UI에서 기존 `legacyError`(또는 동급 fallback 키) 분기를 계속 유지하고, 액션별 `console.error` 포맷을 개별 관리
+- Reason: 사용자 노출 계약을 단순화(`errorCode/message/fieldErrors`)하고, 운영 시 장애 추적 키를 단일 스키마로 맞춰 검색/분석 비용을 줄이기 위함
+- Scope: `src/actions/_common/{service-action.ts,result.ts,action-log.ts}`, `src/actions/auth/logoutAction.ts`, `src/actions/{place.ts,validation.ts}`, `src/actions/group/createGroupAction.ts`, `src/actions/appointment/list.ts`, `src/actions/user/{deleteProfileImageAction.ts,uploadProfileImageAction.ts}`, `src/hooks/{useRequestErrorPresenter.ts,useRequestErrorModal.ts}`, `src/types/result.ts`, `src/app/**/*`
+
+## legacy errorKey 경로 완전 제거 (2026-03-05)
+- Decision: 서버 액션 실패 계약을 `ServiceErrorCode` 단일 축(`validation/auth/conflict/not_found/permission/server`)으로 고정하고, `createLegacyActionErrorState`, `mapLegacyErrorCode`, `errorKey` 기반 분기/응답을 전면 제거한다.
+- Alternatives: `errorKey`를 내부 호환 필드로 계속 유지하며 단계적 제거
+- Reason: 액션 구현/테스트/UI가 모두 동일한 에러 코드 집합을 사용해야 분기 규칙이 단순해지고, 도메인별 문자열 코드 누적에 따른 회귀 위험을 줄일 수 있기 때문
+- Scope:
+  - `src/actions/_common/{service-action.ts,result.ts}`
+  - `src/types/result.ts`
+  - `src/actions/**/*` (모든 액션의 `createActionErrorState({ code })` 정규화 및 `serviceStateToActionError(state)` 단일 브리지화)
+  - `src/actions/**/*/*.test.ts`, `src/hooks/useEmailValidation.test.ts` (기대 에러 코드 `ServiceErrorCode` 기준으로 갱신)
+
+## Debug 표시 경로 분리 (2026-03-05)
+- Decision: 사용자 모달(`RequestErrorModal`)에는 사용자 메시지만 표시하고, 개발용 디버그 정보는 `useActionDebug` 훅으로 콘솔에만 출력한다. 디버그 payload 생성은 `buildDebug` 공통 함수로 일원화한다.
+- Alternatives: 모달에 `[debug]` 블록을 유지하면서 콘솔 로그를 보조로만 사용
+- Reason: 사용자 노출 메시지와 개발자 진단 정보를 명확히 분리해 UX를 단순화하고, 디버그 출력 형식을 한 곳에서 관리해 유지보수 비용을 줄이기 위함
+- Scope: `src/hooks/{build-debug.ts,use-action-debug.ts,useRequestErrorPresenter.ts,useRequestErrorModal.ts}`, `src/components/ui/RequestErrorModal.tsx`
+
+## devError 유틸 제거 (2026-03-05)
+- Decision: 개발환경에서 사용자 메시지에 디버그 문자열을 덧붙이던 `withDevErrorDetails`(`src/actions/_common/devError.ts`)를 제거하고, 디버그 정보는 액션의 `debug` 필드 + `useActionDebug` 콘솔 경로로만 전달한다.
+- Alternatives: `devError`를 유지해 일부 액션에서 메시지 기반 디버그 표시를 병행
+- Reason: 사용자 메시지와 개발자 진단 정보를 분리한다는 최신 에러 처리 기준과 충돌하며, 동일 정보가 중복 경로로 관리되어 회귀 가능성이 높기 때문
+- Scope: `src/actions/group/createGroupAction.ts`, `src/actions/user/uploadProfileImageAction.ts`, `src/actions/_common/devError.ts`
+
+## 에러 분기/디버그 흐름 정합성 보강 (2026-03-05)
+- Decision: `matchesActionError`를 엄격 매칭으로 변경해 기대 조건이 있을 때 실제 값이 없으면 매칭 실패로 처리한다. `runServiceAction`은 예외 catch 시 `logActionError`를 공통 호출해 최소 운영 추적 로그(`requestId/errorCode/action/debug`)를 보장한다. 또한 `useRequestErrorModal`은 UI 옵션(`title/closeLabel`)만 책임지고 `err/source`는 `useRequestErrorPresenter` 전용으로 분리한다.
+- Alternatives: 느슨한 매칭(`actual` 미존재 시 true) 유지, 액션별 수동 로깅만 유지, 모달 훅 옵션에 `err/source`를 계속 포함
+- Reason: UI 오분기(conflict/not_found 오탐)와 운영 로그 누락 리스크를 줄이고, 훅 API 책임을 명확히 분리해 유지보수성을 높이기 위함
+- Scope: `src/hooks/{useRequestErrorPresenter.ts,useRequestErrorModal.ts,useRequestErrorPresenter.test.ts,use-action-debug.test.ts,build-debug.test.ts}`, `src/actions/_common/{service-action.ts,service-action.test.ts}`, `src/actions/group/{createGroupAction.ts,joinGroupAction.ts}`
+
+## 요청 에러 표시 흐름 단순화 (2026-03-05)
+- Decision: 요청 에러 처리 흐름을 `클라이언트 -> useRequestErrorPresenter -> (모달 + 콘솔)` 단일 경로로 단순화한다. presenter 내부의 `debugSnapshot` 상태와 effect 기반 로그를 제거하고, 에러 발생 시 `logActionDebug`를 즉시 호출한다. 모달에는 사용자 메시지와 `errorCode`를 함께 표시한다.
+- Alternatives: 기존처럼 presenter 내부 state/effect로 디버그 스냅샷을 거쳐 로그 출력, 모달에는 메시지만 표시
+- Reason: 디버그 출력 경로를 직관적으로 단순화해 읽기/추적 비용을 줄이고, 사용자/개발자 관점에서 필요한 정보(메시지/코드 vs 전체 디버그)를 명확히 분리하기 위함
+- Scope: `src/hooks/{useRequestErrorPresenter.ts,use-action-debug.ts,useRequestErrorModal.ts}`, `src/provider/request-error-provider.tsx`, `src/components/ui/{RequestErrorModal.tsx,RequestErrorModal.css.ts}`, `src/hooks/{use-action-debug.test.ts,useRequestErrorPresenter.test.ts}`
+
+## Query 에러를 Action 에러 스키마로 정규화 (2026-03-05)
+- Decision: React Query `queryFn`에서 액션 결과 실패를 `Error` 문자열로 재포장하지 않고, `ActionQueryError`(`requestId/errorCode/debug` 포함)로 정규화한다. 또한 `useRequestErrorPresenter`는 액션 메타데이터가 있는 경우에만 콘솔 디버그를 출력한다.
+- Alternatives: query 계층에서 기존 `throw new Error(...)` 유지 + presenter에서 모든 에러를 콘솔 출력
+- Reason: query 경로에서도 모달/디버그 입력 스키마를 액션과 동일하게 맞춰 `errorCode/requestId` 유실 문제를 제거하고, 일반 런타임 에러는 모달 중심으로 처리해 콘솔 노이즈를 줄이기 위함
+- Scope: `src/libs/query/{actionQueryError.ts,appointmentQueries.ts,groupQueries.ts,placeQueries.ts,invitationQueries.ts}`, `src/hooks/useRequestErrorPresenter.ts`, `src/hooks/useRequestErrorPresenter.test.ts`, `src/libs/query/actionQueryError.test.ts`
+
+## 콘솔 디버그 라벨(action/query) 및 메타 보존 강화 (2026-03-05)
+- Decision: `buildDebug`에서 입력 에러 타입을 `action/query/unknown`으로 분류해 `label`을 반환하고, `Error` 인스턴스(`ActionQueryError` 포함)에서도 `requestId/errorCode/debug/message/stack`을 함께 보존해 출력한다. `use-action-debug`는 콘솔 payload에 `label`을 기본 포함한다.
+- Alternatives: 기존처럼 라벨 없이 단일 payload 출력, `Error` 인스턴스는 `name/message/stack`만 출력
+- Reason: Action/Query 에러 흐름을 콘솔에서 즉시 구분하고, query 경로에서 누락되던 운영 추적 메타(`requestId/errorCode`)를 유지하기 위함
+- Scope: `src/hooks/{build-debug.ts,use-action-debug.ts,useRequestErrorPresenter.ts}`, `src/hooks/{build-debug.test.ts,use-action-debug.test.ts,useRequestErrorPresenter.test.ts}`
+
+## 요청 경고 모달 중복 표시 억제 (2026-03-05)
+- Decision: `syncRequestError`에서 동일 에러(`message/errorCode/requestId`)는 상태가 해제될 때까지 1회만 표시하고, `RequestErrorProvider`에서도 동일 키의 경고를 짧은 쿨다운(1.2s) 동안 재오픈하지 않도록 전역 중복 방지를 추가한다.
+- Alternatives: 기존처럼 렌더마다 `openRequestError` 호출 허용
+- Reason: React Query 에러 상태가 유지되는 동안 동일 경고창이 반복 노출되어 UX가 과도하게 방해되는 문제를 줄이기 위함
+- Scope: `src/hooks/useRequestErrorPresenter.ts`, `src/provider/request-error-provider.tsx`, `src/hooks/useRequestErrorPresenter.test.ts`

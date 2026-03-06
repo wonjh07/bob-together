@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { getMyGroupsAction } from './getMyGroupsAction';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('getMyGroupsAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   const userId = '20000000-0000-4000-8000-000000000001';
 
   beforeEach(() => {
@@ -20,17 +20,18 @@ describe('getMyGroupsAction', () => {
   });
 
   it('인증 실패는 그대로 반환한다', async () => {
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: false,
-      error: 'unauthorized',
+      requestId: 'req-unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
 
     const result = await getMyGroupsAction();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
   });
@@ -48,7 +49,7 @@ describe('getMyGroupsAction', () => {
       from: jest.fn().mockReturnValue(query),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
@@ -56,9 +57,9 @@ describe('getMyGroupsAction', () => {
 
     const result = await getMyGroupsAction();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '그룹 정보를 불러올 수 없습니다.',
     });
   });
@@ -85,7 +86,7 @@ describe('getMyGroupsAction', () => {
       from: jest.fn().mockReturnValue(query),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
@@ -97,7 +98,7 @@ describe('getMyGroupsAction', () => {
     expect(query.select).toHaveBeenCalledWith('group_id, groups(name)');
     expect(query.eq).toHaveBeenCalledWith('user_id', userId);
     expect(query.order).toHaveBeenCalledWith('joined_at', { ascending: false });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         groups: [

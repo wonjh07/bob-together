@@ -13,7 +13,7 @@ import InlineLoading from '@/components/ui/InlineLoading';
 import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import { invalidateAfterInvitationResponse } from '@/libs/query/invalidateInvitationQueries';
 import {
   createReceivedInvitationsQueryOptions,
@@ -31,9 +31,7 @@ export default function NotificationsClient() {
   const [processingInvitationId, setProcessingInvitationId] = useState<
     string | null
   >(null);
-  const {
-    openRequestError,
-  } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
 
   const {
     data,
@@ -92,18 +90,14 @@ export default function NotificationsClient() {
         });
 
         if (!result.ok) {
-          openRequestError(result.message || '초대 처리에 실패했습니다.', {
-            err: result,
-            source: 'NotificationsClient.handleRespond.result',
+          showRequestError(result, {
+            fallbackMessage: '초대 처리에 실패했습니다.',
           });
           return;
         }
 
         if (!result.data) {
-          openRequestError('초대 처리에 실패했습니다.', {
-            err: result,
-            source: 'NotificationsClient.handleRespond.noData',
-          });
+          showRequestError('초대 처리에 실패했습니다.');
           return;
         }
 
@@ -124,7 +118,7 @@ export default function NotificationsClient() {
       }
     },
     [
-      openRequestError,
+      showRequestError,
       processingInvitationId,
       queryClient,
       updateInvitationStatusCache,

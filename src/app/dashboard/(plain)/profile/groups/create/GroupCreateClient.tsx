@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 
 import { createGroupAction } from '@/actions/group';
 import PlainTopNav from '@/components/ui/PlainTopNav';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import { invalidateGroupMembershipQueries } from '@/libs/query/invalidateGroupQueries';
 import { groupFormSchema } from '@/schemas/group';
 
@@ -20,9 +20,7 @@ export default function GroupCreateClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const {
-    openRequestError,
-  } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
 
   const {
     register,
@@ -37,18 +35,14 @@ export default function GroupCreateClient() {
     const result = await createGroupAction(data.groupName);
 
     if (!result.ok) {
-      openRequestError(result.message || '그룹 생성에 실패했습니다.', {
-        err: result,
-        source: 'GroupCreateClient.onSubmit.result',
+      showRequestError(result, {
+        fallbackMessage: '그룹 생성에 실패했습니다.',
       });
       return;
     }
 
     if (!result.data) {
-      openRequestError('그룹 정보를 확인할 수 없습니다.', {
-        err: result,
-        source: 'GroupCreateClient.onSubmit.noData',
-      });
+      showRequestError('그룹 정보를 확인할 수 없습니다.');
       return;
     }
 

@@ -19,9 +19,9 @@ describe('getGroupByIdAction', () => {
   it('groupId가 없으면 invalid-format을 반환한다', async () => {
     const result = await getGroupByIdAction('');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '그룹 정보가 필요합니다.',
     });
   });
@@ -29,9 +29,9 @@ describe('getGroupByIdAction', () => {
   it('groupId가 uuid가 아니면 invalid-format을 반환한다', async () => {
     const result = await getGroupByIdAction('invalid-group-id');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 그룹 ID가 아닙니다.',
     });
   });
@@ -44,10 +44,11 @@ describe('getGroupByIdAction', () => {
 
     const result = await getGroupByIdAction('550e8400-e29b-41d4-a716-446655440000');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '그룹 정보를 불러오지 못했습니다.',
+      error: { message: 'db failed' },
     });
   });
 
@@ -59,9 +60,9 @@ describe('getGroupByIdAction', () => {
 
     const result = await getGroupByIdAction('550e8400-e29b-41d4-a716-446655440000');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'group-not-found',
+      errorType: 'not_found',
       message: '그룹을 찾을 수 없습니다.',
     });
   });
@@ -77,7 +78,7 @@ describe('getGroupByIdAction', () => {
 
     const result = await getGroupByIdAction('550e8400-e29b-41d4-a716-446655440000');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         groupId: '550e8400-e29b-41d4-a716-446655440000',

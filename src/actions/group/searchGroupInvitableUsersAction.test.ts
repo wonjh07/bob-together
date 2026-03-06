@@ -11,9 +11,9 @@ describe('searchGroupInvitableUsersAction', () => {
   it('groupId가 없으면 invalid-format을 반환한다', async () => {
     const result = await searchGroupInvitableUsersAction('', '테스트');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '그룹 정보가 필요합니다.',
     });
   });
@@ -21,9 +21,9 @@ describe('searchGroupInvitableUsersAction', () => {
   it('검색어가 짧으면 invalid-format을 반환한다', async () => {
     const result = await searchGroupInvitableUsersAction('group-1', 'a');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '검색어를 2자 이상 입력해주세요.',
     });
   });
@@ -54,9 +54,9 @@ describe('searchGroupInvitableUsersAction', () => {
 
     const result = await searchGroupInvitableUsersAction('group-1', '테스트');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'forbidden',
+      errorType: 'permission',
       message: '그룹을 찾을 수 없거나 접근 권한이 없습니다.',
     });
   });
@@ -111,7 +111,7 @@ describe('searchGroupInvitableUsersAction', () => {
       }),
     );
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         users: [

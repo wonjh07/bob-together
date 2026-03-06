@@ -9,7 +9,7 @@ import { submitPlaceReviewAction } from '@/actions/appointment';
 import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import StarRatingInput from '@/components/ui/StarRatingInput';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError, useSyncRequestError } from '@/hooks/useRequestError';
 import { createAppointmentReviewTargetQueryOptions } from '@/libs/query/appointmentQueries';
 import {
   invalidateReviewMutationQueries,
@@ -32,17 +32,16 @@ export default function ReviewEditorClient({
   const queryScope = useQueryScope();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const initializedAppointmentIdRef = useRef<string | null>(null);
-  const {
-    openRequestError,
-    syncRequestError,
-  } = useRequestErrorPresenter({
-    source: 'ReviewEditorClient.reviewTargetQuery.error',
-    fallbackMessage: '리뷰 정보를 불러오지 못했습니다.',
-  });
+  const { showRequestError } = useRequestError();
 
   const reviewTargetQuery = useQuery({
     ...createAppointmentReviewTargetQueryOptions(appointmentId, queryScope),
     enabled: Boolean(appointmentId),
+  });
+  useSyncRequestError({
+    active: reviewTargetQuery.isError,
+    error: reviewTargetQuery.error,
+    fallbackMessage: '리뷰 정보를 불러오지 못했습니다.',
   });
 
   const [score, setScore] = useState(0);
@@ -66,17 +65,6 @@ export default function ReviewEditorClient({
     element.style.height = '0px';
     element.style.height = `${element.scrollHeight}px`;
   }, [content]);
-
-  useEffect(() => {
-    syncRequestError({
-      isError: reviewTargetQuery.isError,
-      err: reviewTargetQuery.error,
-      message:
-        reviewTargetQuery.error instanceof Error
-          ? reviewTargetQuery.error.message
-          : '리뷰 정보를 불러오지 못했습니다.',
-    });
-  }, [reviewTargetQuery.error, reviewTargetQuery.isError, syncRequestError]);
 
   if (!appointmentId) {
     return (
@@ -124,9 +112,8 @@ export default function ReviewEditorClient({
     setIsSubmitting(false);
 
     if (!result.ok) {
-      openRequestError(result.message || '리뷰 등록에 실패했습니다.', {
-        err: result,
-        source: 'ReviewEditorClient.handleSubmitReview.result',
+      showRequestError(result, {
+        fallbackMessage: '리뷰 등록에 실패했습니다.',
       });
       return;
     }

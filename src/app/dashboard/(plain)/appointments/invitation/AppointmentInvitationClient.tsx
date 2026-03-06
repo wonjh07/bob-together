@@ -14,7 +14,7 @@ import {
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import SearchInput from '@/components/ui/SearchInput';
 import UserIdentityInline from '@/components/ui/UserIdentityInline';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import {
   createAppointmentInvitationStateQueryOptions,
   type AppointmentInvitationStateData,
@@ -60,9 +60,7 @@ export default function AppointmentInvitationClient({
   const [isSearched, setIsSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isInviting, setIsInviting] = useState<Record<string, boolean>>({});
-  const {
-    openRequestError,
-  } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
 
   const {
     control,
@@ -91,9 +89,7 @@ export default function AppointmentInvitationClient({
   const performSearch = useCallback(
     async (query: string) => {
       if (!appointmentId) {
-        openRequestError('약속 정보가 필요합니다.', {
-          source: 'AppointmentInvitationClient.performSearch.noAppointmentId',
-        });
+        showRequestError('약속 정보가 필요합니다.');
         return;
       }
 
@@ -113,25 +109,21 @@ export default function AppointmentInvitationClient({
       setIsSearching(false);
 
       if (!result.ok) {
-        openRequestError(result.message || '사용자 검색에 실패했습니다.', {
-          err: result,
-          source: 'AppointmentInvitationClient.performSearch.result',
+        showRequestError(result, {
+          fallbackMessage: '사용자 검색에 실패했습니다.',
         });
         return;
       }
 
       if (!result.data) {
-        openRequestError('검색 결과를 불러올 수 없습니다.', {
-          err: result,
-          source: 'AppointmentInvitationClient.performSearch.noData',
-        });
+        showRequestError('검색 결과를 불러올 수 없습니다.');
         return;
       }
 
       setResultUsers(result.data.users);
       setIsSearched(true);
     },
-    [appointmentId, openRequestError],
+    [appointmentId, showRequestError],
   );
 
   const onSubmit = async (data: GroupSearchFormInput) => {
@@ -157,9 +149,7 @@ export default function AppointmentInvitationClient({
 
   const handleInvite = async (userId: string) => {
     if (!appointmentId) {
-      openRequestError('약속 정보가 필요합니다.', {
-        source: 'AppointmentInvitationClient.handleInvite.noAppointmentId',
-      });
+      showRequestError('약속 정보가 필요합니다.');
       return;
     }
 
@@ -170,7 +160,7 @@ export default function AppointmentInvitationClient({
     setIsInviting((prev) => ({ ...prev, [userId]: false }));
 
     if (!result.ok) {
-      if (result.error === 'invite-already-sent') {
+      if (result.reason === 'already_invited') {
         updateInvitationStateCache((prev) => ({
           ...prev,
           pendingInviteeIds: prev.pendingInviteeIds.includes(userId)
@@ -180,7 +170,7 @@ export default function AppointmentInvitationClient({
         return;
       }
 
-      if (result.error === 'already-member') {
+      if (result.reason === 'already_member') {
         updateInvitationStateCache((prev) => ({
           ...prev,
           memberIds: prev.memberIds.includes(userId)
@@ -190,9 +180,8 @@ export default function AppointmentInvitationClient({
         return;
       }
 
-      openRequestError(result.message || '초대에 실패했습니다.', {
-        err: result,
-        source: 'AppointmentInvitationClient.handleInvite.result',
+      showRequestError(result, {
+        fallbackMessage: '초대에 실패했습니다.',
       });
       return;
     }
@@ -292,6 +281,7 @@ export default function AppointmentInvitationClient({
             <div className={emptyResult}>검색 결과가 없습니다.</div>
           ) : null}
         </div>
-      </div>    </div>
+      </div>
+    </div>
   );
 }

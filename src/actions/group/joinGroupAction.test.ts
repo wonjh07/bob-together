@@ -29,7 +29,7 @@ describe('joinGroupAction', () => {
 
     const result = await joinGroupAction(GROUP_ID);
 
-    expect(result).toEqual({ ok: true, data: { groupId: GROUP_ID } });
+    expect(result).toMatchObject({ ok: true, data: { groupId: GROUP_ID } });
     expect(rpc).toHaveBeenCalledWith(
       'join_group_transactional',
       expect.objectContaining({
@@ -58,9 +58,9 @@ describe('joinGroupAction', () => {
 
     const result = await joinGroupAction(GROUP_ID);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.',
     });
   });

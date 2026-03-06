@@ -49,9 +49,9 @@ describe('getAppointmentMembersAction', () => {
   it('약속 ID 형식이 올바르지 않으면 invalid-format을 반환한다', async () => {
     const result = await getAppointmentMembersAction('invalid-id');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 약속 ID가 아닙니다.',
     });
   });
@@ -64,7 +64,7 @@ describe('getAppointmentMembersAction', () => {
       p_user_id: '550e8400-e29b-41d4-a716-446655440123',
       p_appointment_id: appointmentId,
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         memberCount: 1,
@@ -99,9 +99,9 @@ describe('getAppointmentMembersAction', () => {
       '550e8400-e29b-41d4-a716-446655440000',
     );
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'forbidden',
+      errorType: 'permission',
       message: '약속을 찾을 수 없거나 접근 권한이 없습니다.',
     });
   });

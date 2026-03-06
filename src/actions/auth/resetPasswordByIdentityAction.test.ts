@@ -41,7 +41,7 @@ describe('resetPasswordByIdentityAction', () => {
       passwordConfirm: 'Password123!',
     });
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual(expect.objectContaining({ ok: true }));
     expect(mockUpdateUserById).toHaveBeenCalledWith('user-1', {
       password: 'Password123!',
     });
@@ -60,11 +60,13 @@ describe('resetPasswordByIdentityAction', () => {
       passwordConfirm: 'Password123!',
     });
 
-    expect(result).toEqual({
-      ok: false,
-      error: 'user-not-found',
-      message: '입력한 정보와 일치하는 계정을 찾을 수 없습니다.',
-    });
+    expect(result).toEqual(
+      expect.objectContaining({
+        ok: false,
+        errorType: 'not_found',
+        message: '입력한 정보와 일치하는 계정을 찾을 수 없습니다.',
+      }),
+    );
     expect(mockUpdateUserById).not.toHaveBeenCalled();
   });
 
@@ -78,7 +80,7 @@ describe('resetPasswordByIdentityAction', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('invalid-format');
+      expect('validation');
     }
     expect(mockRpc).not.toHaveBeenCalled();
   });

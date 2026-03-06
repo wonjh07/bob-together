@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { respondToInvitationAction } from './respond';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('respondToInvitationAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   const userId = '20000000-0000-4000-8000-000000000001';
   const invitationId = '20000000-0000-4000-8000-000000000101';
 
@@ -26,9 +26,9 @@ describe('respondToInvitationAction', () => {
       decision: 'accepted',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 초대 ID가 아닙니다.',
     });
   });
@@ -47,7 +47,7 @@ describe('respondToInvitationAction', () => {
       error: null,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { rpc },
       user: { id: userId },
@@ -58,9 +58,9 @@ describe('respondToInvitationAction', () => {
       decision: 'accepted',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'forbidden',
+      errorType: 'permission',
       message: '종료된 약속은 수락할 수 없습니다.',
     });
   });
@@ -79,7 +79,7 @@ describe('respondToInvitationAction', () => {
       error: null,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { rpc },
       user: { id: userId },
@@ -90,9 +90,9 @@ describe('respondToInvitationAction', () => {
       decision: 'accepted',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'forbidden',
+      errorType: 'permission',
       message: '취소된 약속은 수락할 수 없습니다.',
     });
   });
@@ -111,7 +111,7 @@ describe('respondToInvitationAction', () => {
       error: null,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { rpc },
       user: { id: userId },
@@ -122,7 +122,7 @@ describe('respondToInvitationAction', () => {
       decision: 'accepted',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         invitationId,

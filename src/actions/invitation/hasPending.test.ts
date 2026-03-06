@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { hasPendingInvitationsAction } from './hasPending';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('hasPendingInvitationsAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   const userId = '20000000-0000-4000-8000-000000000001';
 
   beforeEach(() => {
@@ -20,17 +20,18 @@ describe('hasPendingInvitationsAction', () => {
   });
 
   it('인증 실패는 그대로 반환한다', async () => {
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: false,
-      error: 'unauthorized',
+      requestId: 'req-unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
 
     const result = await hasPendingInvitationsAction();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
   });
@@ -50,7 +51,7 @@ describe('hasPendingInvitationsAction', () => {
       select,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { from },
       user: { id: userId },
@@ -65,9 +66,9 @@ describe('hasPendingInvitationsAction', () => {
     });
     expect(firstEq).toHaveBeenCalledWith('invitee_id', userId);
     expect(secondEq).toHaveBeenCalledWith('status', 'pending');
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '알림 상태를 확인하지 못했습니다.',
     });
   });
@@ -87,7 +88,7 @@ describe('hasPendingInvitationsAction', () => {
       select,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { from },
       user: { id: userId },
@@ -95,7 +96,7 @@ describe('hasPendingInvitationsAction', () => {
 
     const result = await hasPendingInvitationsAction();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         hasPendingInvitations: true,
@@ -118,7 +119,7 @@ describe('hasPendingInvitationsAction', () => {
       select,
     });
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase: { from },
       user: { id: userId },
@@ -126,7 +127,7 @@ describe('hasPendingInvitationsAction', () => {
 
     const result = await hasPendingInvitationsAction();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         hasPendingInvitations: false,

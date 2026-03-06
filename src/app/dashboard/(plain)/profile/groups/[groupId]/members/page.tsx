@@ -36,6 +36,7 @@ export default async function GroupMembersPage({
         />
         <RequestErrorModal
           isOpen
+          errorType={result.ok ? 'server' : result.errorType}
           message={
             result.ok
               ? '그룹 멤버 정보를 불러올 수 없습니다.'

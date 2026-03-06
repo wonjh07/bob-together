@@ -30,9 +30,9 @@ describe('sendGroupInvitationAction', () => {
 
     const result = await sendGroupInvitationAction(GROUP_ID, INVITEE_ID);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'forbidden',
+      errorType: 'permission',
       message: '그룹 멤버만 초대할 수 있습니다.',
     });
     expect(rpc).toHaveBeenCalledWith(
@@ -43,5 +43,32 @@ describe('sendGroupInvitationAction', () => {
         p_invitee_id: INVITEE_ID,
       }),
     );
+  });
+
+  it('이미 그룹 멤버면 already_member reason을 반환한다', async () => {
+    const rpc = jest.fn().mockResolvedValue({
+      data: [{ ok: false, error_code: 'already-member' }],
+      error: null,
+    });
+
+    const mockSupabaseClient = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({ data: { user: mockUser } }),
+      },
+      rpc,
+    };
+
+    (createSupabaseServerClient as jest.Mock).mockReturnValue(
+      mockSupabaseClient,
+    );
+
+    const result = await sendGroupInvitationAction(GROUP_ID, INVITEE_ID);
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorType: 'conflict',
+      reason: 'already_member',
+      message: '이미 그룹에 가입된 사용자입니다.',
+    });
   });
 });

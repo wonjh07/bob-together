@@ -26,7 +26,7 @@ describe('loginAction', () => {
 
     const result = await loginAction('test@example.com', 'Password123!');
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toMatchObject({ ok: true });
     expect(mockSupabaseClient.auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'test@example.com',
       password: 'Password123!',
@@ -41,41 +41,41 @@ describe('loginAction', () => {
 
     const result = await loginAction('test@example.com', 'WrongPassword');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-credentials',
+      errorType: 'auth',
       message: '이메일 또는 비밀번호가 올바르지 않습니다.',
     });
   });
 
-  it('빈 이메일은 invalid-email 에러를 반환해야 한다', async () => {
+  it('빈 이메일은 validation 에러를 반환해야 한다', async () => {
     const result = await loginAction('', 'Password123!');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-email',
+      errorType: 'validation',
       message: '이메일을 입력해주세요.',
     });
     expect(mockSupabaseClient.auth.signInWithPassword).not.toHaveBeenCalled();
   });
 
-  it('빈 비밀번호는 invalid-email 에러를 반환해야 한다', async () => {
+  it('빈 비밀번호는 validation 에러를 반환해야 한다', async () => {
     const result = await loginAction('test@example.com', '');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-email',
+      errorType: 'validation',
       message: '비밀번호를 입력해주세요.',
     });
     expect(mockSupabaseClient.auth.signInWithPassword).not.toHaveBeenCalled();
   });
 
-  it('잘못된 이메일 형식은 invalid-email 에러를 반환해야 한다', async () => {
+  it('잘못된 이메일 형식은 validation 에러를 반환해야 한다', async () => {
     const result = await loginAction('invalid-email', 'Password123!');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-email',
+      errorType: 'validation',
       message: '올바른 이메일 형식이 아닙니다.',
     });
     expect(mockSupabaseClient.auth.signInWithPassword).not.toHaveBeenCalled();
@@ -89,9 +89,9 @@ describe('loginAction', () => {
 
     const result = await loginAction('test@example.com', 'Password123!');
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'login-failed',
+      errorType: 'auth',
       message: '로그인 중 오류가 발생했습니다.',
     });
   });
@@ -104,7 +104,7 @@ describe('loginAction', () => {
 
     const result = await loginAction('  Test@Example.COM  ', 'Password123!');
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toMatchObject({ ok: true });
     expect(mockSupabaseClient.auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'test@example.com',
       password: 'Password123!',

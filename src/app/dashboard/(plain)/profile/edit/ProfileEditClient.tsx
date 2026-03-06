@@ -18,7 +18,7 @@ import TrashIcon from '@/components/icons/TrashIcon';
 import FormError from '@/components/ui/FormError';
 import { Input } from '@/components/ui/FormInput';
 import PlainTopNav from '@/components/ui/PlainTopNav';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import { nameSchema, nicknameSchema, passwordSchema } from '@/schemas/auth';
 import { convertToJpegUnderLimit } from '@/utils/convertToJpegUnderLimit';
 import { canUseHistoryBack } from '@/utils/navigationBack';
@@ -77,7 +77,7 @@ export default function ProfileEditClient({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [isImageMarkedForDelete, setIsImageMarkedForDelete] = useState(false);
-  const { openRequestError } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
   const {
     register,
     handleSubmit,
@@ -155,9 +155,8 @@ export default function ProfileEditClient({
     });
 
     if (!result.ok) {
-      openRequestError(result.message || '프로필 저장에 실패했습니다.', {
-        err: result,
-        source: 'ProfileEditClient.onSubmit.updateProfile.result',
+      showRequestError(result, {
+        fallbackMessage: '프로필 저장에 실패했습니다.',
       });
       return;
     }
@@ -171,15 +170,15 @@ export default function ProfileEditClient({
           formData.append('file', pendingImageFile);
           const uploadResult = await uploadProfileImageAction(formData);
 
-          if (!uploadResult.ok || !uploadResult.data) {
-            const message = uploadResult.ok
-              ? '프로필 정보는 저장되었지만 이미지 업로드에 실패했습니다.'
-              : uploadResult.message ||
-                '프로필 정보는 저장되었지만 이미지 업로드에 실패했습니다.';
-            openRequestError(message, {
-              err: uploadResult,
-              source: 'ProfileEditClient.onSubmit.uploadProfileImage.result',
+          if (!uploadResult.ok) {
+            showRequestError(uploadResult, {
+              fallbackMessage: '프로필 정보는 저장되었지만 이미지 업로드에 실패했습니다.',
             });
+            return;
+          }
+
+          if (!uploadResult.data) {
+            showRequestError('프로필 정보는 저장되었지만 이미지 업로드에 실패했습니다.');
             return;
           }
 
@@ -194,14 +193,10 @@ export default function ProfileEditClient({
         if (isImageMarkedForDelete) {
           const deleteResult = await deleteProfileImageAction();
           if (!deleteResult.ok) {
-            openRequestError(
-              deleteResult.message ||
+            showRequestError(deleteResult, {
+              fallbackMessage:
                 '프로필 정보는 저장되었지만 이미지 삭제에 실패했습니다.',
-              {
-                err: deleteResult,
-                source: 'ProfileEditClient.onSubmit.deleteProfileImage.result',
-              },
-            );
+            });
             return;
           }
 

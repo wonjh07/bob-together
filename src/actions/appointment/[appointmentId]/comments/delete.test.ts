@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { deleteAppointmentCommentAction } from './delete';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('deleteAppointmentCommentAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -30,9 +30,9 @@ describe('deleteAppointmentCommentAction', () => {
       commentId: '550e8400-e29b-41d4-a716-446655440000',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 약속 ID가 아닙니다.',
     });
   });
@@ -43,9 +43,9 @@ describe('deleteAppointmentCommentAction', () => {
       commentId: 'not-uuid',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 댓글 ID가 아닙니다.',
     });
   });
@@ -70,10 +70,11 @@ describe('deleteAppointmentCommentAction', () => {
       from: jest.fn().mockReturnValue(deleteQuery),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '550e8400-e29b-41d4-a716-446655440100' },
+      requestId: 'req-test',
     });
 
     const result = await deleteAppointmentCommentAction({
@@ -81,9 +82,9 @@ describe('deleteAppointmentCommentAction', () => {
       commentId: '550e8400-e29b-41d4-a716-446655440001',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '댓글 삭제 중 오류가 발생했습니다.',
     });
   });
@@ -105,10 +106,11 @@ describe('deleteAppointmentCommentAction', () => {
       from: jest.fn().mockReturnValue(deleteQuery),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '550e8400-e29b-41d4-a716-446655440100' },
+      requestId: 'req-test',
     });
 
     const result = await deleteAppointmentCommentAction({
@@ -116,7 +118,7 @@ describe('deleteAppointmentCommentAction', () => {
       commentId,
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         appointmentId,

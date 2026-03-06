@@ -62,7 +62,7 @@ describe('updateProfileAction', () => {
       password: 'Abcd1234!',
     });
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toMatchObject({ ok: true });
     expect(usersTable.update).toHaveBeenCalledWith({
       name: '원재호',
       nickname: '째째왕자',
@@ -88,9 +88,9 @@ describe('updateProfileAction', () => {
       nickname: '째째왕자',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
   });
@@ -106,9 +106,9 @@ describe('updateProfileAction', () => {
       nickname: '째째왕자',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'update-failed',
+      errorType: 'server',
       message: '프로필 저장에 실패했습니다.',
     });
   });
@@ -123,9 +123,9 @@ describe('updateProfileAction', () => {
       nickname: '째째왕자',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'metadata-sync-failed',
+      errorType: 'server',
       message: '프로필은 저장되었지만 계정 정보 동기화에 실패했습니다.',
     });
   });

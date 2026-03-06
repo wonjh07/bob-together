@@ -8,7 +8,7 @@ import { KakaoMapPreview } from '@/components/kakao/KakaoMapPreview';
 import AppointmentPlaceMeta from '@/components/ui/AppointmentPlaceMeta';
 import DateTimeMetaRow from '@/components/ui/DateTimeMetaRow';
 import IconLabel from '@/components/ui/IconLabel';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useRequestError } from '@/hooks/useRequestError';
 import {
   invalidateAppointmentCollectionQueries,
 } from '@/libs/query/invalidateAppointmentQueries';
@@ -25,7 +25,7 @@ interface ConfirmStepProps {
 export function ConfirmStep({ onCreated, onBindSubmit }: ConfirmStepProps) {
   const queryClient = useQueryClient();
   const { groups } = useCreateAppointmentContext();
-  const { openRequestError } = useRequestErrorPresenter();
+  const { showRequestError } = useRequestError();
   const {
     handleSubmit,
     setError,
@@ -71,18 +71,14 @@ export function ConfirmStep({ onCreated, onBindSubmit }: ConfirmStepProps) {
     });
 
     if (!result.ok) {
-      openRequestError(result.message || '약속 생성 중 오류가 발생했습니다.', {
-        err: result,
-        source: 'ConfirmStep.handleCreate.result',
+      showRequestError(result, {
+        fallbackMessage: '약속 생성 중 오류가 발생했습니다.',
       });
       return;
     }
 
     if (!result.data) {
-      openRequestError('약속 정보를 확인할 수 없습니다.', {
-        err: result,
-        source: 'ConfirmStep.handleCreate.noData',
-      });
+      showRequestError('약속 정보를 확인할 수 없습니다.');
       return;
     }
 

@@ -2,13 +2,13 @@
 
 import { useInfiniteQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 
 import DateTimeMetaRow from '@/components/ui/DateTimeMetaRow';
 import PlaceRatingMeta from '@/components/ui/PlaceRatingMeta';
 import { useHorizontalInfiniteObserver } from '@/hooks/useHorizontalInfiniteObserver';
 import { useHorizontalWheelScroll } from '@/hooks/useHorizontalWheelScroll';
-import { useRequestErrorPresenter } from '@/hooks/useRequestErrorPresenter';
+import { useSyncRequestError } from '@/hooks/useRequestError';
 import {
   createReviewableAppointmentsQueryOptions,
   type ReviewableAppointmentsPage,
@@ -20,10 +20,6 @@ import * as styles from './ReviewsWaitList.css';
 export function ReviewsWaitList() {
   const queryScope = useQueryScope();
   const queryOptions = createReviewableAppointmentsQueryOptions(queryScope);
-  const { syncRequestError } = useRequestErrorPresenter({
-    source: 'ReviewsWaitList.query.error',
-    fallbackMessage: '작성 가능한 리뷰를 불러오지 못했습니다.',
-  });
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -44,10 +40,11 @@ export function ReviewsWaitList() {
     data?.pages.flatMap(
       (page: ReviewableAppointmentsPage) => page.appointments,
     ) ?? [];
-
-  useEffect(() => {
-    syncRequestError({ isError, err: error });
-  }, [error, isError, syncRequestError]);
+  useSyncRequestError({
+    active: isError,
+    error,
+    fallbackMessage: '작성 가능한 리뷰를 불러오지 못했습니다.',
+  });
 
   useHorizontalInfiniteObserver({
     rootRef: scrollContainerRef,

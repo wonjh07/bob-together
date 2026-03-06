@@ -60,7 +60,7 @@ describe('getUserData', () => {
 
     const result = await getUserData();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         id: '123',
@@ -94,7 +94,7 @@ describe('getUserData', () => {
 
     const result = await getUserData();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         id: '123',
@@ -114,9 +114,9 @@ describe('getUserData', () => {
 
     const result = await getUserData();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
   });
@@ -129,9 +129,9 @@ describe('getUserData', () => {
 
     const result = await getUserData();
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'unauthorized',
+      errorType: 'auth',
       message: '로그인이 필요합니다.',
     });
   });

@@ -16,7 +16,7 @@
 - Read `ai_docs/INDEX.md` first and selectively read task-related docs
 
 ### Workflow (Must Do)
-- Complex requests: analyze and plan first
+- Complex requests: analyze and plan first(use plan mode)
 - Before code changes: show before/after, justify, get approval, proceed to the next step
 - Always base work on the current file state (users may edit before requesting)
 - If user edits overlap with planned changes, confirm before proceeding
@@ -26,19 +26,6 @@
 - If migration cannot be applied in current environment, report blocked status and defer type-file edits.
 - After massive code changes, run `npm run type-check` and `npm run lint`, then report results (skip for `*.md`-only changes)
 - If a change involves structural/architectural decisions, record it in `ai_docs/DECISIONS.md`.
-
-### `-analyze` Command
-- Trigger: user inputs `-analyze`
-- Scope: analyze the page currently being viewed in VSCode (active `page.tsx`)
-- Output sections:
-  - 문제점: browser performance, React readability, maintainability
-  - 개선점: prioritized improvements with expected impact
-  - 실무 비교: current approach vs production-grade React/web patterns with trade-offs
-- Rules:
-  - analysis only (no code edits) unless user gives explicit follow-up approval
-  - include concrete file references whenever possible
-  - focus only on browser/React concerns (rendering, component structure, state flow, readability, maintainability)
-  - exclude DB/query efficiency analysis unless user explicitly requests it
 
 ---
 

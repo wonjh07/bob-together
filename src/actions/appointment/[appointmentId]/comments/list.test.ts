@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { getAppointmentCommentsAction } from './list';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('getAppointmentCommentsAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   const userId = '20000000-0000-4000-8000-000000000001';
   const appointmentId = '20000000-0000-4000-8000-000000000101';
 
@@ -25,9 +25,9 @@ describe('getAppointmentCommentsAction', () => {
       appointmentId: 'not-uuid',
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 약속 ID가 아닙니다.',
     });
   });
@@ -39,10 +39,11 @@ describe('getAppointmentCommentsAction', () => {
     });
     const supabase = { rpc };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
+      requestId: 'req-test',
     });
 
     const result = await getAppointmentCommentsAction({
@@ -62,9 +63,9 @@ describe('getAppointmentCommentsAction', () => {
       p_cursor_comment_id: '20000000-0000-4000-8000-000000000199',
       p_include_count: false,
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '댓글을 불러오지 못했습니다.',
     });
   });
@@ -111,10 +112,11 @@ describe('getAppointmentCommentsAction', () => {
     });
     const supabase = { rpc };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
+      requestId: 'req-test',
     });
 
     const result = await getAppointmentCommentsAction({
@@ -130,7 +132,7 @@ describe('getAppointmentCommentsAction', () => {
       p_cursor_comment_id: null,
       p_include_count: true,
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         commentCount: 12,
@@ -177,19 +179,20 @@ describe('getAppointmentCommentsAction', () => {
     });
     const supabase = { rpc };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
+      requestId: 'req-test',
     });
 
     const result = await getAppointmentCommentsAction({
       appointmentId,
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '댓글 수를 불러오지 못했습니다.',
     });
   });
@@ -227,10 +230,11 @@ describe('getAppointmentCommentsAction', () => {
     });
     const supabase = { rpc };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
+      requestId: 'req-test',
     });
 
     const result = await getAppointmentCommentsAction({
@@ -242,7 +246,7 @@ describe('getAppointmentCommentsAction', () => {
       limit: 2,
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         commentCount: 0,

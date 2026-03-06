@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { listMyGroupsWithStatsAction } from './listMyGroupsWithStatsAction';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('listMyGroupsWithStatsAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
   const userId = '20000000-0000-4000-8000-000000000001';
 
   beforeEach(() => {
@@ -27,10 +27,13 @@ describe('listMyGroupsWithStatsAction', () => {
       },
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 커서 정보가 아닙니다.',
+      fieldErrors: {
+        cursor: ['유효한 커서 정보가 아닙니다.'],
+      },
     });
   });
 
@@ -42,7 +45,7 @@ describe('listMyGroupsWithStatsAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
@@ -50,10 +53,11 @@ describe('listMyGroupsWithStatsAction', () => {
 
     const result = await listMyGroupsWithStatsAction({ limit: 2 });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '그룹 관리 목록을 불러오지 못했습니다.',
+      error: { message: 'rpc failed' },
     });
   });
 
@@ -99,7 +103,7 @@ describe('listMyGroupsWithStatsAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: userId },
@@ -119,7 +123,7 @@ describe('listMyGroupsWithStatsAction', () => {
       p_cursor_joined_at: '2026-02-26T10:00:00.000Z',
       p_cursor_group_id: '20000000-0000-4000-8000-000000000199',
     });
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         groups: [

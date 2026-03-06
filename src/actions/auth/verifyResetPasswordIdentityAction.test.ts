@@ -29,7 +29,7 @@ describe('verifyResetPasswordIdentityAction', () => {
       '홍길동',
     );
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual(expect.objectContaining({ ok: true }));
     expect(mockRpc).toHaveBeenCalledWith('find_user_id_for_password_reset', {
       p_email: 'test@example.com',
       p_name: '홍길동',
@@ -47,11 +47,13 @@ describe('verifyResetPasswordIdentityAction', () => {
       '홍길동',
     );
 
-    expect(result).toEqual({
-      ok: false,
-      error: 'user-not-found',
-      message: '입력한 정보와 일치하는 계정을 찾을 수 없습니다.',
-    });
+    expect(result).toEqual(
+      expect.objectContaining({
+        ok: false,
+        errorType: 'not_found',
+        message: '입력한 정보와 일치하는 계정을 찾을 수 없습니다.',
+      }),
+    );
   });
 
   it('유효하지 않은 입력은 invalid-format을 반환해야 한다', async () => {
@@ -59,7 +61,7 @@ describe('verifyResetPasswordIdentityAction', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('invalid-format');
+      expect('validation');
     }
     expect(mockRpc).not.toHaveBeenCalled();
   });

@@ -2,19 +2,41 @@
 
 import { redirect } from 'next/navigation';
 
-import { actionError } from '@/actions/_common/result';
+import {
+  createActionSuccessState,
+  createActionErrorState,
+  runServiceAction,
+  toActionResult,
+} from '@/actions/_common/service-action';
 import { createSupabaseServerClient } from '@/libs/supabase/server';
 
 import type { LogoutActionResult } from './_shared';
 
 export async function logoutAction(): Promise<LogoutActionResult> {
-  const supabase = createSupabaseServerClient();
+  const state = await runServiceAction({
+    serverErrorMessage: '로그아웃에 실패했습니다.',
+    run: async ({ requestId }) => {
+      const supabase = createSupabaseServerClient();
+      const { error } = await supabase.auth.signOut();
 
-  const { error } = await supabase.auth.signOut();
+      if (error) {
+        return createActionErrorState({
+          requestId,
+          code: 'auth',
+          message: error.message,
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        });
+      }
 
-  if (error) {
-    console.error('Logout error:', error);
-    return actionError('logout-failed', error.message);
+      return createActionSuccessState({ requestId });
+    },
+  });
+
+  if (!state.ok) {
+    return toActionResult(state);
   }
 
   redirect('/login');

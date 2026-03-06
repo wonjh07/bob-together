@@ -1,4 +1,4 @@
-import { requireUser } from '@/actions/_common/guards';
+import { requireUserService } from '@/actions/_common/guards';
 
 import { listMyReviewsAction } from './listMine';
 
@@ -7,12 +7,12 @@ jest.mock('@/actions/_common/guards', () => {
 
   return {
     ...actual,
-    requireUser: jest.fn(),
+    requireUserService: jest.fn(),
   };
 });
 
 describe('listMyReviewsAction', () => {
-  const mockRequireUser = requireUser as jest.Mock;
+  const mockRequireUserService = requireUserService as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -26,9 +26,9 @@ describe('listMyReviewsAction', () => {
       },
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'invalid-format',
+      errorType: 'validation',
       message: '유효한 커서 정보가 아닙니다.',
     });
   });
@@ -41,7 +41,7 @@ describe('listMyReviewsAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '20000000-0000-4000-8000-000000000001' },
@@ -51,9 +51,9 @@ describe('listMyReviewsAction', () => {
       limit: 2,
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: false,
-      error: 'server-error',
+      errorType: 'server',
       message: '내 리뷰 목록을 불러오지 못했습니다.',
     });
   });
@@ -100,7 +100,7 @@ describe('listMyReviewsAction', () => {
       }),
     };
 
-    mockRequireUser.mockResolvedValue({
+    mockRequireUserService.mockResolvedValue({
       ok: true,
       supabase,
       user: { id: '20000000-0000-4000-8000-000000000001' },
@@ -122,7 +122,7 @@ describe('listMyReviewsAction', () => {
         p_cursor_review_id: '20000000-0000-4000-8000-000000000199',
       },
     );
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
       data: {
         reviews: [

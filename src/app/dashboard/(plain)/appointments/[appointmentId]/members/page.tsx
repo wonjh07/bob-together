@@ -23,6 +23,7 @@ export default async function AppointmentMembersPage({
         <PlainTopNav title="약속 멤버" rightHidden />
         <RequestErrorModal
           isOpen
+          errorType={result.ok ? 'server' : result.errorType}
           message={
             result.ok
               ? '약속 멤버 정보를 불러올 수 없습니다.'
