@@ -1,5 +1,14 @@
 # DECISIONS
 
+## stale appointment invitation은 lifecycle에서 `pending`을 유지하지 않는다 (2026-03-06)
+- Decision: 약속 초대는 `pending`이어도 연결된 약속이 이미 `canceled`이거나 `ends_at <= now()`이면 더 이상 응답 가능한 초대로 취급하지 않는다. 약속 취소 시 관련 `pending` appointment invitation은 DB에서 즉시 `canceled`로 전환하고, 응답 시점에 stale 상태를 발견해도 동일하게 `canceled`로 정리한다. 읽기 경로에서는 stale `pending` appointment invitation을 제외한다.
+- Alternatives: `hasPending` 아이콘만 프론트에서 보정하거나, stale invitation을 계속 `pending`으로 두고 응답 시 에러만 반환
+- Reason: stale invitation을 `pending`으로 남겨두면 알림 아이콘, 알림 목록, 응답 액션이 서로 다른 의미를 보게 된다. 초대 lifecycle을 DB 상태 기준으로 정리하고, 시계 기반 종료 상태만 읽기 경로에서 방어적으로 제외하는 편이 read path 전반의 의미를 일치시키기 쉽다.
+- Scope:
+  - `supabase/migrations/20260306113000_fix_stale_pending_invitations.sql`
+  - `src/actions/invitation/hasPending.ts`
+  - `src/actions/invitation/hasPending.test.ts`
+
 ## validation/Postgrest raw error도 브라우저 디버그 콘솔까지 유지 (2026-03-06)
 - Decision: `ActionError.error`는 `validation`을 포함한 모든 실패 타입에서 유지할 수 있게 하고, `dbError/createPostgrestErrorState`도 서버 로그용 raw DB 에러를 클라이언트 결과까지 함께 전달한다.
 - Alternatives: 기존처럼 validation raw `issues`와 Postgrest raw error는 서버 내부/서버 로그에서만 유지
@@ -963,3 +972,23 @@
 - Alternatives: 기존처럼 렌더마다 `openRequestError` 호출 허용
 - Reason: React Query 에러 상태가 유지되는 동안 동일 경고창이 반복 노출되어 UX가 과도하게 방해되는 문제를 줄이기 위함
 - Scope: `src/hooks/useRequestErrorPresenter.ts`, `src/provider/request-error-provider.tsx`, `src/hooks/useRequestErrorPresenter.test.ts`
+
+## 초대 알림 Indicator를 Pending 기준에서 Read 기준으로 전환 (2026-03-06)
+- Decision: 상단 벨/말풍선의 “새 초대” 판단 기준을 `pending invitation 존재 여부`에서 `읽지 않은 초대 존재 여부`로 전환한다. 이를 위해 `public.user_invitation_read_state` 테이블을 추가하고, `notifications/user_notifications` 레거시 스키마는 제거한다.
+- Alternatives: `invitations.status = 'pending'` 기준을 유지하면서 stale invitation 필터만 계속 보강, 또는 레거시 `notifications/user_notifications` 스키마를 억지로 초대 전용에 재사용
+- Reason: “새 초대”는 응답 가능 여부가 아니라 사용자가 확인했는지 여부를 뜻해야 하며, pending/stale/종료 여부와 결합하면 indicator 의미가 계속 흔들린다. 또한 dead schema를 유지하면 현재 초대 전용 알림 모델이 불필요하게 복잡해진다.
+- Scope:
+  - `supabase/migrations/20260306143000_add_invitation_read_state.sql`
+  - `src/actions/invitation/{getIndicator.ts,markSeen.ts,listReceived.ts,index.ts,types.ts}`
+  - `src/libs/query/{invitationKeys.ts,invitationQueries.ts,invalidateInvitationQueries.ts}`
+  - `src/app/dashboard/_components/nav/TopNavigation.tsx`
+  - `src/app/dashboard/(plain)/notifications/NotificationsClient.tsx`
+  - `src/types/database.types.ts`
+
+## Pending Indicator RPC 제거 (2026-03-06)
+- Decision: unread/read-state 전환 이후 더 이상 사용하지 않는 `public.has_pending_invitations(uuid)` RPC를 삭제한다.
+- Alternatives: 구버전 호환성을 이유로 DB에 미사용 함수를 남겨둠
+- Reason: 앱이 더 이상 pending 기반 indicator를 사용하지 않으므로, 죽은 RPC를 남겨두면 schema와 런타임 구조가 다시 엇갈릴 수 있기 때문
+- Scope:
+  - `supabase/migrations/20260306150000_drop_has_pending_invitations.sql`
+  - `src/types/database.types.ts`

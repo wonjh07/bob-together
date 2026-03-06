@@ -313,36 +313,6 @@ export type Database = {
           },
         ]
       }
-      notifications: {
-        Row: {
-          created_time: string
-          link_url: string | null
-          message: string
-          notification_id: string
-          target_id: string
-          target_type: Database["public"]["Enums"]["notification_target_type"]
-          type: Database["public"]["Enums"]["notification_type"]
-        }
-        Insert: {
-          created_time?: string
-          link_url?: string | null
-          message: string
-          notification_id?: string
-          target_id: string
-          target_type: Database["public"]["Enums"]["notification_target_type"]
-          type: Database["public"]["Enums"]["notification_type"]
-        }
-        Update: {
-          created_time?: string
-          link_url?: string | null
-          message?: string
-          notification_id?: string
-          target_id?: string
-          target_type?: Database["public"]["Enums"]["notification_target_type"]
-          type?: Database["public"]["Enums"]["notification_type"]
-        }
-        Relationships: []
-      }
       places: {
         Row: {
           address: string
@@ -379,49 +349,36 @@ export type Database = {
         }
         Relationships: []
       }
-      user_notifications: {
+      user_invitation_read_state: {
         Row: {
-          created_at: string
-          deleted_at: string | null
-          is_deleted: boolean
-          is_read: boolean
-          notification_id: string
-          read_at: string | null
+          last_seen_created_time: string | null
+          last_seen_invitation_id: string | null
+          latest_received_created_time: string | null
+          latest_received_invitation_id: string | null
+          updated_at: string
           user_id: string
-          user_notification_id: string
         }
         Insert: {
-          created_at?: string
-          deleted_at?: string | null
-          is_deleted?: boolean
-          is_read?: boolean
-          notification_id: string
-          read_at?: string | null
+          last_seen_created_time?: string | null
+          last_seen_invitation_id?: string | null
+          latest_received_created_time?: string | null
+          latest_received_invitation_id?: string | null
+          updated_at?: string
           user_id: string
-          user_notification_id?: string
         }
         Update: {
-          created_at?: string
-          deleted_at?: string | null
-          is_deleted?: boolean
-          is_read?: boolean
-          notification_id?: string
-          read_at?: string | null
+          last_seen_created_time?: string | null
+          last_seen_invitation_id?: string | null
+          latest_received_created_time?: string | null
+          latest_received_invitation_id?: string | null
+          updated_at?: string
           user_id?: string
-          user_notification_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_notifications_notification_id_fkey"
-            columns: ["notification_id"]
-            isOneToOne: false
-            referencedRelation: "notifications"
-            referencedColumns: ["notification_id"]
-          },
-          {
-            foreignKeyName: "user_notifications_user_id_fkey"
+            foreignKeyName: "user_invitation_read_state_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["user_id"]
           },
@@ -683,6 +640,7 @@ export type Database = {
           review_count: number
         }[]
       }
+      has_unread_invitations: { Args: { p_user_id: string }; Returns: boolean }
       join_appointment_transactional: {
         Args: { p_appointment_id: string; p_user_id: string }
         Returns: {
@@ -775,6 +733,7 @@ export type Database = {
           creator_id: string
           creator_name: string
           creator_nickname: string
+          creator_profile_image: string
           ends_at: string
           is_member: boolean
           is_owner: boolean
@@ -804,6 +763,7 @@ export type Database = {
           creator_id: string
           creator_name: string
           creator_nickname: string
+          creator_profile_image: string
           ends_at: string
           is_member: boolean
           is_owner: boolean
@@ -939,6 +899,14 @@ export type Database = {
           start_at: string
           title: string
         }[]
+      }
+      mark_user_invitation_read_state_seen: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      refresh_user_invitation_read_state: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       respond_to_invitation_transactional: {
         Args: { p_decision: string; p_invitation_id: string; p_user_id: string }
@@ -1096,8 +1064,6 @@ export type Database = {
       group_member_role: "owner" | "member"
       invitation_status: "pending" | "accepted" | "rejected" | "canceled"
       invitation_type: "group" | "appointment"
-      notification_target_type: "group" | "appointment"
-      notification_type: "invite" | "review" | "confirmed" | "comment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1230,8 +1196,6 @@ export const Constants = {
       group_member_role: ["owner", "member"],
       invitation_status: ["pending", "accepted", "rejected", "canceled"],
       invitation_type: ["group", "appointment"],
-      notification_target_type: ["group", "appointment"],
-      notification_type: ["invite", "review", "confirmed", "comment"],
     },
   },
 } as const

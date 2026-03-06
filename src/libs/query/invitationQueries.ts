@@ -1,5 +1,5 @@
 import {
-  hasPendingInvitationsAction,
+  getInvitationIndicatorAction,
   listReceivedInvitationsAction,
 } from '@/actions/invitation';
 import { runQueryAction } from '@/libs/errors/request-error';
@@ -12,20 +12,20 @@ import type { QueryFunctionContext } from '@tanstack/react-query';
 const INVITATION_LIST_LIMIT = 10;
 
 type InvitationQueryKey = ReturnType<typeof invitationKeys.received>;
-type PendingInvitationQueryKey = ReturnType<typeof invitationKeys.pending>;
+type InvitationIndicatorQueryKey = ReturnType<typeof invitationKeys.indicator>;
 
 export type InvitationPage = {
   invitations: InvitationListItem[];
   nextCursor: InvitationCursor | null;
 };
 
-export function createHasPendingInvitationsQueryOptions(scope?: QueryScope) {
+export function createInvitationIndicatorQueryOptions(scope?: QueryScope) {
   return {
-    queryKey: invitationKeys.pending(scope) as PendingInvitationQueryKey,
-    queryFn: async (_: QueryFunctionContext<PendingInvitationQueryKey>) =>
-      runQueryAction(() => hasPendingInvitationsAction(), {
+    queryKey: invitationKeys.indicator(scope) as InvitationIndicatorQueryKey,
+    queryFn: async (_: QueryFunctionContext<InvitationIndicatorQueryKey>) =>
+      runQueryAction(() => getInvitationIndicatorAction(), {
         fallbackMessage: '알림 상태를 확인하지 못했습니다.',
-        select: (data) => data.hasPendingInvitations,
+        select: (data) => data.hasUnreadInvitations,
       }),
     staleTime: 15 * 1000,
     refetchInterval: 30 * 1000,

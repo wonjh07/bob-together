@@ -5,16 +5,20 @@ import {
   useQueryClient,
   type InfiniteData,
 } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { respondToInvitationAction } from '@/actions/invitation';
+import {
+  markInvitationIndicatorSeenAction,
+  respondToInvitationAction,
+} from '@/actions/invitation';
 import InlineLoading from '@/components/ui/InlineLoading';
 import ListStateView from '@/components/ui/ListStateView';
 import PlainTopNav from '@/components/ui/PlainTopNav';
 import { useInfiniteLoadMore } from '@/hooks/useInfiniteLoadMore';
 import { useRequestError } from '@/hooks/useRequestError';
 import { invalidateAfterInvitationResponse } from '@/libs/query/invalidateInvitationQueries';
+import { invitationKeys } from '@/libs/query/invitationKeys';
 import {
   createReceivedInvitationsQueryOptions,
   type InvitationPage,
@@ -31,6 +35,7 @@ export default function NotificationsClient() {
   const [processingInvitationId, setProcessingInvitationId] = useState<
     string | null
   >(null);
+  const hasMarkedSeenRef = useRef(false);
   const { showRequestError } = useRequestError();
 
   const {
@@ -124,6 +129,30 @@ export default function NotificationsClient() {
       updateInvitationStatusCache,
     ],
   );
+
+  useEffect(() => {
+    if (hasMarkedSeenRef.current || isLoading || isError || !data) {
+      return;
+    }
+
+    hasMarkedSeenRef.current = true;
+
+    void markInvitationIndicatorSeenAction()
+      .then((result) => {
+        if (!result.ok) {
+          console.error('[invitation-read-state] 알림 읽음 상태 저장 실패', result);
+          return;
+        }
+
+        queryClient.setQueryData<boolean>(
+          invitationKeys.indicator(queryScope),
+          false,
+        );
+      })
+      .catch((error: unknown) => {
+        console.error('[invitation-read-state] 알림 읽음 상태 저장 실패', error);
+      });
+  }, [data, isError, isLoading, queryClient, queryScope]);
 
   const hasState = isLoading || isError || invitations.length === 0;
 

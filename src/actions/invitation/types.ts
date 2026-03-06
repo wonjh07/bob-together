@@ -32,12 +32,14 @@ export type ListReceivedInvitationsResult = ActionResult<
   InvitationErrorCode
 >;
 
-export type HasPendingInvitationsResult = ActionResult<
+export type InvitationIndicatorResult = ActionResult<
   {
-    hasPendingInvitations: boolean;
+    hasUnreadInvitations: boolean;
   },
   InvitationErrorCode
 >;
+
+export type MarkInvitationIndicatorSeenResult = ActionResult<void, InvitationErrorCode>;
 
 export type RespondToInvitationResult = ActionResult<
   {

@@ -21,9 +21,6 @@ export async function invalidateAfterInvitationResponse(
 ) {
   const invalidations: Promise<unknown>[] = [
     invalidateReceivedInvitationsQueries(queryClient),
-    queryClient.invalidateQueries({
-      queryKey: invitationKeys.pending(),
-    }),
   ];
 
   if (params.status === 'accepted') {

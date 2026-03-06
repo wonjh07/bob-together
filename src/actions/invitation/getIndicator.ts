@@ -8,9 +8,9 @@ import {
   toActionResult,
 } from '@/actions/_common/service-action';
 
-import type { HasPendingInvitationsResult } from './types';
+import type { InvitationIndicatorResult } from './types';
 
-export async function hasPendingInvitationsAction(): Promise<HasPendingInvitationsResult> {
+export async function getInvitationIndicatorAction(): Promise<InvitationIndicatorResult> {
   const state = await runServiceAction({
     serverErrorMessage: '알림 상태를 확인하지 못했습니다.',
     run: async ({ requestId }) => {
@@ -20,11 +20,14 @@ export async function hasPendingInvitationsAction(): Promise<HasPendingInvitatio
       }
 
       const { supabase, user } = auth;
-      const { count, error } = await supabase
-        .from('invitations')
-        .select('invitation_id', { count: 'exact', head: true })
-        .eq('invitee_id', user.id)
-        .eq('status', 'pending');
+      const unreadInvitationsRpc = 'has_unread_invitations' as never;
+      const unreadInvitationsParams = {
+        p_user_id: user.id,
+      } as never;
+      const { data, error } = await supabase.rpc(
+        unreadInvitationsRpc,
+        unreadInvitationsParams,
+      );
 
       if (error) {
         return createActionErrorState({
@@ -38,7 +41,7 @@ export async function hasPendingInvitationsAction(): Promise<HasPendingInvitatio
       return createActionSuccessState({
         requestId,
         data: {
-          hasPendingInvitations: (count ?? 0) > 0,
+          hasUnreadInvitations: Boolean(data),
         },
       });
     },

@@ -6,6 +6,18 @@
 - Fix:
 - Lesson:
 
+## 종료/취소된 약속 초대가 계속 `pending`으로 남아 알림 아이콘이 켜짐
+- Context: 새로운 초대가 없는데도 알림 아이콘이 계속 활성화되고, 알림 목록에도 이미 응답 불가능한 약속 초대가 남아 있었음
+- Cause:
+  - `hasPendingInvitationsAction`가 `invitations.status = 'pending'`만 보고 stale appointment invitation을 그대로 집계했음
+  - `respond_to_invitation_transactional`은 종료/취소된 약속 초대를 발견해도 invitation row를 `pending`에서 정리하지 않았음
+  - `update_appointment_status_transactional`도 약속 취소 시 관련 `pending` appointment invitation을 `canceled`로 바꾸지 않았음
+- Fix:
+  - 이후 indicator 구조를 read/unread 기준으로 다시 전환하면서 `has_pending_invitations` RPC는 제거함
+  - `list_received_invitations_with_cursor`가 stale `pending` appointment invitation을 읽기 결과에서 제외하도록 변경
+  - `respond_to_invitation_transactional`, `update_appointment_status_transactional`가 stale appointment invitation을 `canceled`로 정리하도록 변경
+- Lesson: 초대/알림 문제는 read path 보정보다 lifecycle 모델이 먼저 맞아야 한다. 더 이상 응답할 수 없는 invitation을 `pending`으로 남기면 아이콘, 목록, 액션이 서로 다른 의미를 보게 된다.
+
 ## validation / Postgrest raw error가 브라우저 디버그 콘솔에서 사라짐
 - Context: `/dashboard/appointments/<잘못된 ID>` 같은 query 실패에서 validation 메시지는 모달과 콘솔에 보였지만, 실제 Zod `issues`나 Postgrest raw error는 브라우저 콘솔에서 확인할 수 없었음
 - Cause:
@@ -155,3 +167,9 @@
 - Cause: 약속 조회 RLS가 그룹 멤버만 허용인데, 그룹 미가입 사용자에게도 약속 초대가 발송될 수 있어 수락 시 약속 조회가 RLS로 차단됨
 - Fix: 초대 발송 단계에서 초대 대상의 그룹 멤버십을 강제 검증하고, 수락 단계에서도 그룹 멤버십을 먼저 검사해 명확한 권한 에러 메시지를 반환하도록 보강
 - Lesson: 초대/참여 플로우는 생성 시점과 수락 시점 모두에서 권한 전제(그룹 멤버십)를 이중 검증해야 런타임 RLS 오류를 사용자 에러로 노출하지 않는다
+
+## 새 초대 Indicator가 Pending 초대와 섞여 의미가 흔들림
+- Context: 상단 벨 아이콘이 “새 초대”를 뜻하지만, 실제 구현은 `pending invitation` 존재 여부를 보고 있어 오래된 미처리 초대, stale appointment invitation까지 같이 잡혔음
+- Cause: read/unread 개념 없이 `hasPendingInvitationsAction` 하나에 indicator 의미를 얹었기 때문
+- Fix: `user_invitation_read_state` 요약 테이블을 도입하고, 초대 생성 시 latest-received를 갱신하고 알림함 진입 시 last-seen을 갱신하도록 분리했다. 벨 아이콘은 이제 unread 상태만 본다.
+- Lesson: 알림 indicator는 “행동 가능 여부”와 “읽었는가”를 섞지 말고, read-model을 별도로 두는 편이 의미와 확장성이 모두 안정적이다.

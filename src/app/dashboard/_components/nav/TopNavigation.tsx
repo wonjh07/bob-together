@@ -4,16 +4,18 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 
 import BellIcon from '@/components/icons/BellIcon';
-import { createHasPendingInvitationsQueryOptions } from '@/libs/query/invitationQueries';
+import { createInvitationIndicatorQueryOptions } from '@/libs/query/invitationQueries';
 import { useQueryScope } from '@/provider/query-scope-provider';
 
 import {
   topNav,
   logoSection,
   navRight,
+  notificationLinkWrap,
   iconButton,
   bellIcon,
-  bellIconActive,
+  bellIconUnread,
+  notificationBubble,
   menuButton,
   menuIcon,
 } from './TopNavigation.css';
@@ -32,11 +34,11 @@ export function TopNav() {
   const queryScope = useQueryScope();
   const userId = extractUserIdFromScope(queryScope);
 
-  const { data: hasPendingInvitations = false } = useQuery({
-    ...createHasPendingInvitationsQueryOptions(queryScope),
+  const { data: hasUnreadInvitations = false } = useQuery({
+    ...createInvitationIndicatorQueryOptions(queryScope),
     enabled: Boolean(userId),
   });
-  const hasNewNotification = hasPendingInvitations;
+  const hasNewNotification = hasUnreadInvitations;
 
   return (
     <header className={topNav}>
@@ -45,15 +47,22 @@ export function TopNav() {
       </div>
 
       <div className={navRight}>
-        <Link
-          href="/dashboard/notifications"
-          className={iconButton}
-          aria-label="알림 페이지로 이동">
-          <BellIcon
-            variant={hasNewNotification ? 'new' : 'default'}
-            className={`${bellIcon} ${hasNewNotification ? bellIconActive : ''}`}
-          />
-        </Link>
+        <div className={notificationLinkWrap}>
+          <Link
+            href="/dashboard/notifications"
+            className={iconButton}
+            aria-label="알림 페이지로 이동">
+            <BellIcon
+              variant={hasNewNotification ? 'new' : 'default'}
+              className={`${bellIcon} ${hasNewNotification ? bellIconUnread : ''}`}
+            />
+          </Link>
+          {hasNewNotification ? (
+            <span className={notificationBubble} aria-hidden="true">
+              새 초대가 도착했어요
+            </span>
+          ) : null}
+        </div>
         <ProfileDropdown
           triggerClassName={menuButton}
           triggerIconClassName={menuIcon}

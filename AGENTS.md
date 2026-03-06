@@ -15,15 +15,17 @@
 - Check dependencies from `package.json`
 - Read `ai_docs/INDEX.md` first and selectively read task-related docs
 
+### Supabase
+- Always use Supabase MCP to migration or sql works
+- For Supabase schema changes, do not hardcode `src/types/database.types.ts` before migration is applied.
+- Run type/lint only after migration apply + type generation for schema-changing work.
+
 ### Workflow (Must Do)
 - Complex requests: analyze and plan first(use plan mode)
 - Before code changes: show before/after, justify, get approval, proceed to the next step
 - Always base work on the current file state (users may edit before requesting)
 - If user edits overlap with planned changes, confirm before proceeding
 - If unsure, ask before changing code
-- For Supabase schema changes, do not hardcode `src/types/database.types.ts` before migration is applied.
-- Run type/lint only after migration apply + type generation for schema-changing work.
-- If migration cannot be applied in current environment, report blocked status and defer type-file edits.
 - After massive code changes, run `npm run type-check` and `npm run lint`, then report results (skip for `*.md`-only changes)
 - If a change involves structural/architectural decisions, record it in `ai_docs/DECISIONS.md`.
 
